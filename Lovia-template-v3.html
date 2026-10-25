@@ -1,0 +1,1150 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#eeeee9">
+  <meta name="description" content="Lovia 阅读主题展示工坊：将三张原始截图制成清晰、高级的画册式展示海报。">
+  <title>Lovia · 主题展示模板 v3</title>
+  <style>
+@import url("https://fontsapi.zeoseven.com/309/main/result.css");
+:root{--app-bg:#f3f3ee;--paper:#fbfaf6;--ink:#2e3931;--muted:#7e887d;--line:#d9ded4;--accent:#687c6b;--accent-light:#e8eee6;--shadow:0 15px 42px rgba(40,51,40,.045)}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--app-bg);color:var(--ink);font-family:Inter,"Helvetica Neue","PingFang SC","Microsoft YaHei",sans-serif;-webkit-font-smoothing:antialiased}
+button,input{font:inherit}
+button{cursor:pointer}
+button:focus-visible,input:focus-visible{outline:3px solid #9aa99b;outline-offset:3px}
+.app-shell{max-width:1800px;min-height:100vh;margin:0 auto}
+.topbar{height:82px;background:rgba(251,250,246,.92);border-bottom:1px solid #e3e6de;display:flex;justify-content:space-between;align-items:center;padding:0 clamp(24px,3vw,55px);gap:18px}
+.brand{display:flex;align-items:center;gap:19px;white-space:nowrap}
+.brand-monogram{display:grid;place-items:center;width:45px;height:45px;border:1px solid #879386;border-radius:50%;font:italic 29px Georgia,serif;letter-spacing:-5px;padding-right:6px}
+.brand-dot{color:#9d997a}
+.brand-wordmark{font:500 12px Georgia,serif;letter-spacing:2.2px}
+.brand-wordmark i{display:inline-block;height:13px;border-left:1px solid #c5ccc1;vertical-align:middle;margin:0 13px}
+.topbar-actions{display:flex;align-items:center;gap:24px}
+.topbar-note{font:10px Georgia,serif;letter-spacing:1.5px;color:#9aa395}
+.button{border:0;display:inline-flex;align-items:center;justify-content:center;gap:12px;transition:transform .2s ease,background .2s ease,box-shadow .2s ease}
+.button:active{transform:translateY(1px)}
+.button-dark{background:#314235;color:#fff;border-radius:6px}
+.button-dark:hover{background:#4b604f;box-shadow:0 6px 20px #35493620}
+.top-export{height:42px;padding:0 21px;font-size:12px;letter-spacing:.7px}
+.download-icon{font-size:20px;line-height:1}
+.workspace{display:grid;grid-template-columns:minmax(0,1fr) 376px;gap:28px;padding:37px clamp(24px,3vw,55px) 18px;align-items:start}
+.preview-column{min-width:0}
+.intro{display:flex;align-items:end;justify-content:space-between;gap:20px;margin-bottom:25px}
+.eyebrow{font:11px Georgia,serif;letter-spacing:2px;color:#7f8b7d}
+.eyebrow-index{color:#5c6a5d;font-weight:bold}
+h1,h2,h3,p{margin:0}
+h1{font-family:Georgia,"Noto Serif SC","Songti SC",serif;font-size:clamp(24px,2.22vw,35px);font-weight:400;letter-spacing:1px;margin-top:12px;line-height:1.3}
+h1 em{font-style:normal;color:#657c69}
+.intro p{font-size:11px;line-height:1.95;color:#96a094;white-space:nowrap;text-align:right;padding-bottom:2px}
+.preview-card{border:1px solid #dedfd8;border-radius:10px;background:#fff;box-shadow:var(--shadow);overflow:hidden}
+.preview-toolbar{height:49px;padding:0 20px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #eef0ea}
+.preview-status{display:flex;align-items:center;gap:12px;font-size:10px;color:#899487;letter-spacing:.2px;white-space:nowrap}
+.preview-status strong{font-weight:500;color:#5f7363}
+.alive-dot{width:6px;height:6px;background:#83ab84;border-radius:50%;box-shadow:0 0 0 3px #e4f0e2}
+.toolbar-divider{width:1px;height:12px;background:#dfe4dc}
+.icon-text-button{border:0;background:none;color:#6c7f70;font-size:11px;display:flex;align-items:center;gap:7px;padding:8px 0}
+.icon-text-button:hover{text-decoration:underline}
+.expand-icon{font-size:19px;line-height:1}
+.canvas-stage{background:#c7cec3;padding:19px 21px 18px;display:flex;align-items:center;justify-content:center;min-height:310px}
+#posterCanvas{display:block;width:100%;height:auto;aspect-ratio:4/3;background:#ebe7dc;box-shadow:0 0 0 1px #aab3a4,0 11px 30px #1a271816}
+.preview-caption{padding:15px 21px;display:flex;align-items:center;justify-content:space-between;gap:15px;color:#8b968a;font-size:10px;letter-spacing:.15px}
+.preview-caption>span:last-child{font:10px Georgia,serif;letter-spacing:1.3px;white-space:nowrap;color:#a2a99d}
+.heart{font-size:14px;color:#8c9e86}
+.tiny-sparkle{font-size:13px;color:#7b9279;margin-right:5px}
+.info-row{display:grid;grid-template-columns:repeat(3,1fr);gap:15px;margin-top:28px;padding:0 5px}
+.info-item{display:flex;align-items:flex-start;gap:12px}
+.info-number{font:italic 27px Georgia,serif;color:#c4cec0;line-height:1}
+.info-item div{display:flex;flex-direction:column;gap:7px}
+.info-item b{font-size:12px;font-weight:500;color:#647467}
+.info-item div span{font-size:10px;color:#a4aca1}
+.editor{position:sticky;top:19px;background:var(--paper);border:1px solid #e0e3dc;border-radius:11px;box-shadow:var(--shadow);overflow:hidden}
+.editor-top{padding:23px 24px 20px;display:flex;justify-content:space-between;align-items:center;gap:10px;border-bottom:1px solid #e6e9e2}
+h2{font:400 23px Georgia,"Noto Serif SC",serif;margin-top:8px}
+.reset-button{border:1px solid #d8ded4;background:#fff;color:#7c8b7c;border-radius:5px;padding:8px 10px;font-size:12px;display:flex;gap:5px;align-items:center}
+.reset-button:hover{background:#edf2eb}
+.editor-scroll{max-height:min(calc(100vh - 255px),1000px);overflow-y:auto;scrollbar-width:thin;scrollbar-color:#c4cec1 transparent}
+.editor-section{padding:23px 24px 25px;border-bottom:1px solid #e9eae4}
+.section-title{display:flex;align-items:center;gap:10px;margin-bottom:21px}
+.section-title>span:first-child{font:italic 17px Georgia,serif;color:#a9b4a7}
+.section-title h3{font-size:12px;letter-spacing:.5px;font-weight:600}
+.section-description{margin-left:auto;color:#afb9ae;font:9px Georgia,serif;letter-spacing:1.4px}
+.field-label{display:block;margin-bottom:9px;color:#7e8d7f;font-size:11px}
+.text-input,.prefixed-field{width:100%;height:42px;border:1px solid #dce1d9;background:#fff;border-radius:5px;color:#47594b;outline:0;transition:border-color .15s ease,box-shadow .15s ease}
+.text-input{padding:0 12px;font-size:12px;letter-spacing:.35px}
+.text-input:focus,.prefixed-field:focus-within{border-color:#94a897;box-shadow:0 0 0 3px #b2c4b024}
+.field-label:not(:first-of-type){margin-top:17px}
+.prefixed-field{display:flex;align-items:center;gap:7px;padding:0 12px}
+.prefixed-field span{font:11px Georgia,serif;letter-spacing:1px;color:#919d8f;white-space:nowrap}
+.prefixed-field input{background:transparent;min-width:0;width:100%;border:0;outline:0;color:#405446;font:12px Georgia,serif;letter-spacing:1px}
+.date-field{display:flex;gap:7px}
+.date-field input{min-width:0;flex:1}
+.date-field button{border:1px solid #dce1d9;border-radius:5px;background:#f8faf7;color:#647b69;font-size:11px;padding:0 12px}
+.date-field button:hover{background:#edf1e9}
+.section-note{color:#97a294;font-size:10px;line-height:1.7;margin:-11px 0 16px}
+.upload-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.upload-tile{position:relative;display:block;padding:0;border:1px solid #cad3c9;background:#e3e8df;aspect-ratio:942/2048;border-radius:4px;overflow:hidden;text-align:left;transition:transform .15s ease,border-color .15s ease,box-shadow .15s ease}
+.upload-tile:hover,.upload-tile.dragover{border-color:#657e6a;box-shadow:0 0 0 3px #8daa882d;transform:translateY(-2px)}
+.upload-tile img{width:100%;height:100%;object-fit:contain;display:block}
+.tile-shade{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:space-between;padding:7px;background:linear-gradient(180deg,#1f2f2054 0,transparent 22%,transparent 68%,#1b281f88 100%);color:#fff;pointer-events:none}
+.tile-shade strong{font:15px Georgia,serif;font-weight:400}
+.tile-shade small{font-size:9px;white-space:nowrap}
+.image-size-message{margin-top:12px;color:#9da89b;font-size:10px;line-height:1.6}
+.style-options{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.style-option{background:#fff;border:1px solid #e0e5dd;border-radius:5px;padding:7px 6px 10px;color:#738074;display:flex;flex-direction:column;gap:8px;font-size:10px;transition:all .15s ease}
+.style-option.selected{border-color:#708873;box-shadow:0 0 0 2px #8ba58a22;color:#435c48}
+.style-option:hover{border-color:#9fb09c}
+.style-sample{height:40px;width:100%;border:1px solid #e3e3da;display:flex;align-items:center;justify-content:center;gap:7px}
+.style-sample i{display:block;width:17%;height:73%;border:1px solid #abb1a7;background:#f1efe5}
+.sample-botanical{background:#ebe7dc}
+.sample-nocturne{background:#252d29;border-color:#252d29}
+.sample-nocturne i{border-color:#a3afa1;background:#efefe6}
+.sample-minimal{background:#d7dcd3}
+.sample-minimal i{border-color:#7f9382;background:#ecede6}
+.palette-heading{display:flex;align-items:center;justify-content:space-between;margin-top:23px;font-size:11px;color:#778879}
+.palette-heading button{border:0;background:none;padding:3px 0;color:#8da18e;font-size:10px}
+.palette-heading button:hover{text-decoration:underline}
+.color-inputs{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-top:13px}
+.color-item{display:flex;align-items:center;flex-direction:column;gap:8px;cursor:pointer}
+.color-item input{width:31px;height:31px;border:0;border-radius:50%;padding:0;background:none;overflow:hidden;cursor:pointer}
+.color-item input::-webkit-color-swatch-wrapper{padding:0}
+.color-item input::-webkit-color-swatch{border:1px solid #b5c0b1;border-radius:50%}
+.color-item input::-moz-color-swatch{border:1px solid #b5c0b1;border-radius:50%}
+.color-item span{font:10px Georgia,serif;color:#a0aaa0;letter-spacing:1px}
+.last-section{border-bottom:0}
+.toggle-row{display:flex;align-items:center;justify-content:space-between;gap:10px;cursor:pointer}
+.toggle-row>span:first-child{display:flex;flex-direction:column;gap:8px}
+.toggle-row strong{font-size:11px;font-weight:500;color:#657967}
+.toggle-row small{font-size:10px;color:#9ba69b}
+.switch{position:relative;flex:none}
+.switch input{position:absolute;opacity:0}
+.switch-track{display:block;width:35px;height:21px;border-radius:20px;background:#cbd2c9;transition:background .15s ease;position:relative}
+.switch-track:after{content:"";position:absolute;top:3px;left:3px;width:15px;height:15px;border-radius:50%;background:white;transition:transform .15s ease}
+.switch input:checked+.switch-track{background:#758e79}
+.switch input:checked+.switch-track:after{transform:translateX(14px)}
+.editor-footer{padding:16px 24px 20px;border-top:1px solid #e7ebe3;background:#fbfbf8}
+.download-main{width:100%;height:46px;font-size:12px;letter-spacing:.4px}
+.download-main>span{font-size:20px}
+.download-main small{font-size:9px;font-weight:400;color:#b9c6b9;margin-left:auto;padding-right:8px}
+.editor-footer p{margin-top:12px;text-align:center;font-size:10px;color:#abb3aa}
+.site-footer{display:flex;justify-content:space-between;gap:15px;padding:28px clamp(24px,3vw,55px) 24px;font:10px Georgia,serif;color:#a7b0a5;letter-spacing:2px}
+.preview-dialog{border:0;max-width:min(95vw,1550px);max-height:94vh;width:min(95vw,1550px);padding:0;background:#f5f6f1;border-radius:9px;box-shadow:0 25px 120px #0b170bcc;overflow:hidden}
+.preview-dialog::backdrop{background:rgba(18,29,21,.75);backdrop-filter:blur(5px)}
+.dialog-header{height:54px;border-bottom:1px solid #e1e4dd;display:flex;align-items:center;justify-content:space-between;padding:0 22px;font:12px Georgia,serif;letter-spacing:2px;color:#586b5d}
+.dialog-header i{color:#a0ac9f;font-style:normal;font-size:10px}
+.dialog-header button{border:0;background:transparent;font-size:27px;color:#68806a}
+.dialog-content{max-height:calc(94vh - 54px);overflow:auto;display:flex;padding:20px;justify-content:center}
+.dialog-content img{max-width:100%;height:fit-content;box-shadow:0 3px 18px #31423624}
+.toast{position:fixed;bottom:28px;left:50%;transform:translate(-50%,18px);background:#2c3e31;color:white;padding:12px 20px;border-radius:6px;font-size:12px;box-shadow:0 15px 45px #21322530;opacity:0;pointer-events:none;transition:all .22s ease;z-index:50;white-space:nowrap}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+@media(max-width:1200px){.workspace{grid-template-columns:minmax(0,1fr) 334px;gap:20px;padding:25px}.topbar{padding:0 25px}.editor-top,.editor-section,.editor-footer{padding-left:18px;padding-right:18px}.intro p{display:none}.info-item{gap:8px}.info-item div span{line-height:1.4}}
+@media(max-width:900px){.workspace{grid-template-columns:minmax(0,1fr);gap:24px}.editor{position:static}.editor-scroll{max-height:none}.editor-section{padding:22px 25px}.upload-grid{max-width:390px}.style-options{max-width:460px}.intro p{display:block}.info-row{margin-bottom:4px}.editor-footer{padding:18px 25px}.topbar-note{display:none}}
+@media(max-width:580px){.topbar{height:66px;padding:0 16px}.brand{gap:9px}.brand-monogram{width:36px;height:36px;font-size:23px}.brand-wordmark{font-size:9px;letter-spacing:1px}.brand-wordmark i{margin:0 5px}.top-export{font-size:0;width:39px;height:39px;padding:0;border-radius:50%}.top-export .download-icon{font-size:23px}.workspace{padding:23px 14px}.intro{margin-bottom:19px}.intro p{display:none}h1{font-size:26px}.preview-toolbar{padding:0 10px}.preview-status{gap:6px;font-size:9px}.preview-status span:last-child,.preview-status .toolbar-divider:last-of-type{display:none}.icon-text-button{font-size:10px}.canvas-stage{padding:10px;min-height:unset}.preview-caption{padding:11px 10px}.preview-caption>span:last-child{display:none}.info-row{grid-template-columns:repeat(3,1fr);gap:9px;margin-top:18px}.info-number{font-size:21px}.info-item{flex-direction:column;gap:7px}.info-item b{font-size:10px}.info-item div span{font-size:9px;line-height:1.45}.site-footer{padding:16px;font-size:8px;letter-spacing:1px}.site-footer span:last-child{display:none}.editor-top{padding:22px 18px}.editor-section{padding:22px 18px}.editor-footer{padding:16px 18px}.preview-dialog{width:98vw;max-width:98vw}.dialog-content{padding:8px}}
+@media(prefers-reduced-motion:reduce){*,*:before,*:after{transition:none!important;scroll-behavior:auto!important}}
+
+/* Edition 02 — user-selectable backgrounds and gallery frames. */
+.style-options{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.style-option{min-height:82px}
+.style-option>span:last-child{font-size:10px;white-space:nowrap}
+.sample-custom{background:#b8b4a4}
+.sample-custom i{background:#f8f6ee;border-color:#6d766c}
+.sample-image{background:linear-gradient(140deg,#65705d 0%,#aeb6a6 43%,#dfd9c8 100%)}
+.sample-image i{background:#e8e9e2a8;border-color:#f1f4e8aa}
+.sample-glass{background:radial-gradient(ellipse at 20% 20%,#fff2d2 0%,transparent 35%),radial-gradient(ellipse at 84% 75%,#6a897b 0%,transparent 53%),#b4b0ad}
+.sample-glass i{border-radius:3px;border-color:#fdfdfbc4;background:#ffffff61;box-shadow:0 1px 4px #fff8}
+.mode-intro{margin:14px 0 0;min-height:16px}
+.mode-panel{padding:14px 0 2px}
+.mode-panel[hidden]{display:none!important}
+.custom-color-row{display:flex;align-items:center;gap:13px;color:#778878;font:11px Georgia,serif;letter-spacing:1px}
+.custom-color-row input{height:42px;width:65px;border:1px solid #d1d9cf;border-radius:6px;padding:4px;background:white;cursor:pointer}
+.asset-picker{width:100%;min-height:60px;border:1px dashed #aab9aa;border-radius:6px;background:#f5f7f2;display:flex;align-items:center;gap:12px;padding:9px;text-align:left;color:#5e7261}
+.asset-picker:hover{border-color:#77927c;background:#edf4eb}
+.asset-icon{height:36px;width:36px;flex:none;border:1px solid #c0cec0;border-radius:5px;display:grid;place-items:center;font-size:20px;font-weight:300}
+.asset-picker>span:last-child{display:flex;flex-direction:column;gap:6px;min-width:0}
+.asset-picker strong{font-size:11px;font-weight:600}
+.asset-picker small{font-size:10px;line-height:1.3;color:#92a193;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:238px}
+.range-label{display:flex;justify-content:space-between;align-items:center;margin:17px 0 10px;color:#718574;font-size:11px}
+.range-label output{font:11px Georgia,serif;color:#7c947f}
+.range-input{display:block;width:100%;height:5px;margin:0 0 10px;accent-color:#6e856f;cursor:pointer}
+.palette-heading small{font-size:9px;font-weight:400;margin-left:4px;color:#b3beb1}
+.border-note{margin:0 0 14px}
+.border-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.border-option{background:#fff;border:1px solid #e0e5dd;border-radius:5px;min-height:59px;display:flex;align-items:center;gap:10px;padding:9px;color:#738375;font-size:11px;text-align:left}
+.border-option.selected{border-color:#708873;box-shadow:0 0 0 2px #8ba58a22;color:#435c48;background:#fbfdfa}
+.border-option:hover{border-color:#9db09e}
+.border-sample{display:block;flex:none;width:31px;height:37px;background:#f2f0e8}
+.border-line{border:1px solid #728a75}
+.border-double{border:3px double #728a75}
+.border-shadow{border:1px solid #e4e9e1;box-shadow:3px 4px 5px #465c4b4b}
+.border-none{border:0;outline:1px dotted #d3d9d0}
+
+/* Mobile workspace: larger touch targets and a permanently reachable export. */
+.mobile-actions{display:none}
+@media(max-width:580px){
+  html{scroll-padding-top:78px}
+  body{padding-bottom:calc(83px + env(safe-area-inset-bottom,0px))}
+  .topbar{position:sticky;top:0;z-index:20;background:rgba(251,250,246,.96);backdrop-filter:blur(16px)}
+  .top-export{width:44px;height:44px}
+  .workspace{padding:19px 12px 25px;gap:21px}
+  .intro{margin-bottom:16px}
+  .preview-card,.editor{border-radius:8px}
+  .canvas-stage{padding:8px}
+  .preview-toolbar{height:45px}
+  .editor-scroll{max-height:none;overflow:visible}
+  .editor-top,.editor-section{padding-left:17px;padding-right:17px}
+  .text-input,.prefixed-field,.date-field button{min-height:44px}
+  .reset-button{min-height:42px}
+  .upload-grid{max-width:none;gap:9px}
+  .style-options{max-width:none}
+  .style-option{min-height:88px}
+  .border-option{min-height:52px}
+  .color-item input{width:36px;height:36px}
+  #editorTitle{scroll-margin-top:84px}
+  .mobile-actions{position:fixed;bottom:0;left:0;right:0;z-index:25;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.5fr);gap:10px;padding:11px 13px calc(11px + env(safe-area-inset-bottom,0px));background:rgba(250,250,246,.97);border-top:1px solid #dce4d9;box-shadow:0 -8px 24px rgba(34,54,37,.1);backdrop-filter:blur(18px)}
+  .mobile-edit-link,.mobile-export-button{display:flex;justify-content:center;align-items:center;min-height:48px;border-radius:7px;font-size:13px;letter-spacing:.2px;text-decoration:none}
+  .mobile-edit-link{border:1px solid #cbd5ca;color:#49634e;background:#fff}
+  .mobile-export-button{border:0;background:#314235;color:#fff;font-weight:600}
+  .mobile-edit-link:focus-visible,.mobile-export-button:focus-visible{outline:3px solid #95aa96;outline-offset:2px}
+  .toast{bottom:calc(92px + env(safe-area-inset-bottom,0px));max-width:calc(100vw - 24px);white-space:normal;text-align:center}
+}
+
+/* Edition 03 — flexible 2–4 image layouts and hand-adjustable linework. */
+.welcome-note{margin-top:22px;padding:16px 19px;border-left:2px solid #697b6e;background:#f4f6f1;color:#627364;font:15px/1.6 "Songti SC","Noto Serif SC",serif;letter-spacing:.8px}
+.batch-upload-button{display:flex;width:100%;justify-content:space-between;align-items:center;gap:12px;margin:-1px 0 16px;border:1px dashed #9cad9e;border-radius:6px;background:#f1f5ef;color:#4d6655;font-size:12px;min-height:46px;padding:0 14px;text-align:left}
+.batch-upload-button span{color:#9aab9a;font-size:10px;white-space:nowrap}
+.batch-upload-button:hover{background:#eaf1e8;border-color:#7b967f}
+.upload-grid{grid-template-columns:repeat(var(--tile-count,3),minmax(0,1fr));gap:8px}
+.upload-tile{width:100%;min-width:0;min-height:88px;aspect-ratio:var(--img-ratio,.46);border-radius:3px}
+.upload-tile img{object-fit:contain}
+.upload-tile-add{min-height:110px;border-style:dashed;display:flex;flex-direction:column;gap:7px;justify-content:center;align-items:center;color:#829b84;background:#f2f6ef;font-size:9px}
+.upload-tile-add .add-icon{font-size:30px;line-height:1;font-weight:200}
+.upload-tile-add:hover{color:#475f4b;background:#eaf0e8}
+.finish-label{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:11px;color:#637663;margin-bottom:10px}
+.finish-label>span,.finish-label output{color:#9eafa0;font-size:10px}
+.ratio-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:0 0 22px}
+.ratio-option{border:1px solid #d9e2d7;border-radius:5px;background:white;padding:10px 12px;display:flex;gap:10px;justify-content:space-between;align-items:center;color:#667c68}
+.ratio-option strong{font:18px Georgia,serif}
+.ratio-option small{font-size:10px;color:#9ba99c}
+.ratio-option.selected{border-color:#6c8b70;background:#f2f7f1;box-shadow:inset 0 0 0 1px #6c8b702a}
+.ratio-option:hover{border-color:#8ba48f}
+.line-controls{padding:16px 0 13px;margin-bottom:19px;border-top:1px solid #e5ebe3;border-bottom:1px solid #e5ebe3}
+.line-controls .finish-label input[type=color]{width:56px;height:32px;padding:3px;border:1px solid #cdd8cc;border-radius:5px;background:#fff;cursor:pointer}
+.line-controls .range-input{width:100%;margin:0 0 7px}
+.border-corners{border:0;background:linear-gradient(#728a75,#728a75) left top/9px 1px no-repeat,linear-gradient(#728a75,#728a75) left top/1px 9px no-repeat,linear-gradient(#728a75,#728a75) right top/9px 1px no-repeat,linear-gradient(#728a75,#728a75) right top/1px 9px no-repeat,linear-gradient(#728a75,#728a75) left bottom/9px 1px no-repeat,linear-gradient(#728a75,#728a75) left bottom/1px 9px no-repeat,linear-gradient(#728a75,#728a75) right bottom/9px 1px no-repeat,linear-gradient(#728a75,#728a75) right bottom/1px 9px no-repeat,#f2f0e8}
+.border-matte{border:5px solid #fff;outline:1px solid #a7b3a5;box-shadow:0 1px 4px #31443618}
+.border-dashed{border:1px dashed #728a75}
+.border-inset{border:3px double #728a75;box-shadow:inset 0 0 0 4px #f2f0e8,inset 0 0 0 5px #728a75}
+@media(max-width:580px){.batch-upload-button{min-height:51px}.upload-tile{min-height:98px}.ratio-option{padding:11px}.welcome-note{font-size:13px}.border-options{gap:9px}}
+
+</style>
+  
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="brand" aria-label="Lovia Reading Studio">
+        <span class="brand-monogram">L<span class="brand-dot">.</span></span>
+        <span class="brand-wordmark">LOVIA <i></i> READING STUDIO</span>
+      </div>
+      <div class="topbar-actions">
+        <span class="topbar-note">A LITTLE SPACE FOR BEAUTIFUL PAGES</span>
+        <button class="button button-dark top-export" id="topExport" type="button"><span class="download-icon">↧</span> 导出高清海报</button>
+      </div>
+    </header>
+
+    <main class="workspace">
+      <section class="preview-column" aria-labelledby="pageTitle">
+        <div class="intro">
+          <div>
+            <div class="eyebrow"><span class="eyebrow-index">01</span> / THE PREVIEW</div>
+            <h1 id="pageTitle">好好展示老师的主题吧！</h1>
+          </div>
+          <p>自由取色、换底图，或加入液态玻璃的朦胧感。<br>每一个字、每一处插画，都留在原来的位置。</p>
+        </div>
+
+        <div class="preview-card">
+          <div class="preview-toolbar">
+            <div class="preview-status"><span class="alive-dot"></span><strong>实时预览</strong><span class="toolbar-divider"></span><span id="ratioPreviewLabel">4:3 横版</span><span class="toolbar-divider"></span><span id="resolutionPreviewLabel">3600 × 2700 px</span></div>
+            <button class="icon-text-button" id="largePreview" type="button" title="查看大图"><span class="expand-icon">⤢</span> 放大预览</button>
+          </div>
+          <div class="canvas-stage">
+            <canvas id="posterCanvas" width="3600" height="2700" role="img" aria-label="阅读主题三图海报实时预览"></canvas>
+          </div>
+          <div class="preview-caption">
+            <span><span class="tiny-sparkle">✳</span> 每张截图完整呈现 · 原始比例 · 无文字重绘</span>
+            <span>MADE WITH <span class="heart">♡</span> LOVIA</span>
+          </div>
+        </div>
+
+        <div class="welcome-note">欢迎使用Lovia的模版～</div>
+      </section>
+
+      <aside class="editor" aria-labelledby="editorTitle">
+        <div class="editor-top">
+          <div><span class="eyebrow"><span class="eyebrow-index">02</span> / THE EDITOR</span><h2 id="editorTitle">选择你的预览样式ovo</h2></div>
+          <button class="reset-button" id="resetAll" type="button" title="恢复默认设置">↺ <span>重置</span></button>
+        </div>
+
+        <div class="editor-scroll">
+          <section class="editor-section" aria-labelledby="textSectionTitle">
+            <div class="section-title"><span>01</span><h3 id="textSectionTitle">文字与署名</h3><span class="section-description">TYPOGRAPHY</span></div>
+            <label class="field-label" for="themeName">左上 · 主题名称</label>
+            <input class="text-input" id="themeName" type="text" maxlength="70" autocomplete="off" value="THE SURREAL LIBRARY" placeholder="输入主题名称">
+            <label class="field-label" for="authorName">右上 · 作者</label>
+            <div class="prefixed-field"><span>AUTHOR /</span><input id="authorName" type="text" maxlength="48" autocomplete="off" value="LOVIA" placeholder="你的名字"></div>
+            <label class="field-label" for="dateText">右下 · 日期</label>
+            <div class="date-field"><input class="text-input" id="dateText" type="text" maxlength="24" autocomplete="off" value="OCT. 2026" placeholder="例如 OCT. 2026"><button id="todayButton" type="button">今天</button></div>
+          </section>
+
+          <section class="editor-section" aria-labelledby="imageSectionTitle">
+            <div class="section-title"><span>02</span><h3 id="imageSectionTitle">展示图片</h3><span class="section-description">YOUR IMAGES</span></div>
+            <p class="section-note">支持一次选择 2–4 张图片，顺序排列、等距展示。每张图片均完整保留原始比例。</p>
+            <button class="batch-upload-button" id="batchUploadButton" type="button">＋ 一键选择 2–4 张图片 <span>支持多选</span></button>
+            <input id="batchFileInput" type="file" accept="image/png,image/jpeg,image/webp,image/avif,image/gif" multiple hidden>
+            <div class="upload-grid" id="uploadGrid"></div>
+            <div class="image-size-message" id="imageSizeMessage">当前示例：3 张 942 × 2048 px 原尺寸截图</div>
+            <input id="imageFileInput" type="file" accept="image/png,image/jpeg,image/webp,image/avif,image/gif" hidden>
+          </section>
+
+          <section class="editor-section" aria-labelledby="styleSectionTitle">
+            <div class="section-title"><span>03</span><h3 id="styleSectionTitle">底图风格</h3><span class="section-description">BACKGROUND</span></div>
+            <div class="style-options" id="styleOptions" role="group" aria-label="选择底图风格">
+              <button type="button" class="style-option selected" data-theme="light" aria-pressed="true"><span class="style-sample sample-botanical"><i></i><i></i><i></i></span><span>淡色取色</span></button>
+              <button type="button" class="style-option" data-theme="dark" aria-pressed="false"><span class="style-sample sample-nocturne"><i></i><i></i><i></i></span><span>深色取色</span></button>
+              <button type="button" class="style-option" data-theme="custom" aria-pressed="false"><span class="style-sample sample-custom"><i></i><i></i><i></i></span><span>自选颜色</span></button>
+              <button type="button" class="style-option" data-theme="image" aria-pressed="false"><span class="style-sample sample-image"><i></i><i></i><i></i></span><span>图片底图</span></button>
+              <button type="button" class="style-option" data-theme="glass" aria-pressed="false"><span class="style-sample sample-glass"><i></i><i></i><i></i></span><span>封面玻璃</span></button>
+            </div>
+            <p class="section-note mode-intro" id="modeDescription">自动提取截图中的柔和浅色作为底图。</p>
+            <div class="mode-panel" id="customColorPanel" hidden>
+              <label class="field-label" for="customBackdropColor">选择背景颜色</label>
+              <div class="custom-color-row"><input type="color" id="customBackdropColor" value="#E9E6DB"><span id="customColorValue">#E9E6DB</span></div>
+            </div>
+            <div class="mode-panel" id="imageBackdropPanel" hidden>
+              <button class="asset-picker" id="chooseBackground" type="button"><span class="asset-icon">＋</span><span><strong>选择底图图片</strong><small id="backgroundFileName">未选择，暂用第一张截图预览</small></span></button>
+              <input id="backgroundFileInput" type="file" accept="image/png,image/jpeg,image/webp,image/avif" hidden>
+              <div class="range-label"><label for="backgroundBlur">模糊程度</label><output id="backgroundBlurValue">40 px</output></div>
+              <input id="backgroundBlur" class="range-input" type="range" min="0" max="120" step="5" value="40">
+            </div>
+            <div class="mode-panel" id="glassBackdropPanel" hidden>
+              <button class="asset-picker" id="chooseCover" type="button"><span class="asset-icon">＋</span><span><strong>上传书籍封面</strong><small id="coverFileName">未选择，默认取第一张截图颜色</small></span></button>
+              <input id="coverFileInput" type="file" accept="image/png,image/jpeg,image/webp,image/avif" hidden>
+              <div class="range-label"><label for="glassStrength">朦胧程度</label><output id="glassStrengthValue">70%</output></div>
+              <input id="glassStrength" class="range-input" type="range" min="20" max="100" step="5" value="70">
+            </div>
+            <div class="palette-heading"><span>左下 · 配色圆点 <small>由浅至深</small></span><button type="button" id="extractPalette">重新取色 ↗</button></div>
+            <div class="color-inputs" id="colorInputs">
+              <label class="color-item"><input type="color" value="#F1EEE3" data-color="0"><span>01</span></label>
+              <label class="color-item"><input type="color" value="#A5B09E" data-color="1"><span>02</span></label>
+              <label class="color-item"><input type="color" value="#667966" data-color="2"><span>03</span></label>
+              <label class="color-item"><input type="color" value="#283029" data-color="3"><span>04</span></label>
+              <label class="color-item"><input type="color" value="#CA9194" data-color="4"><span>05</span></label>
+            </div>
+          </section>
+
+          <section class="editor-section last-section" aria-labelledby="detailsTitle">
+            <div class="section-title"><span>04</span><h3 id="detailsTitle">细节设置</h3><span class="section-description">FINISHING TOUCH</span></div>
+            <div class="finish-label">最终画布比例 <span>海报元素保持一致</span></div>
+            <div class="ratio-options" role="group" aria-label="选择画布比例">
+              <button type="button" class="ratio-option selected" data-ratio="4:3" aria-pressed="true"><strong>4:3</strong><small>横版画报</small></button>
+              <button type="button" class="ratio-option" data-ratio="1:1" aria-pressed="false"><strong>1:1</strong><small>方形画报</small></button>
+            </div>
+            <div class="line-controls">
+              <label class="finish-label" for="ruleColor">装饰线条颜色 <input id="ruleColor" type="color" value="#000000" aria-label="装饰线条颜色"></label>
+              <label class="finish-label" for="ruleOpacity">装饰线条透明度 <output id="ruleOpacityValue">100%</output></label>
+              <input id="ruleOpacity" class="range-input" type="range" min="0" max="100" step="5" value="100">
+            </div>
+            <p class="section-note border-note">图片尺寸不同，边框会随各张图片自动贴合；所有效果都不裁切原图。</p>
+            <div class="border-options" role="group" aria-label="截图边框设计">
+              <button type="button" class="border-option selected" data-border="line" aria-pressed="true"><span class="border-sample border-line"></span>精细单线</button>
+              <button type="button" class="border-option" data-border="double" aria-pressed="false"><span class="border-sample border-double"></span>双层细线</button>
+              <button type="button" class="border-option" data-border="shadow" aria-pressed="false"><span class="border-sample border-shadow"></span>柔和阴影</button>
+              <button type="button" class="border-option" data-border="none" aria-pressed="false"><span class="border-sample border-none"></span>无边框</button>
+              <button type="button" class="border-option" data-border="corners" aria-pressed="false"><span class="border-sample border-corners"></span>四角定位</button>
+              <button type="button" class="border-option" data-border="matte" aria-pressed="false"><span class="border-sample border-matte"></span>纸页留白</button>
+              <button type="button" class="border-option" data-border="dashed" aria-pressed="false"><span class="border-sample border-dashed"></span>虚线框</button>
+              <button type="button" class="border-option" data-border="inset" aria-pressed="false"><span class="border-sample border-inset"></span>内外细线</button>
+            </div>
+          </section>
+        </div>
+
+        <div class="editor-footer"><button class="button button-dark download-main" type="button" id="downloadButton"><span>↓</span> 下载高清 PNG <small id="downloadResolution">3600 × 2700</small></button><p>所有编辑仅在当前浏览器处理 · 无需上传到服务器</p></div>
+      </aside>
+    </main>
+    <nav class="mobile-actions" aria-label="手机快捷操作">
+      <a class="mobile-edit-link" href="#editorTitle">✎ 编辑设置</a>
+      <button class="mobile-export-button" id="mobileExport" type="button">↓ 保存高清 PNG</button>
+    </nav>
+    <footer class="site-footer"><span>© LOVIA — A PERSONAL DESIGN TOOL</span><span>READ · COLLECT · REFLECT</span></footer>
+  </div>
+
+  <dialog class="preview-dialog" id="previewDialog" aria-label="高清画报预览"><div class="dialog-header"><span>FULL-SIZE PREVIEW <i id="dialogResolution"> / 3600 × 2700</i></span><button type="button" id="closePreview" aria-label="关闭">×</button></div><div class="dialog-content"><img id="largeImage" alt="高清海报大图"></div></dialog>
+  <div role="status" aria-live="polite" class="toast" id="toast"></div>
+<script>
+(() => {
+  'use strict';
+
+  const CANVAS_W = 3600;
+  let CANVAS_H = 2700;
+  const DEFAULT_IMAGES = ['https://kaiserlovia.github.io/lovia-reading-studio/assets/IMG_5735.JPG', 'https://kaiserlovia.github.io/lovia-reading-studio/assets/IMG_5733.JPG', 'https://kaiserlovia.github.io/lovia-reading-studio/assets/IMG_5721.PNG'];
+  const DEFAULT_TEXT = { name: 'THE SURREAL LIBRARY', author: 'LOVIA', date: 'OCT. 2026' };
+  const MODE_DESCRIPTIONS = {
+    light: '自动提取截图中的柔和浅色作为底图。',
+    dark: '从截图提取深色，形成鲜明的画廊对比。',
+    custom: '自选纯色背景，不添加渐变或纹理。',
+    image: '使用指定图片铺满底图，可自由调整模糊度。',
+    glass: '取封面颜色，形成柔和的液态玻璃朦胧背景。',
+  };
+
+  const canvas = document.getElementById('posterCanvas');
+  const ctx = canvas.getContext('2d', { alpha: false });
+  const refs = {
+    name: document.getElementById('themeName'),
+    author: document.getElementById('authorName'),
+    date: document.getElementById('dateText'),
+    colors: [...document.querySelectorAll('[data-color]')],
+    styles: [...document.querySelectorAll('.style-option')],
+    borderStyles: [...document.querySelectorAll('[data-border]')],
+    customColor: document.getElementById('customBackdropColor'),
+    blur: document.getElementById('backgroundBlur'),
+    glassStrength: document.getElementById('glassStrength'),
+    backgroundInput: document.getElementById('backgroundFileInput'),
+    coverInput: document.getElementById('coverFileInput'),
+    uploadGrid: document.getElementById('uploadGrid'),
+    batchInput: document.getElementById('batchFileInput'),
+    ratioButtons: [...document.querySelectorAll('[data-ratio]')],
+    ruleColor: document.getElementById('ruleColor'),
+    ruleOpacity: document.getElementById('ruleOpacity'),
+    imageInput: document.getElementById('imageFileInput'),
+    info: document.getElementById('imageSizeMessage'),
+    toast: document.getElementById('toast'),
+    dialog: document.getElementById('previewDialog'),
+    dialogImage: document.getElementById('largeImage'),
+  };
+  let currentTheme = 'light';
+  let borderStyle = 'line';
+  let currentColors = ['#F1EEE3', '#A5B09E', '#CA9194', '#667966', '#283029'];
+  let derivedColors = { light: '#EBE7DC', dark: '#242B27', accent: '#8B4E40', medium: '#7B8A7C' };
+  let backgroundImage = null;
+  let coverImage = null;
+  let backgroundObjectURL = null;
+  let coverObjectURL = null;
+  let images = [null, null, null];
+  let activeSlot = 0;
+  let pendingDraw = false;
+  let previewURL = null;
+  let toastTimeout = null;
+  let userObjectURLs = [null, null, null];
+
+  function loadImage(src) {
+    return new Promise((resolve, reject) => {
+      const image = new Image();
+      image.onload = () => resolve(image);
+      image.onerror = () => reject(new Error(`图片加载失败：${src}`));
+      image.src = src;
+    });
+  }
+
+  function announce(message) {
+    refs.toast.textContent = message;
+    refs.toast.classList.add('show');
+    clearTimeout(toastTimeout);
+    toastTimeout = setTimeout(() => refs.toast.classList.remove('show'), 2800);
+  }
+
+  function scheduleDraw() {
+    if (pendingDraw) return;
+    pendingDraw = true;
+    requestAnimationFrame(() => {
+      pendingDraw = false;
+      drawPoster();
+    });
+  }
+
+  function setStroke(color, width = 3) {
+    ctx.strokeStyle = color;
+    ctx.lineWidth = width;
+  }
+
+  function rectangle(x, y, width, height, stroke, lineWidth = 3) {
+    setStroke(stroke, lineWidth);
+    ctx.strokeRect(x, y, width, height);
+  }
+
+  function rule(x1, y1, x2, y2, stroke, lineWidth = 3) {
+    setStroke(stroke, lineWidth);
+    ctx.beginPath();
+    ctx.moveTo(x1, y1);
+    ctx.lineTo(x2, y2);
+    ctx.stroke();
+  }
+
+  function cross(x, y, color, size = 22) {
+    rule(x - size, y, x + size, y, color, 3);
+    rule(x, y - size, x, y + size, color, 3);
+  }
+
+  function drawTrackedText(raw, x, centerY, opts = {}) {
+    const text = String(raw || '').trim();
+    if (!text) return;
+    const { color = '#333B31', maxWidth = 1450, size = 51, minSize = 25, tracking = 9, align = 'left', italic = false, bold = false, kinghwa = false } = opts;
+    let selectedSize = size;
+    let effectiveTracking = tracking;
+    const family = kinghwa
+      ? '"KingHwaOldSong", "KingHwa_OldSong", "京華老宋体", "京华老宋体", "Songti SC", serif'
+      : /[\u3400-\u9fff]/.test(text) ? 'Georgia, "Songti SC", "Noto Serif CJK SC", serif' : 'Georgia, "Times New Roman", serif';
+    const fontForSize = v => `${italic ? 'italic ' : ''}${bold ? 'bold ' : ''}${v}px ${family}`;
+    const lengthAt = (v, spacing) => {
+      ctx.font = fontForSize(v);
+      return [...text].reduce((sum, ch) => sum + ctx.measureText(ch).width + spacing, -spacing);
+    };
+    while (selectedSize > minSize && lengthAt(selectedSize, effectiveTracking) > maxWidth) selectedSize -= 1;
+    if (lengthAt(selectedSize, effectiveTracking) > maxWidth) effectiveTracking = Math.max(0, (maxWidth - lengthAt(selectedSize, 0)) / Math.max(1, [...text].length - 1));
+    const width = lengthAt(selectedSize, effectiveTracking);
+    ctx.font = fontForSize(selectedSize);
+    ctx.fillStyle = color;
+    ctx.textBaseline = 'middle';
+    let penX = align === 'right' ? x - width : align === 'center' ? x - width / 2 : x;
+    for (const ch of text) {
+      ctx.fillText(ch, penX, centerY);
+      penX += ctx.measureText(ch).width + effectiveTracking;
+    }
+  }
+
+  function rgb(hex) { return [1, 3, 5].map(i => parseInt(hex.slice(i, i + 2), 16)); }
+  function luminance(color) {
+    const [r, g, b] = Array.isArray(color) ? color : rgb(color);
+    return .2126 * r + .7152 * g + .0722 * b;
+  }
+  function mixedColor(a, b, amount) {
+    const first = Array.isArray(a) ? a : rgb(a);
+    const second = Array.isArray(b) ? b : rgb(b);
+    return rgbToHex(...first.map((v, i) => v * (1 - amount) + second[i] * amount));
+  }
+  function sortedColors(colors) { return [...colors].sort((a, b) => luminance(b) - luminance(a)); }
+  function sampleImagePixels(sourceImages) {
+    const small = document.createElement('canvas');
+    small.width = 108;
+    small.height = 108;
+    const probe = small.getContext('2d', { willReadFrequently: true });
+    const samples = [];
+    for (const image of sourceImages.filter(Boolean)) {
+      probe.clearRect(0, 0, 108, 108);
+      probe.drawImage(image, 0, 0, 108, 108);
+      const bytes = probe.getImageData(0, 0, 108, 108).data;
+      for (let i = 0; i < bytes.length; i += 20) {
+        if (bytes[i + 3] < 220) continue;
+        samples.push([bytes[i], bytes[i + 1], bytes[i + 2]]);
+      }
+    }
+    return samples;
+  }
+  function hslToHex(h, s, l) {
+    const k = n => (n + h / 30) % 12;
+    const a = s * Math.min(l, 1 - l);
+    const f = n => l - a * Math.max(-1, Math.min(k(n) - 3, 9 - k(n), 1));
+    return rgbToHex(f(0) * 255, f(8) * 255, f(4) * 255);
+  }
+  function analyzeColors(sourceImages) {
+    const pixels = sampleImagePixels(sourceImages);
+    if (!pixels.length) return { light: '#EBE7DC', dark: '#242B27', accent: '#8B4E40', medium: '#7B8A7C' };
+    const ranges = [[], [], []];
+    const hueBins = Array.from({ length: 24 }, () => ({ score: 0, hue: 0 }));
+    for (const pixel of pixels) {
+      const y = luminance(pixel);
+      if (y >= 164) ranges[0].push(pixel);
+      else if (y < 105) ranges[2].push(pixel);
+      else ranges[1].push(pixel);
+      const normalized = pixel.map(v => v / 255);
+      const maximum = Math.max(...normalized), minimum = Math.min(...normalized);
+      const delta = maximum - minimum;
+      if (delta < .10 || y < 35 || y > 235) continue;
+      let hue = 0;
+      if (maximum === normalized[0]) hue = ((normalized[1] - normalized[2]) / delta) % 6;
+      else if (maximum === normalized[1]) hue = (normalized[2] - normalized[0]) / delta + 2;
+      else hue = (normalized[0] - normalized[1]) / delta + 4;
+      hue = ((hue * 60) + 360) % 360;
+      const saturation = delta / (1 - Math.abs(maximum + minimum - 1) + .0001);
+      const bin = Math.floor(hue / 15) % 24;
+      hueBins[bin].score += Math.pow(saturation, 1.6);
+      hueBins[bin].hue += hue * Math.pow(saturation, 1.6);
+    }
+    const average = (items, fallback) => items.length ? items[0].map((_, k) => items.reduce((sum, p) => sum + p[k], 0) / items.length) : rgb(fallback);
+    const light = mixedColor(average(ranges[0], '#E6E5DA'), '#EEEADF', .28);
+    const dark = mixedColor(average(ranges[2], '#292E27'), '#27312B', .55);
+    const medium = mixedColor(average(ranges[1], '#7B8A7C'), '#88948A', .20);
+    const chosenBin = hueBins.reduce((best, item) => item.score > best.score ? item : best, hueBins[0]);
+    let accent = chosenBin.score > 1 ? hslToHex(chosenBin.hue / chosenBin.score, .52, .34) : '#8B4E40';
+    if (Math.sqrt(rgb(accent).reduce((sum, value, i) => sum + (value - rgb(dark)[i]) ** 2, 0)) < 74) accent = '#97523F';
+    return { light, dark, medium, accent };
+  }
+  function refreshAutoColors() {
+    derivedColors = analyzeColors(images);
+    if (currentTheme === 'light' || currentTheme === 'dark' || currentTheme === 'glass') scheduleDraw();
+  }
+
+  function paletteFromImages(sourceImages) {
+    const data = sampleImagePixels(sourceImages).filter(p => luminance(p) > 16 && luminance(p) < 252);
+    if (!data.length) return sortedColors(currentColors);
+    let centers = [0, .19, .41, .69, .93].map(v => [...data[Math.floor(v * (data.length - 1))]]);
+    for (let iteration = 0; iteration < 12; iteration++) {
+      const groups = centers.map(() => [0, 0, 0, 0]);
+      for (const pixel of data) {
+        let best = 0, distance = Infinity;
+        centers.forEach((center, i) => {
+          const d = (pixel[0] - center[0]) ** 2 + (pixel[1] - center[1]) ** 2 + (pixel[2] - center[2]) ** 2;
+          if (d < distance) { distance = d; best = i; }
+        });
+        for (let k = 0; k < 3; k++) groups[best][k] += pixel[k];
+        groups[best][3]++;
+      }
+      centers = centers.map((old, i) => groups[i][3] ? groups[i].slice(0, 3).map(sum => sum / groups[i][3]) : old);
+    }
+    return sortedColors(centers.map(c => rgbToHex(...c)));
+  }
+
+  function drawFullBleedImage(image, blur) {
+    if (!image) return;
+    const scale = Math.max(CANVAS_W / image.naturalWidth, CANVAS_H / image.naturalHeight);
+    const w = image.naturalWidth * scale, h = image.naturalHeight * scale;
+    ctx.save();
+    ctx.filter = blur > 0 ? `blur(${blur}px)` : 'none';
+    ctx.drawImage(image, (CANVAS_W - w) / 2, (CANVAS_H - h) / 2, w, h);
+    ctx.restore();
+  }
+  function drawGlassBackground(image, strength, base) {
+    ctx.fillStyle = base;
+    ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+    drawFullBleedImage(image, 55 + 1.2 * strength);
+    ctx.fillStyle = `rgba(249, 249, 243, ${(.42 + .002 * strength).toFixed(3)})`;
+    ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+    const bloomColors = sortedColors(paletteFromImages(image ? [image] : images));
+    const points = [
+      [400, 480, 1000, bloomColors[1]], [3100, 2150, 1050, bloomColors[2]], [1800, 1350, 1300, bloomColors[3]],
+    ];
+    points.forEach(([x, y, radius, hex]) => {
+      const gradient = ctx.createRadialGradient(x, y, 0, x, y, radius);
+      const [r, g, b] = rgb(hex);
+      gradient.addColorStop(0, `rgba(${r},${g},${b},${(.10 + strength * .0016).toFixed(3)})`);
+      gradient.addColorStop(1, `rgba(${r},${g},${b},0)`);
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+    });
+    // Frosted, softly translucent sheet; all screenshot pixels are placed later, untouched.
+    ctx.fillStyle = 'rgba(255,255,252,.10)';
+    ctx.fillRect(68, 54, 3464, CANVAS_H - 108);
+  }
+
+  function displayColors() {
+    const sample = currentTheme === 'glass' && coverImage ? analyzeColors([coverImage]) : derivedColors;
+    let bg = sample.light;
+    if (currentTheme === 'dark') bg = sample.dark;
+    else if (currentTheme === 'custom') bg = refs.customColor.value;
+    const dark = currentTheme === 'dark' || (currentTheme === 'custom' && luminance(bg) < 125);
+    return {
+      bg, band: dark ? mixedColor(sample.dark, '#101912', .48) : sample.dark, accent: sample.accent,
+      ink: dark ? '#F1F0E7' : '#2F3A31',
+      rule: dark ? '#99A99C' : mixedColor(sample.dark, '#91A290', .38),
+      secondary: dark ? '#788C7F' : mixedColor(sample.light, sample.dark, .35),
+      frame: dark ? '#B1C0AE' : mixedColor(sample.dark, '#71846F', .44),
+    };
+  }
+
+  function rgbaFromHex(hex, alpha) {
+    const [r,g,b] = rgb(hex);
+    return 'rgba(' + r + ',' + g + ',' + b + ',' + alpha.toFixed(2) + ')';
+  }
+
+  function imagePlacement(image, index, total) {
+    const count = Math.max(2, Math.min(4, total));
+    const xStart = 168;
+    const usableWidth = CANVAS_W - 336;
+    const gap = count === 4 ? 60 : count === 3 ? 76 : 112;
+    const cellWidth = (usableWidth - gap * (count - 1)) / count;
+    const yStart = 329;
+    const usableHeight = CANVAS_H - 620;
+    const naturalW = image?.naturalWidth || 942;
+    const naturalH = image?.naturalHeight || 2048;
+    const scale = Math.min(1, cellWidth / naturalW, usableHeight / naturalH);
+    const width = naturalW * scale;
+    const height = naturalH * scale;
+    return { x: xStart + index * (cellWidth + gap) + (cellWidth - width)/2,
+      y: yStart + (usableHeight - height)/2, w: width, h: height };
+  }
+
+  function drawFittedImage(image, p) {
+    ctx.fillStyle = '#f6f5ef';
+    ctx.fillRect(p.x, p.y, p.w, p.h);
+    if (!image) {
+      drawTrackedText('ADD IMAGE', p.x + p.w/2, p.y+p.h/2,
+        {color:'#9baa9a',size:41,tracking:6,maxWidth:p.w-30,align:'center'});
+      return;
+    }
+    const pixelExact = p.w === image.naturalWidth && p.h === image.naturalHeight;
+    ctx.imageSmoothingEnabled = !pixelExact;
+    ctx.imageSmoothingQuality = 'high';
+    ctx.drawImage(image, p.x, p.y, p.w, p.h);
+    ctx.imageSmoothingEnabled = true;
+  }
+
+  function drawAdaptiveFrame(p, line, theme) {
+    const pad = Math.max(7, Math.min(14, Math.min(p.w,p.h)*.015));
+    const x = p.x - pad, y = p.y - pad, w = p.w + pad*2, h = p.h + pad*2;
+    if (borderStyle === 'shadow') {
+      ctx.save();
+      ctx.shadowColor = 'rgba(14,24,18,.30)';
+      ctx.shadowBlur = 36;
+      ctx.shadowOffsetX = 10;
+      ctx.shadowOffsetY = 14;
+      ctx.fillStyle = '#f8f8f4';
+      ctx.fillRect(x,y,w,h);
+      ctx.restore();
+      rectangle(x,y,w,h,line,2);
+    } else if (borderStyle === 'matte') {
+      const depth = pad*1.6;
+      ctx.fillStyle = '#fbfbf8';
+      ctx.fillRect(x-depth,y-depth,w+depth*2,h+depth*2);
+      rectangle(x-depth,y-depth,w+depth*2,h+depth*2,line,2);
+      rectangle(x,y,w,h,line,1);
+    } else if (borderStyle === 'double') {
+      rectangle(x-pad,y-pad,w+pad*2,h+pad*2,line,2);
+      rectangle(x,y,w,h,line,2);
+    } else if (borderStyle === 'line') {
+      rectangle(x,y,w,h,line,3);
+    } else if (borderStyle === 'dashed') {
+      ctx.save();ctx.setLineDash([14,11]);
+      rectangle(x,y,w,h,line,2);ctx.restore();
+    } else if (borderStyle === 'inset') {
+      rectangle(x-pad*.8,y-pad*.8,w+pad*1.6,h+pad*1.6,line,2);
+      rectangle(x,y,w,h,line,2);
+    } else if (borderStyle === 'corners') {
+      const short = Math.min(72, w*.16, h*.16);
+      for (const [xx,sx] of [[x,1],[x+w,-1]]) {
+        for (const [yy,sy] of [[y,1],[y+h,-1]]) {
+          rule(xx,yy,xx+sx*short,yy,line,4);
+          rule(xx,yy,xx,yy+sy*short,line,4);
+        }
+      }
+    }
+  }
+
+  function drawPoster() {
+    const theme = displayColors();
+    const line = rgbaFromHex(refs.ruleColor.value, Number(refs.ruleOpacity.value)/100);
+    ctx.clearRect(0,0,CANVAS_W,CANVAS_H);
+    ctx.fillStyle = theme.bg;
+    ctx.fillRect(0,0,CANVAS_W,CANVAS_H);
+    if (currentTheme === 'image') {
+      drawFullBleedImage(backgroundImage || images[0], Number(refs.blur.value));
+      ctx.fillStyle = 'rgba(249,248,243,.62)';
+      ctx.fillRect(0,0,CANVAS_W,CANVAS_H);
+    } else if (currentTheme === 'glass') {
+      drawGlassBackground(coverImage || images[0], Number(refs.glassStrength.value), theme.bg);
+    }
+
+    ctx.fillStyle = theme.band;
+    ctx.fillRect(0,0,CANVAS_W,29);
+    ctx.fillStyle = theme.accent;
+    ctx.fillRect(CANVAS_W-365,0,365,29);
+    ctx.fillRect(0,CANVAS_H-29,CANVAS_W,29);
+
+    rectangle(67,54,CANVAS_W-135,CANVAS_H-109,line,4);
+    rectangle(87,74,CANVAS_W-175,CANVAS_H-149,line,1);
+    const footerRuleY = CANVAS_H-236;
+    rule(166,269,3034,269,line,3);
+    rule(3034,269,3434,269,line,3);
+    rule(166,footerRuleY,3034,footerRuleY,line,3);
+    rule(3034,footerRuleY,3434,footerRuleY,line,3);
+    for (const x of [163,3437]) {
+      cross(x,318,line);
+      cross(x,CANVAS_H-282,line);
+    }
+
+    const count = images.length;
+    images.forEach((image,i) => {
+      const p = imagePlacement(image,i,count);
+      drawAdaptiveFrame(p,line,theme);
+      drawFittedImage(image,p);
+    });
+    drawTrackedText(refs.name.value || DEFAULT_TEXT.name,179,175,
+      {color:theme.ink,size:61,minSize:29,tracking:5,maxWidth:1670,bold:true,kinghwa:true});
+    drawTrackedText('AUTHOR / '+(refs.author.value || DEFAULT_TEXT.author),3421,175,
+      {color:theme.ink,size:48,minSize:28,tracking:8,maxWidth:1430,align:'right'});
+    sortedColors(currentColors).forEach((color,i) => {
+      const x=200+67*i,y=CANVAS_H-160;
+      ctx.beginPath();ctx.arc(x,y,21,0,Math.PI*2);
+      ctx.fillStyle=color;ctx.fill();
+      setStroke(line,2);ctx.stroke();
+    });
+    drawTrackedText(refs.date.value || DEFAULT_TEXT.date,3421,CANVAS_H-160,
+      {color:theme.ink,size:45,minSize:29,tracking:8,maxWidth:780,align:'right'});
+  }
+
+  function syncPaletteInputs() {
+    currentColors = sortedColors(currentColors);
+    refs.colors.forEach((input, i) => input.value = currentColors[i]);
+  }
+
+  function selectTheme(key) {
+    if (!MODE_DESCRIPTIONS[key]) return;
+    currentTheme = key;
+    document.getElementById('modeDescription').textContent = MODE_DESCRIPTIONS[key];
+    document.getElementById('customColorPanel').hidden = key !== 'custom';
+    document.getElementById('imageBackdropPanel').hidden = key !== 'image';
+    document.getElementById('glassBackdropPanel').hidden = key !== 'glass';
+    refs.styles.forEach(button => {
+      const selected = button.dataset.theme === key;
+      button.classList.toggle('selected', selected);
+      button.setAttribute('aria-pressed', String(selected));
+    });
+    scheduleDraw();
+  }
+
+  function selectBorder(key) {
+    if (!['line', 'double', 'shadow', 'none', 'corners', 'matte', 'dashed', 'inset'].includes(key)) return;
+    borderStyle = key;
+    refs.borderStyles.forEach(button => {
+      const selected = button.dataset.border === key;
+      button.classList.toggle('selected', selected);
+      button.setAttribute('aria-pressed', String(selected));
+    });
+    scheduleDraw();
+  }
+
+  function setCanvasRatio(ratio) {
+    const square = ratio === '1:1';
+    CANVAS_H = square ? 3600 : 2700;
+    canvas.width = CANVAS_W;
+    canvas.height = CANVAS_H;
+    canvas.style.aspectRatio = square ? '1 / 1' : '4 / 3';
+    refs.ratioButtons.forEach(button => {
+      const selected = button.dataset.ratio === ratio;
+      button.classList.toggle('selected',selected);
+      button.setAttribute('aria-pressed',String(selected));
+    });
+    const dims = CANVAS_W+' × '+CANVAS_H;
+    document.getElementById('ratioPreviewLabel').textContent = square?'1:1 正方形':'4:3 横版';
+    document.getElementById('resolutionPreviewLabel').textContent = dims+' px';
+    document.getElementById('downloadResolution').textContent = dims;
+    document.getElementById('dialogResolution').textContent = ' / '+dims;
+    scheduleDraw();
+  }
+
+  function renderTiles() {
+    const grid = refs.uploadGrid;
+    grid.replaceChildren();
+    grid.style.setProperty('--tile-count', String(Math.max(2,Math.min(4,images.length + (images.length<4?1:0)))));
+    images.forEach((image,index) => {
+      const tile = document.createElement('button');
+      tile.type = 'button';
+      tile.className = 'upload-tile';
+      tile.dataset.slot = String(index);
+      tile.setAttribute('aria-label','替换第'+(index+1)+'张图片');
+      tile.style.setProperty('--img-ratio',String(image ? image.naturalWidth/image.naturalHeight : .46));
+      const thumb = document.createElement('img');
+      thumb.src = image ? image.src : '';
+      thumb.alt = '第'+(index+1)+'张预览图';
+      const overlay = document.createElement('span');overlay.className='tile-shade';
+      const count = document.createElement('strong');count.textContent=String(index+1).padStart(2,'0');
+      const caption = document.createElement('small');caption.textContent='替换图片 ↗';
+      overlay.append(count,caption);tile.append(thumb,overlay);grid.append(tile);
+    });
+    if (images.length < 4) {
+      const add = document.createElement('button');
+      add.type='button';add.className='upload-tile upload-tile-add';
+      add.dataset.slot=String(images.length);
+      add.setAttribute('aria-label','添加第'+(images.length+1)+'张图片');
+      add.innerHTML='<span class="add-icon">＋</span><span>添加第'+(images.length+1)+'张</span>';
+      grid.append(add);
+    }
+  }
+
+  function updateSizeMessage() {
+    const dims = images.map(img => img ? img.naturalWidth+' × '+img.naturalHeight : '—');
+    const same = images.every(img => img && img.naturalWidth===942 && img.naturalHeight===2048);
+    refs.info.textContent = images.length+' 张图片'+(same?'，均为 942 × 2048 px':'：'+dims.join(' / '))+
+      ' · 等距排列 · 保持原始比例 · 不裁切';
+    renderTiles();
+  }
+
+  async function loadUserFile(file) {
+    if (!file || !/^image\/(png|jpeg|webp|avif|gif)$/i.test(file.type)) throw Error('请使用 PNG、JPG、WebP、AVIF 或 GIF 图片');
+    if (file.size > 45*1024*1024) throw Error('单张图片需小于 45 MB');
+    const url=URL.createObjectURL(file);
+    try {
+      const image=await loadImage(url);
+      if (image.naturalWidth*image.naturalHeight>60000000) throw Error('图片像素过大，请缩小后重试');
+      return {image,url};
+    } catch(err) { URL.revokeObjectURL(url);throw err; }
+  }
+
+  async function importBatch(fileList) {
+    const files=Array.from(fileList || []);
+    if (files.length<2||files.length>4) return announce('请一次选择 2–4 张图片');
+    const loaded=[];
+    try {
+      for (const file of files) loaded.push(await loadUserFile(file));
+      userObjectURLs.forEach(url=>url&&URL.revokeObjectURL(url));
+      images=loaded.map(item=>item.image);
+      userObjectURLs=loaded.map(item=>item.url);
+      updateSizeMessage();
+      refreshAutoColors();
+      currentColors=paletteFromImages(images);
+      syncPaletteInputs();
+      scheduleDraw();
+      announce('已放入 '+images.length+' 张图片 · 等距自动排版');
+    } catch(error) {
+      loaded.forEach(item=>URL.revokeObjectURL(item.url));
+      announce(error.message || '上传失败，请重新选择');
+    }
+  }
+
+  async function replaceImage(index,file) {
+    if (!file) return;
+    try {
+      const loaded=await loadUserFile(file);
+      const old=userObjectURLs[index];
+      if (index>=images.length) images.push(loaded.image);
+      else images[index]=loaded.image;
+      userObjectURLs[index]=loaded.url;
+      if (old) URL.revokeObjectURL(old);
+      updateSizeMessage();
+      refreshAutoColors();
+      currentColors=paletteFromImages(images);
+      syncPaletteInputs();
+      scheduleDraw();
+      announce('第 '+(index+1)+' 张图片已更新 · '+loaded.image.naturalWidth+' × '+loaded.image.naturalHeight);
+    } catch(error) { announce(error.message || '图片读取失败，请换一张'); }
+  }
+
+  async function resetAll() {
+    refs.name.value=DEFAULT_TEXT.name;
+    refs.author.value=DEFAULT_TEXT.author;
+    refs.date.value=DEFAULT_TEXT.date;
+    refs.customColor.value='#E9E6DB';
+    document.getElementById('customColorValue').textContent='#E9E6DB';
+    refs.blur.value='40';document.getElementById('backgroundBlurValue').textContent='40 px';
+    refs.glassStrength.value='70';document.getElementById('glassStrengthValue').textContent='70%';
+    refs.ruleColor.value='#000000';refs.ruleOpacity.value='100';
+    document.getElementById('ruleOpacityValue').textContent='100%';
+    for (const url of [backgroundObjectURL,coverObjectURL]) if(url) URL.revokeObjectURL(url);
+    backgroundObjectURL=null;coverObjectURL=null;backgroundImage=null;coverImage=null;
+    document.getElementById('backgroundFileName').textContent='未选择，暂用第一张截图预览';
+    document.getElementById('coverFileName').textContent='未选择，默认取第一张截图颜色';
+    userObjectURLs.forEach(url=>url&&URL.revokeObjectURL(url));
+    userObjectURLs=[null,null,null];
+    try { images=await Promise.all(DEFAULT_IMAGES.map(loadImage)); }
+    catch(error) { images=[null,null,null]; }
+    updateSizeMessage();refreshAutoColors();currentColors=paletteFromImages(images);
+    syncPaletteInputs();selectTheme('light');selectBorder('line');setCanvasRatio('4:3');
+    announce('已恢复默认展示');
+  }
+
+  function formatToday() {
+    const date = new Date();
+    const month = new Intl.DateTimeFormat('en-US', { month: 'short' }).format(date).toUpperCase();
+    return `${month}. ${date.getFullYear()}`;
+  }
+
+  function rgbToHex(r, g, b) {
+    return '#' + [r, g, b].map(c => Math.min(255, Math.max(0, Math.round(c))).toString(16).padStart(2, '0')).join('').toUpperCase();
+  }
+
+  function extractPalette() {
+    const source = currentTheme === 'glass' && coverImage ? [coverImage] : images;
+    if (!source.some(Boolean)) return announce('请先添加一张图片');
+    currentColors = paletteFromImages(source);
+    syncPaletteInputs();
+    scheduleDraw();
+    announce('已提取 5 种配色，并从浅到深排列');
+  }
+
+  async function replaceBackdropAsset(kind, file) {
+    if (!file || !file.type.startsWith('image/')) return announce('请选择有效的图片');
+    const url = URL.createObjectURL(file);
+    try {
+      const image = await loadImage(url);
+      if (kind === 'background') {
+        if (backgroundObjectURL) URL.revokeObjectURL(backgroundObjectURL);
+        backgroundObjectURL = url;
+        backgroundImage = image;
+        document.getElementById('backgroundFileName').textContent = file.name;
+      } else {
+        if (coverObjectURL) URL.revokeObjectURL(coverObjectURL);
+        coverObjectURL = url;
+        coverImage = image;
+        document.getElementById('coverFileName').textContent = file.name;
+        currentColors = paletteFromImages([image]);
+        syncPaletteInputs();
+      }
+      scheduleDraw();
+      announce(kind === 'background' ? '底图图片已替换' : '封面取色已更新');
+    } catch (error) {
+      URL.revokeObjectURL(url);
+      announce('图片读取失败，请换一张');
+    }
+  }
+
+  function safeFilename() {
+    const str = (refs.name.value || 'Lovia-Reading-Gallery').trim().replace(/[\\/:*?"<>|\x00-\x1f]/g, '-').replace(/\s+/g, '-');
+    return `${(str || 'Lovia-Reading-Gallery').slice(0, 45)}-${CANVAS_W}x${CANVAS_H}.png`;
+  }
+
+  function canvasBlob() {
+    return new Promise((resolve, reject) => canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error('PNG 创建失败')), 'image/png'));
+  }
+
+  async function exportPNG() {
+    try {
+      await document.fonts.ready;
+      drawPoster();
+      const blob = await canvasBlob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = safeFilename();
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 30000);
+      announce(`高清 PNG 已开始下载 · ${CANVAS_W} × ${CANVAS_H} px`);
+    } catch (error) {
+      console.error(error);
+      announce('导出遇到问题，请稍后重试');
+    }
+  }
+
+  async function openPreview() {
+    await document.fonts.ready;
+    drawPoster();
+    const blob = await canvasBlob();
+    if (previewURL) URL.revokeObjectURL(previewURL);
+    previewURL = URL.createObjectURL(blob);
+    refs.dialogImage.src = previewURL;
+    refs.dialog.showModal();
+  }
+
+  function closePreview() {
+    refs.dialog.close();
+    refs.dialogImage.removeAttribute('src');
+    if (previewURL) URL.revokeObjectURL(previewURL);
+    previewURL = null;
+  }
+
+  function bindControls() {
+    for (const input of [refs.name, refs.author, refs.date]) input.addEventListener('input', scheduleDraw);
+    refs.colors.forEach(input => input.addEventListener('input', () => {
+      currentColors[Number(input.dataset.color)] = input.value.toUpperCase();
+      syncPaletteInputs();
+      scheduleDraw();
+    }));
+    refs.styles.forEach(button => button.addEventListener('click', () => selectTheme(button.dataset.theme)));
+    refs.borderStyles.forEach(button => button.addEventListener('click', () => selectBorder(button.dataset.border)));
+    refs.ratioButtons.forEach(button => button.addEventListener('click', () => setCanvasRatio(button.dataset.ratio)));
+    refs.ruleColor.addEventListener('input',scheduleDraw);
+    refs.ruleOpacity.addEventListener('input',() => {
+      document.getElementById('ruleOpacityValue').textContent = refs.ruleOpacity.value+'%';
+      scheduleDraw();
+    });
+    document.getElementById('batchUploadButton').addEventListener('click',() => refs.batchInput.click());
+    refs.batchInput.addEventListener('change', async () => {
+      const files=Array.from(refs.batchInput.files);refs.batchInput.value='';
+      await importBatch(files);
+    });
+    refs.customColor.addEventListener('input', () => {
+      document.getElementById('customColorValue').textContent = refs.customColor.value.toUpperCase();
+      scheduleDraw();
+    });
+    refs.blur.addEventListener('input', () => {
+      document.getElementById('backgroundBlurValue').textContent = `${refs.blur.value} px`;
+      scheduleDraw();
+    });
+    refs.glassStrength.addEventListener('input', () => {
+      document.getElementById('glassStrengthValue').textContent = `${refs.glassStrength.value}%`;
+      scheduleDraw();
+    });
+    document.getElementById('chooseBackground').addEventListener('click', () => refs.backgroundInput.click());
+    document.getElementById('chooseCover').addEventListener('click', () => refs.coverInput.click());
+    refs.backgroundInput.addEventListener('change', async () => {
+      const file = refs.backgroundInput.files[0]; refs.backgroundInput.value = '';
+      if (file) await replaceBackdropAsset('background', file);
+    });
+    refs.coverInput.addEventListener('change', async () => {
+      const file = refs.coverInput.files[0]; refs.coverInput.value = '';
+      if (file) await replaceBackdropAsset('cover', file);
+    });
+    document.getElementById('todayButton').addEventListener('click', () => { refs.date.value = formatToday(); scheduleDraw(); });
+    document.getElementById('resetAll').addEventListener('click', resetAll);
+    document.getElementById('extractPalette').addEventListener('click', extractPalette);
+    document.getElementById('downloadButton').addEventListener('click', exportPNG);
+    document.getElementById('topExport').addEventListener('click', exportPNG);
+    document.getElementById('mobileExport').addEventListener('click', exportPNG);
+    document.getElementById('largePreview').addEventListener('click', openPreview);
+    document.getElementById('closePreview').addEventListener('click', closePreview);
+    refs.dialog.addEventListener('click', event => { if (event.target === refs.dialog) closePreview(); });
+    refs.dialog.addEventListener('close', () => {
+      if (previewURL) URL.revokeObjectURL(previewURL);
+      previewURL = null;
+    });
+
+    refs.uploadGrid.addEventListener('click',event => {
+      const tile=event.target.closest('.upload-tile');
+      if (!tile) return;
+      activeSlot=Number(tile.dataset.slot);
+      refs.imageInput.click();
+    });
+    refs.uploadGrid.addEventListener('dragover',event => {
+      event.preventDefault();
+      const tile=event.target.closest('.upload-tile');
+      if(tile) tile.classList.add('dragover');
+    });
+    refs.uploadGrid.addEventListener('dragleave',event => {
+      const tile=event.target.closest('.upload-tile');
+      if(tile) tile.classList.remove('dragover');
+    });
+    refs.uploadGrid.addEventListener('drop',event => {
+      event.preventDefault();
+      refs.uploadGrid.querySelectorAll('.dragover').forEach(el=>el.classList.remove('dragover'));
+      const files=Array.from(event.dataTransfer.files || []);
+      if (files.length>=2 && files.length<=4) importBatch(files);
+      else if (files.length===1) {
+        const tile=event.target.closest('.upload-tile');
+        const index=tile?Number(tile.dataset.slot):0;
+        replaceImage(index,files[0]);
+      }
+    });
+    refs.imageInput.addEventListener('change',async () => {
+      const file=refs.imageInput.files[0];refs.imageInput.value='';
+      if(file) await replaceImage(activeSlot,file);
+    });
+  }
+
+  async function initialize() {
+    bindControls();
+    syncPaletteInputs();
+    try {
+      images = await Promise.all(DEFAULT_IMAGES.map(loadImage));
+      updateSizeMessage();
+      refreshAutoColors();
+      currentColors = paletteFromImages(images);
+      syncPaletteInputs();
+      setCanvasRatio('4:3');
+      drawPoster();
+      // Ensure the actual embedded old-Song font is used in the preview and export.
+      document.fonts.load('bold 61px "KingHwaOldSong"').then(scheduleDraw).catch(() => {});
+    } catch (error) {
+      console.error('Default image loading failed', error);
+      renderTiles();
+      drawPoster();
+      announce('默认图片未能载入，可点击重新选择图片');
+    }
+  }
+
+  initialize();
+})();
+
+</script>
+</body>
+</html>
