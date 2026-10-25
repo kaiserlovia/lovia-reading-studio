@@ -27,14 +27,14 @@
         <div class="intro">
           <div>
             <div class="eyebrow"><span class="eyebrow-index">01</span> / THE PREVIEW</div>
-            <h1 id="pageTitle">让喜欢的阅读主题，<em>好好展示。</em></h1>
+            <h1 id="pageTitle">好好展示老师的主题吧！</h1>
           </div>
           <p>自由取色、换底图，或加入液态玻璃的朦胧感。<br>每一个字、每一处插画，都留在原来的位置。</p>
         </div>
 
         <div class="preview-card">
           <div class="preview-toolbar">
-            <div class="preview-status"><span class="alive-dot"></span><strong>实时预览</strong><span class="toolbar-divider"></span><span>4:3 横版</span><span class="toolbar-divider"></span><span>3600 × 2700 px</span></div>
+            <div class="preview-status"><span class="alive-dot"></span><strong>实时预览</strong><span class="toolbar-divider"></span><span id="ratioPreviewLabel">4:3 横版</span><span class="toolbar-divider"></span><span id="resolutionPreviewLabel">3600 × 2700 px</span></div>
             <button class="icon-text-button" id="largePreview" type="button" title="查看大图"><span class="expand-icon">⤢</span> 放大预览</button>
           </div>
           <div class="canvas-stage">
@@ -46,16 +46,12 @@
           </div>
         </div>
 
-        <div class="info-row">
-          <div class="info-item"><span class="info-number">01</span><div><b>原图优先</b><span>等尺寸图片将以原始像素嵌入</span></div></div>
-          <div class="info-item"><span class="info-number">02</span><div><b>所见即所得</b><span>文案与配色实时更新</span></div></div>
-          <div class="info-item"><span class="info-number">03</span><div><b>高清可保存</b><span>完整导出无压缩 PNG</span></div></div>
-        </div>
+        <div class="welcome-note">欢迎使用Lovia的模版～</div>
       </section>
 
       <aside class="editor" aria-labelledby="editorTitle">
         <div class="editor-top">
-          <div><span class="eyebrow"><span class="eyebrow-index">02</span> / THE EDITOR</span><h2 id="editorTitle">编辑你的画报</h2></div>
+          <div><span class="eyebrow"><span class="eyebrow-index">02</span> / THE EDITOR</span><h2 id="editorTitle">选择你的预览样式ovo</h2></div>
           <button class="reset-button" id="resetAll" type="button" title="恢复默认设置">↺ <span>重置</span></button>
         </div>
 
@@ -72,12 +68,10 @@
 
           <section class="editor-section" aria-labelledby="imageSectionTitle">
             <div class="section-title"><span>02</span><h3 id="imageSectionTitle">展示图片</h3><span class="section-description">YOUR IMAGES</span></div>
-            <p class="section-note">点击或拖拽替换。按照左、中、右顺序展示，完整保留截图。</p>
-            <div class="upload-grid" id="uploadGrid">
-              <button class="upload-tile" type="button" data-slot="0" aria-label="替换左侧截图"><img id="thumb0" src="assets/IMG_5735.JPG" alt="第一张预览图"><span class="tile-shade"><strong>01</strong><small>更换图片 ↗</small></span></button>
-              <button class="upload-tile" type="button" data-slot="1" aria-label="替换中间截图"><img id="thumb1" src="assets/IMG_5733.JPG" alt="第二张预览图"><span class="tile-shade"><strong>02</strong><small>更换图片 ↗</small></span></button>
-              <button class="upload-tile" type="button" data-slot="2" aria-label="替换右侧截图"><img id="thumb2" src="assets/IMG_5721.PNG" alt="第三张预览图"><span class="tile-shade"><strong>03</strong><small>更换图片 ↗</small></span></button>
-            </div>
+            <p class="section-note">支持一次选择 2–4 张图片，顺序排列、等距展示。每张图片均完整保留原始比例。</p>
+            <button class="batch-upload-button" id="batchUploadButton" type="button">＋ 一键选择 2–4 张图片 <span>支持多选</span></button>
+            <input id="batchFileInput" type="file" accept="image/png,image/jpeg,image/webp,image/avif,image/gif" multiple hidden>
+            <div class="upload-grid" id="uploadGrid"></div>
             <div class="image-size-message" id="imageSizeMessage">当前示例：3 张 942 × 2048 px 原尺寸截图</div>
             <input id="imageFileInput" type="file" accept="image/png,image/jpeg,image/webp,image/avif,image/gif" hidden>
           </section>
@@ -120,17 +114,31 @@
 
           <section class="editor-section last-section" aria-labelledby="detailsTitle">
             <div class="section-title"><span>04</span><h3 id="detailsTitle">细节设置</h3><span class="section-description">FINISHING TOUCH</span></div>
-            <p class="section-note border-note">为三张展示图统一设置边框，效果只作用于截图外侧。</p>
+            <div class="finish-label">最终画布比例 <span>海报元素保持一致</span></div>
+            <div class="ratio-options" role="group" aria-label="选择画布比例">
+              <button type="button" class="ratio-option selected" data-ratio="4:3" aria-pressed="true"><strong>4:3</strong><small>横版画报</small></button>
+              <button type="button" class="ratio-option" data-ratio="1:1" aria-pressed="false"><strong>1:1</strong><small>方形画报</small></button>
+            </div>
+            <div class="line-controls">
+              <label class="finish-label" for="ruleColor">装饰线条颜色 <input id="ruleColor" type="color" value="#000000" aria-label="装饰线条颜色"></label>
+              <label class="finish-label" for="ruleOpacity">装饰线条透明度 <output id="ruleOpacityValue">100%</output></label>
+              <input id="ruleOpacity" class="range-input" type="range" min="0" max="100" step="5" value="100">
+            </div>
+            <p class="section-note border-note">图片尺寸不同，边框会随各张图片自动贴合；所有效果都不裁切原图。</p>
             <div class="border-options" role="group" aria-label="截图边框设计">
               <button type="button" class="border-option selected" data-border="line" aria-pressed="true"><span class="border-sample border-line"></span>精细单线</button>
               <button type="button" class="border-option" data-border="double" aria-pressed="false"><span class="border-sample border-double"></span>双层细线</button>
               <button type="button" class="border-option" data-border="shadow" aria-pressed="false"><span class="border-sample border-shadow"></span>柔和阴影</button>
               <button type="button" class="border-option" data-border="none" aria-pressed="false"><span class="border-sample border-none"></span>无边框</button>
+              <button type="button" class="border-option" data-border="corners" aria-pressed="false"><span class="border-sample border-corners"></span>四角定位</button>
+              <button type="button" class="border-option" data-border="matte" aria-pressed="false"><span class="border-sample border-matte"></span>纸页留白</button>
+              <button type="button" class="border-option" data-border="dashed" aria-pressed="false"><span class="border-sample border-dashed"></span>虚线框</button>
+              <button type="button" class="border-option" data-border="inset" aria-pressed="false"><span class="border-sample border-inset"></span>内外细线</button>
             </div>
           </section>
         </div>
 
-        <div class="editor-footer"><button class="button button-dark download-main" type="button" id="downloadButton"><span>↓</span> 下载高清 PNG <small>3600 × 2700</small></button><p>所有编辑仅在当前浏览器处理 · 无需上传到服务器</p></div>
+        <div class="editor-footer"><button class="button button-dark download-main" type="button" id="downloadButton"><span>↓</span> 下载高清 PNG <small id="downloadResolution">3600 × 2700</small></button><p>所有编辑仅在当前浏览器处理 · 无需上传到服务器</p></div>
       </aside>
     </main>
     <nav class="mobile-actions" aria-label="手机快捷操作">
@@ -140,7 +148,7 @@
     <footer class="site-footer"><span>© LOVIA — A PERSONAL DESIGN TOOL</span><span>READ · COLLECT · REFLECT</span></footer>
   </div>
 
-  <dialog class="preview-dialog" id="previewDialog" aria-label="高清画报预览"><div class="dialog-header"><span>FULL-SIZE PREVIEW <i> / 3600 × 2700</i></span><button type="button" id="closePreview" aria-label="关闭">×</button></div><div class="dialog-content"><img id="largeImage" alt="高清海报大图"></div></dialog>
+  <dialog class="preview-dialog" id="previewDialog" aria-label="高清画报预览"><div class="dialog-header"><span>FULL-SIZE PREVIEW <i id="dialogResolution"> / 3600 × 2700</i></span><button type="button" id="closePreview" aria-label="关闭">×</button></div><div class="dialog-content"><img id="largeImage" alt="高清海报大图"></div></dialog>
   <div role="status" aria-live="polite" class="toast" id="toast"></div>
 </body>
 </html>

@@ -2,11 +2,7 @@
   'use strict';
 
   const CANVAS_W = 3600;
-  const CANVAS_H = 2700;
-  const PANEL_W = 942;
-  const PANEL_H = 2048;
-  const PANEL_Y = 342;
-  const PANEL_X = [267, 1329, 2391];
+  let CANVAS_H = 2700;
   const DEFAULT_IMAGES = ['assets/IMG_5735.JPG', 'assets/IMG_5733.JPG', 'assets/IMG_5721.PNG'];
   const DEFAULT_TEXT = { name: 'THE SURREAL LIBRARY', author: 'LOVIA', date: 'OCT. 2026' };
   const MODE_DESCRIPTIONS = {
@@ -31,7 +27,11 @@
     glassStrength: document.getElementById('glassStrength'),
     backgroundInput: document.getElementById('backgroundFileInput'),
     coverInput: document.getElementById('coverFileInput'),
-    tiles: [...document.querySelectorAll('.upload-tile')],
+    uploadGrid: document.getElementById('uploadGrid'),
+    batchInput: document.getElementById('batchFileInput'),
+    ratioButtons: [...document.querySelectorAll('[data-ratio]')],
+    ruleColor: document.getElementById('ruleColor'),
+    ruleOpacity: document.getElementById('ruleOpacity'),
     imageInput: document.getElementById('imageFileInput'),
     info: document.getElementById('imageSizeMessage'),
     toast: document.getElementById('toast'),
@@ -249,7 +249,7 @@
     });
     // Frosted, softly translucent sheet; all screenshot pixels are placed later, untouched.
     ctx.fillStyle = 'rgba(255,255,252,.10)';
-    ctx.fillRect(68, 54, 3464, 2592);
+    ctx.fillRect(68, 54, 3464, CANVAS_H - 108);
   }
 
   function displayColors() {
@@ -267,90 +267,134 @@
     };
   }
 
-  function drawCoverImage(img, x, y) {
-    if (!img) {
-      ctx.fillStyle = '#f3f1e9';
-      ctx.fillRect(x, y, PANEL_W, PANEL_H);
-      drawTrackedText('ADD IMAGE', x + PANEL_W / 2, y + PANEL_H / 2, { color: '#9baa9a', size: 41, tracking: 8, align: 'center' });
+  function rgbaFromHex(hex, alpha) {
+    const [r,g,b] = rgb(hex);
+    return 'rgba(' + r + ',' + g + ',' + b + ',' + alpha.toFixed(2) + ')';
+  }
+
+  function imagePlacement(image, index, total) {
+    const count = Math.max(2, Math.min(4, total));
+    const xStart = 168;
+    const usableWidth = CANVAS_W - 336;
+    const gap = count === 4 ? 60 : count === 3 ? 76 : 112;
+    const cellWidth = (usableWidth - gap * (count - 1)) / count;
+    const yStart = 329;
+    const usableHeight = CANVAS_H - 620;
+    const naturalW = image?.naturalWidth || 942;
+    const naturalH = image?.naturalHeight || 2048;
+    const scale = Math.min(1, cellWidth / naturalW, usableHeight / naturalH);
+    const width = naturalW * scale;
+    const height = naturalH * scale;
+    return { x: xStart + index * (cellWidth + gap) + (cellWidth - width)/2,
+      y: yStart + (usableHeight - height)/2, w: width, h: height };
+  }
+
+  function drawFittedImage(image, p) {
+    ctx.fillStyle = '#f6f5ef';
+    ctx.fillRect(p.x, p.y, p.w, p.h);
+    if (!image) {
+      drawTrackedText('ADD IMAGE', p.x + p.w/2, p.y+p.h/2,
+        {color:'#9baa9a',size:41,tracking:6,maxWidth:p.w-30,align:'center'});
       return;
     }
-    ctx.fillStyle = '#f6f5ee';
-    ctx.fillRect(x, y, PANEL_W, PANEL_H);
-    const ratio = Math.min(PANEL_W / img.naturalWidth, PANEL_H / img.naturalHeight);
-    const drawW = img.naturalWidth * ratio;
-    const drawH = img.naturalHeight * ratio;
-    const drawX = x + (PANEL_W - drawW) / 2;
-    const drawY = y + (PANEL_H - drawH) / 2;
-    // Exact 942 × 2048 screenshots are drawn at 1:1 with no resizing or crop.
-    ctx.imageSmoothingEnabled = !(img.naturalWidth === PANEL_W && img.naturalHeight === PANEL_H);
+    const pixelExact = p.w === image.naturalWidth && p.h === image.naturalHeight;
+    ctx.imageSmoothingEnabled = !pixelExact;
     ctx.imageSmoothingQuality = 'high';
-    ctx.drawImage(img, drawX, drawY, drawW, drawH);
+    ctx.drawImage(image, p.x, p.y, p.w, p.h);
     ctx.imageSmoothingEnabled = true;
+  }
+
+  function drawAdaptiveFrame(p, line, theme) {
+    const pad = Math.max(7, Math.min(14, Math.min(p.w,p.h)*.015));
+    const x = p.x - pad, y = p.y - pad, w = p.w + pad*2, h = p.h + pad*2;
+    if (borderStyle === 'shadow') {
+      ctx.save();
+      ctx.shadowColor = 'rgba(14,24,18,.30)';
+      ctx.shadowBlur = 36;
+      ctx.shadowOffsetX = 10;
+      ctx.shadowOffsetY = 14;
+      ctx.fillStyle = '#f8f8f4';
+      ctx.fillRect(x,y,w,h);
+      ctx.restore();
+      rectangle(x,y,w,h,line,2);
+    } else if (borderStyle === 'matte') {
+      const depth = pad*1.6;
+      ctx.fillStyle = '#fbfbf8';
+      ctx.fillRect(x-depth,y-depth,w+depth*2,h+depth*2);
+      rectangle(x-depth,y-depth,w+depth*2,h+depth*2,line,2);
+      rectangle(x,y,w,h,line,1);
+    } else if (borderStyle === 'double') {
+      rectangle(x-pad,y-pad,w+pad*2,h+pad*2,line,2);
+      rectangle(x,y,w,h,line,2);
+    } else if (borderStyle === 'line') {
+      rectangle(x,y,w,h,line,3);
+    } else if (borderStyle === 'dashed') {
+      ctx.save();ctx.setLineDash([14,11]);
+      rectangle(x,y,w,h,line,2);ctx.restore();
+    } else if (borderStyle === 'inset') {
+      rectangle(x-pad*.8,y-pad*.8,w+pad*1.6,h+pad*1.6,line,2);
+      rectangle(x,y,w,h,line,2);
+    } else if (borderStyle === 'corners') {
+      const short = Math.min(72, w*.16, h*.16);
+      for (const [xx,sx] of [[x,1],[x+w,-1]]) {
+        for (const [yy,sy] of [[y,1],[y+h,-1]]) {
+          rule(xx,yy,xx+sx*short,yy,line,4);
+          rule(xx,yy,xx,yy+sy*short,line,4);
+        }
+      }
+    }
   }
 
   function drawPoster() {
     const theme = displayColors();
-    ctx.clearRect(0, 0, CANVAS_W, CANVAS_H);
+    const line = rgbaFromHex(refs.ruleColor.value, Number(refs.ruleOpacity.value)/100);
+    ctx.clearRect(0,0,CANVAS_W,CANVAS_H);
     ctx.fillStyle = theme.bg;
-    ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+    ctx.fillRect(0,0,CANVAS_W,CANVAS_H);
     if (currentTheme === 'image') {
       drawFullBleedImage(backgroundImage || images[0], Number(refs.blur.value));
       ctx.fillStyle = 'rgba(249,248,243,.62)';
-      ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+      ctx.fillRect(0,0,CANVAS_W,CANVAS_H);
     } else if (currentTheme === 'glass') {
       drawGlassBackground(coverImage || images[0], Number(refs.glassStrength.value), theme.bg);
     }
 
     ctx.fillStyle = theme.band;
-    ctx.fillRect(0, 0, CANVAS_W, 29);
+    ctx.fillRect(0,0,CANVAS_W,29);
     ctx.fillStyle = theme.accent;
-    ctx.fillRect(CANVAS_W - 365, 0, 365, 29);
-    ctx.fillRect(0, CANVAS_H - 29, CANVAS_W, 29);
+    ctx.fillRect(CANVAS_W-365,0,365,29);
+    ctx.fillRect(0,CANVAS_H-29,CANVAS_W,29);
 
-    rectangle(67, 54, 3465, 2591, theme.rule, 4);
-    rectangle(87, 74, 3425, 2551, theme.secondary, 1);
-    rule(166, 269, 3034, 269, theme.rule, 3);
-    rule(3034, 269, 3434, 269, theme.accent, 3);
-    rule(166, 2464, 3034, 2464, theme.rule, 3);
-    rule(3034, 2464, 3434, 2464, theme.accent, 3);
-    for (const x of [163, 3437]) {
-      cross(x, 318, theme.rule);
-      cross(x, 2418, theme.rule);
+    rectangle(67,54,CANVAS_W-135,CANVAS_H-109,line,4);
+    rectangle(87,74,CANVAS_W-175,CANVAS_H-149,line,1);
+    const footerRuleY = CANVAS_H-236;
+    rule(166,269,3034,269,line,3);
+    rule(3034,269,3434,269,line,3);
+    rule(166,footerRuleY,3034,footerRuleY,line,3);
+    rule(3034,footerRuleY,3434,footerRuleY,line,3);
+    for (const x of [163,3437]) {
+      cross(x,318,line);
+      cross(x,CANVAS_H-282,line);
     }
 
-    PANEL_X.forEach((x, i) => {
-      if (borderStyle === 'shadow') {
-        ctx.save();
-        ctx.shadowColor = 'rgba(17,27,19,.38)';
-        ctx.shadowBlur = 42;
-        ctx.shadowOffsetX = 13;
-        ctx.shadowOffsetY = 18;
-        ctx.fillStyle = '#F6F5EF';
-        ctx.fillRect(x - 5, PANEL_Y - 5, PANEL_W + 10, PANEL_H + 10);
-        ctx.restore();
-      } else if (borderStyle === 'double') {
-        rectangle(x - 16, PANEL_Y - 16, PANEL_W + 32, PANEL_H + 32, theme.secondary, 2);
-        rectangle(x - 6, PANEL_Y - 6, PANEL_W + 12, PANEL_H + 12, theme.frame, 3);
-      } else if (borderStyle === 'line') {
-        rectangle(x - 6, PANEL_Y - 6, PANEL_W + 12, PANEL_H + 12, theme.frame, 3);
-      }
-      drawCoverImage(images[i], x, PANEL_Y);
+    const count = images.length;
+    images.forEach((image,i) => {
+      const p = imagePlacement(image,i,count);
+      drawAdaptiveFrame(p,line,theme);
+      drawFittedImage(image,p);
     });
-
-    drawTrackedText(refs.name.value || DEFAULT_TEXT.name, 179, 175, { color: theme.ink, size: 61, minSize: 29, tracking: 5, maxWidth: 1670, bold: true, kinghwa: true });
-    drawTrackedText('AUTHOR / ' + (refs.author.value || DEFAULT_TEXT.author), 3421, 175, { color: theme.ink, size: 48, minSize: 28, tracking: 8, maxWidth: 1430, align: 'right' });
-
-    sortedColors(currentColors).forEach((color, i) => {
-      const x = 200 + 67 * i;
-      const y = 2540;
-      ctx.beginPath();
-      ctx.arc(x, y, 21, 0, Math.PI * 2);
-      ctx.fillStyle = color;
-      ctx.fill();
-      setStroke(theme.rule, 2);
-      ctx.stroke();
+    drawTrackedText(refs.name.value || DEFAULT_TEXT.name,179,175,
+      {color:theme.ink,size:61,minSize:29,tracking:5,maxWidth:1670,bold:true,kinghwa:true});
+    drawTrackedText('AUTHOR / '+(refs.author.value || DEFAULT_TEXT.author),3421,175,
+      {color:theme.ink,size:48,minSize:28,tracking:8,maxWidth:1430,align:'right'});
+    sortedColors(currentColors).forEach((color,i) => {
+      const x=200+67*i,y=CANVAS_H-160;
+      ctx.beginPath();ctx.arc(x,y,21,0,Math.PI*2);
+      ctx.fillStyle=color;ctx.fill();
+      setStroke(line,2);ctx.stroke();
     });
-    drawTrackedText(refs.date.value || DEFAULT_TEXT.date, 3421, 2540, { color: theme.ink, size: 45, minSize: 29, tracking: 8, maxWidth: 780, align: 'right' });
+    drawTrackedText(refs.date.value || DEFAULT_TEXT.date,3421,CANVAS_H-160,
+      {color:theme.ink,size:45,minSize:29,tracking:8,maxWidth:780,align:'right'});
   }
 
   function syncPaletteInputs() {
@@ -374,7 +418,7 @@
   }
 
   function selectBorder(key) {
-    if (!['line', 'double', 'shadow', 'none'].includes(key)) return;
+    if (!['line', 'double', 'shadow', 'none', 'corners', 'matte', 'dashed', 'inset'].includes(key)) return;
     borderStyle = key;
     refs.borderStyles.forEach(button => {
       const selected = button.dataset.border === key;
@@ -384,66 +428,132 @@
     scheduleDraw();
   }
 
-  function updateSizeMessage() {
-    const dims = images.map(img => img ? `${img.naturalWidth} × ${img.naturalHeight}` : '—');
-    const same = dims.every(d => d === '942 × 2048');
-    refs.info.textContent = same
-      ? '三张均为 942 × 2048 px，导出时以 1:1 原始像素嵌入'
-      : `图片尺寸：${dims.join('  /  ')}。不同尺寸完整等比适配，无裁切。`;
+  function setCanvasRatio(ratio) {
+    const square = ratio === '1:1';
+    CANVAS_H = square ? 3600 : 2700;
+    canvas.width = CANVAS_W;
+    canvas.height = CANVAS_H;
+    canvas.style.aspectRatio = square ? '1 / 1' : '4 / 3';
+    refs.ratioButtons.forEach(button => {
+      const selected = button.dataset.ratio === ratio;
+      button.classList.toggle('selected',selected);
+      button.setAttribute('aria-pressed',String(selected));
+    });
+    const dims = CANVAS_W+' × '+CANVAS_H;
+    document.getElementById('ratioPreviewLabel').textContent = square?'1:1 正方形':'4:3 横版';
+    document.getElementById('resolutionPreviewLabel').textContent = dims+' px';
+    document.getElementById('downloadResolution').textContent = dims;
+    document.getElementById('dialogResolution').textContent = ' / '+dims;
+    scheduleDraw();
   }
 
-  async function replaceImage(index, file) {
-    if (!file || !file.type.startsWith('image/')) return announce('请选择 PNG、JPG 或 WebP 图片');
-    const temporaryURL = URL.createObjectURL(file);
-    try {
-      const image = await loadImage(temporaryURL);
-      const oldURL = userObjectURLs[index];
-      userObjectURLs[index] = temporaryURL;
-      images[index] = image;
-      document.getElementById(`thumb${index}`).src = temporaryURL;
-      if (oldURL) URL.revokeObjectURL(oldURL);
-      updateSizeMessage();
-      refreshAutoColors();
-      currentColors = paletteFromImages(images);
-      syncPaletteInputs();
-      scheduleDraw();
-      announce(`第 ${index + 1} 张截图已替换 · ${image.naturalWidth} × ${image.naturalHeight}`);
-    } catch (err) {
-      URL.revokeObjectURL(temporaryURL);
-      announce('这张图片暂时无法读取，请换一张再试');
+  function renderTiles() {
+    const grid = refs.uploadGrid;
+    grid.replaceChildren();
+    grid.style.setProperty('--tile-count', String(Math.max(2,Math.min(4,images.length + (images.length<4?1:0)))));
+    images.forEach((image,index) => {
+      const tile = document.createElement('button');
+      tile.type = 'button';
+      tile.className = 'upload-tile';
+      tile.dataset.slot = String(index);
+      tile.setAttribute('aria-label','替换第'+(index+1)+'张图片');
+      tile.style.setProperty('--img-ratio',String(image ? image.naturalWidth/image.naturalHeight : .46));
+      const thumb = document.createElement('img');
+      thumb.src = image ? image.src : '';
+      thumb.alt = '第'+(index+1)+'张预览图';
+      const overlay = document.createElement('span');overlay.className='tile-shade';
+      const count = document.createElement('strong');count.textContent=String(index+1).padStart(2,'0');
+      const caption = document.createElement('small');caption.textContent='替换图片 ↗';
+      overlay.append(count,caption);tile.append(thumb,overlay);grid.append(tile);
+    });
+    if (images.length < 4) {
+      const add = document.createElement('button');
+      add.type='button';add.className='upload-tile upload-tile-add';
+      add.dataset.slot=String(images.length);
+      add.setAttribute('aria-label','添加第'+(images.length+1)+'张图片');
+      add.innerHTML='<span class="add-icon">＋</span><span>添加第'+(images.length+1)+'张</span>';
+      grid.append(add);
     }
   }
 
+  function updateSizeMessage() {
+    const dims = images.map(img => img ? img.naturalWidth+' × '+img.naturalHeight : '—');
+    const same = images.every(img => img && img.naturalWidth===942 && img.naturalHeight===2048);
+    refs.info.textContent = images.length+' 张图片'+(same?'，均为 942 × 2048 px':'：'+dims.join(' / '))+
+      ' · 等距排列 · 保持原始比例 · 不裁切';
+    renderTiles();
+  }
+
+  async function loadUserFile(file) {
+    if (!file || !/^image\/(png|jpeg|webp|avif|gif)$/i.test(file.type)) throw Error('请使用 PNG、JPG、WebP、AVIF 或 GIF 图片');
+    if (file.size > 45*1024*1024) throw Error('单张图片需小于 45 MB');
+    const url=URL.createObjectURL(file);
+    try {
+      const image=await loadImage(url);
+      if (image.naturalWidth*image.naturalHeight>60000000) throw Error('图片像素过大，请缩小后重试');
+      return {image,url};
+    } catch(err) { URL.revokeObjectURL(url);throw err; }
+  }
+
+  async function importBatch(fileList) {
+    const files=Array.from(fileList || []);
+    if (files.length<2||files.length>4) return announce('请一次选择 2–4 张图片');
+    const loaded=[];
+    try {
+      for (const file of files) loaded.push(await loadUserFile(file));
+      userObjectURLs.forEach(url=>url&&URL.revokeObjectURL(url));
+      images=loaded.map(item=>item.image);
+      userObjectURLs=loaded.map(item=>item.url);
+      updateSizeMessage();
+      refreshAutoColors();
+      currentColors=paletteFromImages(images);
+      syncPaletteInputs();
+      scheduleDraw();
+      announce('已放入 '+images.length+' 张图片 · 等距自动排版');
+    } catch(error) {
+      loaded.forEach(item=>URL.revokeObjectURL(item.url));
+      announce(error.message || '上传失败，请重新选择');
+    }
+  }
+
+  async function replaceImage(index,file) {
+    if (!file) return;
+    try {
+      const loaded=await loadUserFile(file);
+      const old=userObjectURLs[index];
+      if (index>=images.length) images.push(loaded.image);
+      else images[index]=loaded.image;
+      userObjectURLs[index]=loaded.url;
+      if (old) URL.revokeObjectURL(old);
+      updateSizeMessage();
+      refreshAutoColors();
+      currentColors=paletteFromImages(images);
+      syncPaletteInputs();
+      scheduleDraw();
+      announce('第 '+(index+1)+' 张图片已更新 · '+loaded.image.naturalWidth+' × '+loaded.image.naturalHeight);
+    } catch(error) { announce(error.message || '图片读取失败，请换一张'); }
+  }
+
   async function resetAll() {
-    refs.name.value = DEFAULT_TEXT.name;
-    refs.author.value = DEFAULT_TEXT.author;
-    refs.date.value = DEFAULT_TEXT.date;
-    refs.customColor.value = '#E9E6DB';
-    document.getElementById('customColorValue').textContent = '#E9E6DB';
-    refs.blur.value = '40';
-    document.getElementById('backgroundBlurValue').textContent = '40 px';
-    refs.glassStrength.value = '70';
-    document.getElementById('glassStrengthValue').textContent = '70%';
-    for (const url of [backgroundObjectURL, coverObjectURL]) if (url) URL.revokeObjectURL(url);
-    backgroundObjectURL = null;
-    coverObjectURL = null;
-    backgroundImage = null;
-    coverImage = null;
-    document.getElementById('backgroundFileName').textContent = '未选择，暂用第一张截图预览';
-    document.getElementById('coverFileName').textContent = '未选择，默认取第一张截图颜色';
-    userObjectURLs.forEach(url => url && URL.revokeObjectURL(url));
-    userObjectURLs = [null, null, null];
-    await Promise.all(DEFAULT_IMAGES.map(async (src, i) => {
-      images[i] = await loadImage(src);
-      document.getElementById(`thumb${i}`).src = src;
-    }));
-    updateSizeMessage();
-    refreshAutoColors();
-    currentColors = paletteFromImages(images);
-    syncPaletteInputs();
-    selectTheme('light');
-    selectBorder('line');
-    scheduleDraw();
+    refs.name.value=DEFAULT_TEXT.name;
+    refs.author.value=DEFAULT_TEXT.author;
+    refs.date.value=DEFAULT_TEXT.date;
+    refs.customColor.value='#E9E6DB';
+    document.getElementById('customColorValue').textContent='#E9E6DB';
+    refs.blur.value='40';document.getElementById('backgroundBlurValue').textContent='40 px';
+    refs.glassStrength.value='70';document.getElementById('glassStrengthValue').textContent='70%';
+    refs.ruleColor.value='#000000';refs.ruleOpacity.value='100';
+    document.getElementById('ruleOpacityValue').textContent='100%';
+    for (const url of [backgroundObjectURL,coverObjectURL]) if(url) URL.revokeObjectURL(url);
+    backgroundObjectURL=null;coverObjectURL=null;backgroundImage=null;coverImage=null;
+    document.getElementById('backgroundFileName').textContent='未选择，暂用第一张截图预览';
+    document.getElementById('coverFileName').textContent='未选择，默认取第一张截图颜色';
+    userObjectURLs.forEach(url=>url&&URL.revokeObjectURL(url));
+    userObjectURLs=[null,null,null];
+    try { images=await Promise.all(DEFAULT_IMAGES.map(loadImage)); }
+    catch(error) { images=[null,null,null]; }
+    updateSizeMessage();refreshAutoColors();currentColors=paletteFromImages(images);
+    syncPaletteInputs();selectTheme('light');selectBorder('line');setCanvasRatio('4:3');
     announce('已恢复默认展示');
   }
 
@@ -494,7 +604,7 @@
 
   function safeFilename() {
     const str = (refs.name.value || 'Lovia-Reading-Gallery').trim().replace(/[\\/:*?"<>|\x00-\x1f]/g, '-').replace(/\s+/g, '-');
-    return `${(str || 'Lovia-Reading-Gallery').slice(0, 45)}-3600x2700.png`;
+    return `${(str || 'Lovia-Reading-Gallery').slice(0, 45)}-${CANVAS_W}x${CANVAS_H}.png`;
   }
 
   function canvasBlob() {
@@ -514,7 +624,7 @@
       a.click();
       a.remove();
       setTimeout(() => URL.revokeObjectURL(url), 30000);
-      announce('高清 PNG 已开始下载 · 3600 × 2700 px');
+      announce(`高清 PNG 已开始下载 · ${CANVAS_W} × ${CANVAS_H} px`);
     } catch (error) {
       console.error(error);
       announce('导出遇到问题，请稍后重试');
@@ -547,6 +657,17 @@
     }));
     refs.styles.forEach(button => button.addEventListener('click', () => selectTheme(button.dataset.theme)));
     refs.borderStyles.forEach(button => button.addEventListener('click', () => selectBorder(button.dataset.border)));
+    refs.ratioButtons.forEach(button => button.addEventListener('click', () => setCanvasRatio(button.dataset.ratio)));
+    refs.ruleColor.addEventListener('input',scheduleDraw);
+    refs.ruleOpacity.addEventListener('input',() => {
+      document.getElementById('ruleOpacityValue').textContent = refs.ruleOpacity.value+'%';
+      scheduleDraw();
+    });
+    document.getElementById('batchUploadButton').addEventListener('click',() => refs.batchInput.click());
+    refs.batchInput.addEventListener('change', async () => {
+      const files=Array.from(refs.batchInput.files);refs.batchInput.value='';
+      await importBatch(files);
+    });
     refs.customColor.addEventListener('input', () => {
       document.getElementById('customColorValue').textContent = refs.customColor.value.toUpperCase();
       scheduleDraw();
@@ -583,21 +704,35 @@
       previewURL = null;
     });
 
-    refs.tiles.forEach(tile => {
-      const slot = Number(tile.dataset.slot);
-      tile.addEventListener('click', () => { activeSlot = slot; refs.imageInput.click(); });
-      tile.addEventListener('dragover', event => { event.preventDefault(); tile.classList.add('dragover'); });
-      tile.addEventListener('dragleave', () => tile.classList.remove('dragover'));
-      tile.addEventListener('drop', event => {
-        event.preventDefault();
-        tile.classList.remove('dragover');
-        replaceImage(slot, event.dataTransfer.files[0]);
-      });
+    refs.uploadGrid.addEventListener('click',event => {
+      const tile=event.target.closest('.upload-tile');
+      if (!tile) return;
+      activeSlot=Number(tile.dataset.slot);
+      refs.imageInput.click();
     });
-    refs.imageInput.addEventListener('change', async () => {
-      const file = refs.imageInput.files[0];
-      refs.imageInput.value = '';
-      if (file) await replaceImage(activeSlot, file);
+    refs.uploadGrid.addEventListener('dragover',event => {
+      event.preventDefault();
+      const tile=event.target.closest('.upload-tile');
+      if(tile) tile.classList.add('dragover');
+    });
+    refs.uploadGrid.addEventListener('dragleave',event => {
+      const tile=event.target.closest('.upload-tile');
+      if(tile) tile.classList.remove('dragover');
+    });
+    refs.uploadGrid.addEventListener('drop',event => {
+      event.preventDefault();
+      refs.uploadGrid.querySelectorAll('.dragover').forEach(el=>el.classList.remove('dragover'));
+      const files=Array.from(event.dataTransfer.files || []);
+      if (files.length>=2 && files.length<=4) importBatch(files);
+      else if (files.length===1) {
+        const tile=event.target.closest('.upload-tile');
+        const index=tile?Number(tile.dataset.slot):0;
+        replaceImage(index,files[0]);
+      }
+    });
+    refs.imageInput.addEventListener('change',async () => {
+      const file=refs.imageInput.files[0];refs.imageInput.value='';
+      if(file) await replaceImage(activeSlot,file);
     });
   }
 
@@ -610,13 +745,15 @@
       refreshAutoColors();
       currentColors = paletteFromImages(images);
       syncPaletteInputs();
+      setCanvasRatio('4:3');
       drawPoster();
       // Ensure the actual embedded old-Song font is used in the preview and export.
       document.fonts.load('bold 61px "KingHwaOldSong"').then(scheduleDraw).catch(() => {});
     } catch (error) {
       console.error('Default image loading failed', error);
+      renderTiles();
       drawPoster();
-      announce('默认图片未能载入，可点击右侧重新上传');
+      announce('默认图片未能载入，可点击重新选择图片');
     }
   }
 
