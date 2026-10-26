@@ -35,6 +35,7 @@
   let previewZoom=1;
   let selectedExportQuality='original';
   let largePreviewInView=true;
+  let hasSeenLargePreview=false;
   const refs = {
     name: document.getElementById('themeName'),
     author: document.getElementById('authorName'),
@@ -131,14 +132,14 @@
 
   function updateDockVisibility() {
     const dock=document.getElementById('mobilePreviewDock');
-    dock.classList.toggle('is-empty', !compactMode || !images.some(Boolean) || largePreviewInView || refs.dialog.open);
+    dock.classList.toggle('is-empty', !compactMode || !images.some(Boolean) || !hasSeenLargePreview || largePreviewInView || refs.dialog.open);
   }
 
   function setupResponsivePreview() {
     if (!compactMode) return;
     const card=document.querySelector('.preview-card');
     // On phones the full-size preview belongs after every editing control.
-    // The separate floating mini preview remains visible while that card is offscreen.
+    // The floating mini preview appears only after the user has reached the full-size preview once.
     const editor=document.querySelector('.editor');
     editor.after(card);
     card.classList.add('mobile-restored-preview');
@@ -147,11 +148,13 @@
       const bounds=card.getBoundingClientRect();
       const viewportHeight=window.visualViewport?.height || window.innerHeight;
       largePreviewInView=bounds.bottom>77 && bounds.top<viewportHeight-80;
+      if(largePreviewInView) hasSeenLargePreview=true;
       updateDockVisibility();
     };
     if ('IntersectionObserver' in window) {
       const observer=new IntersectionObserver(entries=>{
         largePreviewInView=Boolean(entries[0]?.isIntersecting);
+        if(largePreviewInView) hasSeenLargePreview=true;
         updateDockVisibility();
       },{rootMargin:'-76px 0px -80px 0px',threshold:0});
       observer.observe(card);
