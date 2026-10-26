@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="zh-CN">
+<html lang="zh-CN" data-studio-page="lovia" data-src-lang="sc">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -8,6 +8,7 @@
   <title>Lovia — Reading Gallery Studio</title>
   <link rel="stylesheet" href="./styles.css?v=20261027-v13">
   <script src="./app.js?v=20261027-v13" defer></script>
+  <script src="./studio-shell.js?v=1" defer></script>
 </head>
 <body>
   <div class="app-shell">
@@ -21,6 +22,7 @@
         <button class="button button-dark top-export" id="topExport" type="button" aria-label="下载高清海报" title="下载高清海报"><svg class="download-svg" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3v12m-4.5-4.5L12 15l4.5-4.5M4 18v3h16v-3" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="top-export-label">导出高清海报</span></button>
       </div>
     </header>
+    <div class="studio-switch-row"><div id="studioShell"></div></div>
 
     <main class="workspace">
       <section class="preview-column" aria-labelledby="pageTitle">
