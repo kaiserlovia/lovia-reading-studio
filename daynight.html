@@ -295,6 +295,11 @@ button{cursor:pointer}
         <div class="seg" data-seg="single"><button data-v="day" aria-pressed="true">日間</button><button data-v="night" aria-pressed="false">夜間</button></div>
         <p class="hint">單面版型可以在「匯出」一次存下日間、夜間兩張。</p>
       </div>
+      <div class="group" id="grpOrder" hidden>
+        <h3>順序</h3>
+        <div class="seg" data-seg="order"><button data-v="dn" aria-pressed="true">日夜</button><button data-v="nd" aria-pressed="false">夜日</button></div>
+        <p class="hint">日夜：日間在左、在上或在前；夜日相反。「匯出」的各存一張會兩種順序各存一張。</p>
+      </div>
       <div class="group" id="grpTilt" hidden>
         <h3>傾斜方向</h3>
         <div class="seg" data-seg="tilt"><button data-v="alt" aria-pressed="true" id="tiltAlt">一高一低</button><button data-v="left-high" aria-pressed="false">左高右低 ↘</button><button data-v="left-low" aria-pressed="false">左低右高 ↗</button></div>
@@ -537,7 +542,7 @@ const BG_DESC={
 const today=new Date();
 const fmtToday=()=>{const d=new Date();return`${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getDate()).padStart(2,'0')}`;};
 const S={
-  ratio:'4:3', layout:'pairs', single:'day', splitDir:'auto', tilt:'alt',
+  ratio:'4:3', layout:'pairs', single:'day', splitDir:'auto', tilt:'alt', order:'dn',
   size:1, gap:1, radius:.06, frame:'shadow',
   rules:false, ruleColor:'#000000', ruleOpacity:.4,
   bg:'solid', tint:.7, grain:.30, customBg:'#E9E6DB', tbTop:'#EDE9DE', tbBottom:'#A5B09E', tbCustom:false,
@@ -718,7 +723,7 @@ function fit(items,box,gap,capH,maxRows=3){
 }
 function shrinkBox(b,k){const w=b.w*k,h=b.h*k;return{x:b.x+(b.w-w)/2,y:b.y+(b.h-h)/2,w,h};}
 function isSingle(l){return l.startsWith('single');}
-function geometry(W,H,lay,side){
+function geometry(W,H,lay,side,A='day',B='night'){
   if(isSingle(lay))return{kind:'single',panels:[{side,x:0,y:0,w:W,h:H}]};
   const dir=S.splitDir==='auto'?(W>=H?'v':'h'):S.splitDir;
   if(lay==='split'||lay==='diagonal'){
@@ -728,9 +733,9 @@ function geometry(W,H,lay,side){
       if(k){pd=[[0,0],[W*(.5+k),0],[W*(.5-k),H],[0,H]];pn=[[W*(.5+k),0],[W,0],[W,H],[W*(.5-k),H]];}}
     else{d={x:0,y:0,w:W,h:H/2};n={x:0,y:H/2,w:W,h:H/2};
       if(k){pd=[[0,0],[W,0],[W,H*(.5-k)],[0,H*(.5+k)]];pn=[[0,H*(.5+k)],[W,H*(.5-k)],[W,H],[0,H]];}}
-    return{kind:'split',dir,k,panels:[{side:'day',...d,poly:pd},{side:'night',...n,poly:pn}]};
+    return{kind:'split',dir,k,A,B,panels:[{side:A,...d,poly:pd},{side:B,...n,poly:pn}]};
   }
-  return{kind:'blend',dir:W>=H?'v':'h',panels:[{side:'blend',x:0,y:0,w:W,h:H}]};
+  return{kind:'blend',dir:W>=H?'v':'h',A,B,panels:[{side:'blend',x:0,y:0,w:W,h:H}]};
 }
 function bestInkFor(bg,prefer){
   const cands=[prefer,S.colors.day.ink,S.colors.night.ink].filter(Boolean);
@@ -782,8 +787,8 @@ function paintBlend(ctx,geo,W,H){
   const full={x:0,y:0,w:W,h:H};
   if(S.bg==='custom'){ctx.fillStyle=S.customBg;ctx.fillRect(0,0,W,H);return()=>S.customBg;}
   if(S.bg==='tb'){const g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,S.tbTop);g.addColorStop(1,S.tbBottom);ctx.fillStyle=g;ctx.fillRect(0,0,W,H);return(x,y)=>mix(S.tbTop,S.tbBottom,clamp(y/H,0,1));}
-  const dc=S.bg==='light'?tonesFor('day').light:S.bg==='dark'?tonesFor('day').dark:S.colors.day.bg;
-  const nc=S.bg==='light'?tonesFor('night').light:S.bg==='dark'?tonesFor('night').dark:S.colors.night.bg;
+  const tone=side=>S.bg==='light'?tonesFor(side).light:S.bg==='dark'?tonesFor(side).dark:S.colors[side].bg;
+  const dc=tone(geo.A),nc=tone(geo.B);
   const g=geo.dir==='v'?ctx.createLinearGradient(0,0,W,0):ctx.createLinearGradient(0,0,0,H);
   g.addColorStop(0,dc);g.addColorStop(.28,dc);g.addColorStop(.72,nc);g.addColorStop(1,nc);
   ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
@@ -795,7 +800,8 @@ function paintBlend(ctx,geo,W,H){
 function drawPoster(ctx,W,H,opt={}){
   const lay=opt.layout||S.layout, singleSide=opt.side||S.single;
   const u=Math.min(W,H)/100, m=u*6;
-  const geo=geometry(W,H,lay,singleSide);
+  const A=(opt.order||S.order)==='nd'?'night':'day',B=A==='day'?'night':'day';
+  const geo=geometry(W,H,lay,singleSide,A,B);
   const f=curFont();
   const hits=[];
   let bgAt=null;
@@ -887,28 +893,28 @@ function drawPoster(ctx,W,H,opt={}){
     for(const p of geo.panels){
       const extra=geo.k?geo.k*(geo.dir==='v'?W:H)*.75:0;
       const box=geo.dir==='v'
-        ?areaOf(p,p.side==='night'?extra:0,p.side==='day'?extra:0)
-        :areaOf(p,0,0,p.side==='night'?extra:0,p.side==='day'?extra:0);
+        ?areaOf(p,p===geo.panels[1]?extra:0,p===geo.panels[0]?extra:0)
+        :areaOf(p,0,0,p===geo.panels[1]?extra:0,p===geo.panels[0]?extra:0);
       pushFit(S.shots[p.side],box,()=>p.side);
     }
   }else{
     const box=areaOf(geo.panels[0]);
     if(lay==='alternate'){
       const seq=[];const n=Math.max(S.shots.day.length,S.shots.night.length);
-      for(let i=0;i<n;i++){if(S.shots.day[i])seq.push(['day',S.shots.day[i]]);if(S.shots.night[i])seq.push(['night',S.shots.night[i]]);}
+      for(let i=0;i<n;i++){if(S.shots[A][i])seq.push([A,S.shots[A][i]]);if(S.shots[B][i])seq.push([B,S.shots[B][i]]);}
       pushFit(seq.map(s=>s[1]),box,(sh,i)=>seq[i][0]);
     }else{
       const n=Math.max(S.shots.day.length,S.shots.night.length);
       const units=[];const OX=.2,OY=.075;
-      for(let i=0;i<n;i++){const d=S.shots.day[i],nn=S.shots.night[i];const front=d||nn;
+      for(let i=0;i<n;i++){const d=S.shots[A][i],nn=S.shots[B][i];const front=d||nn;
         units.push({a:d&&nn?front.a*(1+OX)/(1+OY):front.a,d,nn});}
       const b=shrinkBox(box,S.size);
       const r=fit(units.map(un=>({a:un.a,un})),b,gap*1.1+phoneGap,capH,2);
       for(const q of r){const{d,nn}=q.it.un;
         if(d&&nn){const fw=q.w/(1+OX),fh=q.h/(1+OY);
-          placed.push({shot:nn,side:'night',x:q.x+fw*OX,y:q.y,w:fw/frameScale,h:fh/frameScale,ox:fw*(1-1/frameScale)/2,oy:fh*(1-1/frameScale)/2,z:0,cap:false});
-          placed.push({shot:d,side:'day',x:q.x,y:q.y+fh*OY,w:fw/frameScale,h:fh/frameScale,ox:fw*(1-1/frameScale)/2,oy:fh*(1-1/frameScale)/2,z:1,cap:true,capW:q.w,capX:q.x});
-        }else{const s=d||nn;placed.push({shot:s,side:d?'day':'night',x:q.x,y:q.y,w:q.w/frameScale,h:q.h/frameScale,ox:q.w*(1-1/frameScale)/2,oy:q.h*(1-1/frameScale)/2,z:1,cap:true});}
+          placed.push({shot:nn,side:B,x:q.x+fw*OX,y:q.y,w:fw/frameScale,h:fh/frameScale,ox:fw*(1-1/frameScale)/2,oy:fh*(1-1/frameScale)/2,z:0,cap:false});
+          placed.push({shot:d,side:A,x:q.x,y:q.y+fh*OY,w:fw/frameScale,h:fh/frameScale,ox:fw*(1-1/frameScale)/2,oy:fh*(1-1/frameScale)/2,z:1,cap:true,capW:q.w,capX:q.x});
+        }else{const s=d||nn;placed.push({shot:s,side:d?A:B,x:q.x,y:q.y,w:q.w/frameScale,h:q.h/frameScale,ox:q.w*(1-1/frameScale)/2,oy:q.h*(1-1/frameScale)/2,z:1,cap:true});}
       }
     }
   }
@@ -955,20 +961,20 @@ function drawPoster(ctx,W,H,opt={}){
     let dotsLeft=m;
     if(geo.kind==='single'){const p=geo.panels[0];drawFooter(ctx,singleSide,m,fy(p),'left',inkAt(singleSide,fy(p)),u,f,sw);dotsLeft=m+footLabelWidth(ctx,singleSide,u,f);}
     else if(geo.kind==='split'){
-      for(const p of geo.panels){let x=p.x+m;if(geo.k&&geo.dir==='v'&&p.side==='night')x=p.x-geo.k*W+m;drawFooter(ctx,p.side,x,fy(p),'left',inkAt(p.side,fy(p)),u,f,sw);
+      for(const p of geo.panels){let x=p.x+m;if(geo.k&&geo.dir==='v'&&p===geo.panels[1])x=p.x-geo.k*W+m;drawFooter(ctx,p.side,x,fy(p),'left',inkAt(p.side,fy(p)),u,f,sw);
         if(p.y+p.h>=H-1)dotsLeft=Math.max(dotsLeft,x+footLabelWidth(ctx,p.side,u,f));}
     }else{
       const y=H-m*.95-u*1.2;
-      drawFooter(ctx,'day',m,y,'left',bestInkFor(bgAt(m+u*8,y)),u,f,sw);
-      if(!fivePal)drawFooter(ctx,'night',W-m,y,'right',bestInkFor(bgAt(W-m-u*8,y)),u,f,sw);
-      else if(S.sideLabels)drawFooter(ctx,'night',m+footLabelWidth(ctx,'day',u,f),y,'left',bestInkFor(bgAt(m+u*20,y)),u,f,false);
-      dotsLeft=m+footLabelWidth(ctx,'day',u,f)+(fivePal?footLabelWidth(ctx,'night',u,f):0);
+      drawFooter(ctx,A,m,y,'left',bestInkFor(bgAt(m+u*8,y)),u,f,sw);
+      if(!fivePal)drawFooter(ctx,B,W-m,y,'right',bestInkFor(bgAt(W-m-u*8,y)),u,f,sw);
+      else if(S.sideLabels)drawFooter(ctx,B,m+footLabelWidth(ctx,A,u,f),y,'left',bestInkFor(bgAt(m+u*20,y)),u,f,false);
+      dotsLeft=m+footLabelWidth(ctx,A,u,f)+(fivePal?footLabelWidth(ctx,B,u,f):0);
     }
     if(fivePal){
       const y=H-m*.95-u*1.2,x=W-m;
       let ink;
       if(geo.kind==='single')ink=inkAt(singleSide,y);
-      else if(geo.kind==='split')ink=inkAt('night',y);
+      else if(geo.kind==='split')ink=inkAt(geo.panels[1].side,y);
       else ink=bestInkFor(bgAt(x-u*10,y));
       drawDots(ctx,S.five,x,y,'right',ink,u,x-dotsLeft-u*2);
     }
@@ -1173,6 +1179,8 @@ $('#selDone').addEventListener('click',()=>{if(S.scaleMode==='all')setScaleMode(
 function syncLayoutUI(){
   $$('#layouts button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.layout===S.layout)));
   $('#grpSingle').hidden=!isSingle(S.layout);
+  $('#grpOrder').hidden=isSingle(S.layout);
+  $('#exportPair').textContent=isSingle(S.layout)?'日間、夜間各存一張':'日夜、夜日各存一張';
   $('#grpDir').hidden=!(S.layout==='split'||S.layout==='diagonal');
   $('#grpTilt').hidden=!(S.layout==='single-stagger'||S.layout==='single-overlap');
   $('#tiltAlt').hidden=S.layout==='single-overlap';
@@ -1384,10 +1392,14 @@ $('#exportOne').addEventListener('click',()=>busy(async()=>{
   showResult([{blob:r.blob,name}]);status(`已產生 ${r.w}×${r.h} PNG。`);
 }));
 $('#exportPair').addEventListener('click',()=>busy(async()=>{
-  const lay=isSingle(S.layout)?S.layout:'single-even';const out=[];
-  for(const side of['day','night']){if(!S.shots[side].length)continue;
-    const r=await renderBlob({layout:lay,side});const name=`${safeName(S.title)}-${side==='day'?'日間':'夜間'}-${r.w}x${r.h}.png`;
-    out.push({blob:r.blob,name});}
+  const out=[];
+  if(isSingle(S.layout)){
+    for(const side of['day','night']){if(!S.shots[side].length)continue;
+      const r=await renderBlob({layout:S.layout,side});out.push({blob:r.blob,name:`${safeName(S.title)}-${side==='day'?'日間':'夜間'}-${r.w}x${r.h}.png`});}
+  }else{
+    for(const order of['dn','nd']){
+      const r=await renderBlob({order});out.push({blob:r.blob,name:`${safeName(S.title)}-${order==='dn'?'日夜':'夜日'}-${r.w}x${r.h}.png`});}
+  }
   const q=currentQuality();
   showResult(out,`長按圖片選「儲存到照片」，或按下方按鈕一次存進相簿。尺寸 ${q.w}×${q.h}。`);
   status(`已產生 ${out.length} 張，尺寸 ${q.w}×${q.h}。`);
@@ -1452,7 +1464,7 @@ if(window.LoviaStudio){
 
 /* ---------------- init ---------------- */
 async function init(){
-  syncQuality();syncColorInputs();setSeg('frame',S.frame);setSeg('bg',S.bg);setSeg('align',S.align);setSeg('tilt',S.tilt);setSeg('palette',S.palette);setSeg('scaleMode',S.scaleMode);
+  syncQuality();syncColorInputs();setSeg('frame',S.frame);setSeg('bg',S.bg);setSeg('align',S.align);setSeg('tilt',S.tilt);setSeg('palette',S.palette);setSeg('order',S.order);setSeg('scaleMode',S.scaleMode);
   renderFonts();syncLayoutUI();
   await Promise.race([document.fonts.ready,new Promise(r=>setTimeout(r,1500))]);
   await loadSamples();renderLists();syncSel();req();
