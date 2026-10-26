@@ -104,6 +104,11 @@
   let importedFontFace=null;
   let fontImportVersion=0;
   const backdropBuffer = document.createElement('canvas');
+  // Day/night: the live image variables above hold the group being edited; the other group waits here.
+  const DN_LAYOUTS=['pairs','split','diagonal','alternate'];
+  let activeGroup='day';
+  const groupStore={night:{images:[null],userObjectURLs:[null],imageOffsets:[{x:0,y:0}],imageScales:[100],selectedImageIndex:0}};
+  let nightToneCache={key:'',colors:null};
 
   function loadImage(src) {
     return new Promise((resolve, reject) => {
@@ -363,8 +368,37 @@
     if (Math.sqrt(rgb(accent).reduce((sum, value, i) => sum + (value - rgb(dark)[i]) ** 2, 0)) < 74) accent = '#97523F';
     return { light, dark, medium, accent };
   }
+  function isDayNightLayout() { return DN_LAYOUTS.includes(layoutMode); }
+  function groupOf(name) {
+    return name===activeGroup ? {images,userObjectURLs,imageOffsets,imageScales} : groupStore[name];
+  }
+  function syncGroupButtons() {
+    document.querySelectorAll('[data-group]').forEach(button=>{
+      const active=button.dataset.group===activeGroup;
+      button.classList.toggle('active',active);
+      button.setAttribute('aria-pressed',String(active));
+    });
+    const night=groupOf('night').images.filter(Boolean).length, day=groupOf('day').images.filter(Boolean).length;
+    const dayCount=document.getElementById('dayGroupCount'), nightCount=document.getElementById('nightGroupCount');
+    if(dayCount)dayCount.textContent=day?day+' 张':'尚未添加';
+    if(nightCount)nightCount.textContent=night?night+' 张':'尚未添加';
+  }
+  function setActiveGroup(name) {
+    if(!['day','night'].includes(name)||name===activeGroup){syncGroupButtons();return;}
+    groupStore[activeGroup]={images,userObjectURLs,imageOffsets,imageScales,selectedImageIndex};
+    const g=groupStore[name];delete groupStore[name];
+    images=g.images;userObjectURLs=g.userObjectURLs;imageOffsets=g.imageOffsets;imageScales=g.imageScales;selectedImageIndex=g.selectedImageIndex||0;
+    activeGroup=name;
+    updateSelectedScaleUI();updateSizeMessage();refreshAutoColors();syncGroupButtons();scheduleDraw();
+  }
+  function nightTone() {
+    const list=groupOf('night').images.filter(Boolean);
+    const key=list.map(img=>img.src).join('|');
+    if(nightToneCache.key!==key||!nightToneCache.colors)nightToneCache={key,colors:analyzeColors(list)};
+    return nightToneCache.colors;
+  }
   function refreshAutoColors() {
-    derivedColors = analyzeColors(images);
+    derivedColors = analyzeColors(isDayNightLayout() ? groupOf('day').images : images);
     if (!gradientCustomized) setAutoGradient(false);
     if (currentTheme === 'light' || currentTheme === 'dark' || currentTheme === 'glass') scheduleDraw();
   }
@@ -520,6 +554,67 @@
     return {x,y,w,h};
   }
 
+  function dayNightGeometry() {
+    const W=CANVAS_W,H=CANVAS_H,k=layoutMode==='diagonal'?.07:0;
+    const day=k?[[0,0],[W*(.5+k),0],[W*(.5-k),H],[0,H]]:[[0,0],[W/2,0],[W/2,H],[0,H]];
+    const night=k?[[W*(.5+k),0],[W,0],[W,H],[W*(.5-k),H]]:[[W/2,0],[W,0],[W,H],[W/2,H]];
+    return {k,day,night};
+  }
+  function tracePolygon(points) { ctx.beginPath(); points.forEach(([x,y],i)=>i?ctx.lineTo(x,y):ctx.moveTo(x,y)); ctx.closePath(); }
+  function finishPlacement(group,index,p) {
+    // same zoom, offset and bounds as the classic layouts
+    const g=groupOf(group);
+    const zoom=(g.imageScales[index] ?? 100)/100;
+    let {x,y,w,h}=p;
+    const centerX=x+w/2,centerY=y+h/2;
+    w*=zoom;h*=zoom;x=centerX-w/2;y=centerY-h/2;
+    const offset=g.imageOffsets[index]||{x:0,y:0};
+    x=Math.max(114,Math.min(CANVAS_W-114-w,x+offset.x));
+    y=Math.max(315,Math.min(CANVAS_H-265-h,y+offset.y));
+    return {x,y,w,h};
+  }
+  function placeRow(items, box, gap) {
+    // one row, equal heights, never enlarged past the screenshot's own pixels
+    if(!items.length)return [];
+    const aspect=it=>it.a;
+    const total=items.reduce((sum,it)=>sum+aspect(it),0);
+    let h=Math.min(box.h,(box.w-gap*(items.length-1))/total,...items.map(it=>it.maxH));
+    const rowW=items.reduce((sum,it)=>sum+aspect(it)*h,0)+gap*(items.length-1);
+    let x=box.x+(box.w-rowW)/2;const y=box.y+(box.h-h)/2;
+    return items.map(it=>{const w=aspect(it)*h;const r={it,x,y,w,h};x+=w+gap;return r;});
+  }
+  function dayNightPlacements() {
+    const areaX=170,areaW=CANVAS_W-340,areaY=330,areaH=CANVAS_H-655;
+    const entry=(group,image,index)=>({group,image,index,a:image.naturalWidth/image.naturalHeight,maxH:image.naturalHeight});
+    const list=group=>groupOf(group).images.map((img,i)=>img?entry(group,img,i):null).filter(Boolean);
+    const day=list('day'),night=list('night');
+    const out=[];
+    if(layoutMode==='split'||layoutMode==='diagonal'){
+      const {k}=dayNightGeometry();
+      const inner=70+k*CANVAS_W*.75;
+      for(const [items,x0,x1] of [[day,areaX,CANVAS_W/2-inner],[night,CANVAS_W/2+inner,areaX+areaW]]){
+        for(const r of placeRow(items,{x:x0,y:areaY,w:x1-x0,h:areaH},items.length>3?36:60))out.push({...r.it,p:r});
+      }
+    } else if(layoutMode==='alternate'){
+      const seq=[];for(let i=0;i<Math.max(day.length,night.length);i++){if(day[i])seq.push(day[i]);if(night[i])seq.push(night[i]);}
+      for(const r of placeRow(seq,{x:areaX,y:areaY,w:areaW,h:areaH},seq.length>6?30:44))out.push({...r.it,p:r});
+    } else { // pairs: the night version peeks out behind the day version
+      const OX=.2,OY=.075,units=[];
+      for(let i=0;i<Math.max(day.length,night.length);i++){
+        const d=day[i],n=night[i],front=d||n;
+        units.push({d,n,a:d&&n?front.a*(1+OX)/(1+OY):front.a,maxH:(d&&n?Math.min(d.maxH,n.maxH):front.maxH)*(d&&n?1+OY:1)});
+      }
+      for(const r of placeRow(units,{x:areaX,y:areaY,w:areaW,h:areaH},units.length>3?50:80)){
+        const {d,n}=r.it;
+        if(d&&n){const fw=r.w/(1+OX),fh=r.h/(1+OY);
+          out.push({...n,p:{x:r.x+fw*OX,y:r.y,w:fw,h:fh}});
+          out.push({...d,p:{x:r.x,y:r.y+fh*OY,w:fw,h:fh}});
+        } else {const one=d||n;out.push({...one,p:{x:r.x,y:r.y,w:r.w,h:r.h}});}
+      }
+    }
+    return out.map(item=>({...item,p:finishPlacement(item.group,item.index,{x:item.p.x,y:item.p.y,w:item.p.w,h:item.p.h})}));
+  }
+
   function drawFittedImage(image, p) {
     ctx.fillStyle = '#f6f5ef';
     ctx.fillRect(p.x, p.y, p.w, p.h);
@@ -577,7 +672,7 @@
   }
 
   function setLayout(key) {
-    if (!['even','stagger','overlap','focus'].includes(key)) return;
+    if (!['even','stagger','overlap','focus',...DN_LAYOUTS].includes(key)) return;
     layoutMode = key;
     refs.layoutButtons.forEach(button=>{
       const selected=button.dataset.layout===key;
@@ -586,6 +681,7 @@
     });
     document.getElementById('directionPanel').hidden = !['stagger','overlap'].includes(key);
     resetPositions(false);
+    refreshAutoColors();
     scheduleDraw();
   }
   function setLayoutDirection(key) {
@@ -694,6 +790,8 @@
       }
     }
 
+    if (isDayNightLayout()) { drawDayNightPoster(theme,line); return; }
+
     const count = images.length;
     lastPlacements=images.map((image,i)=>imagePlacement(image,i,count));
     images.forEach((image,i) => {
@@ -717,6 +815,52 @@
     }
     drawTrackedText(refs.date.value || DEFAULT_TEXT.date,3421,CANVAS_H-121,
       {color:theme.ink,size:Number(refs.dateSize.value),minSize:16,tracking:7,maxWidth:900,align:'right'});
+  }
+
+  function drawPosterText(ink) {
+    drawTrackedText(refs.name.value || DEFAULT_TEXT.name,179,175,
+      {color:ink,size:Number(refs.titleSize.value),minSize:18,tracking:5,maxWidth:1670,bold:true,kinghwa:true});
+    drawTrackedText('AUTHOR / '+(refs.author.value || DEFAULT_TEXT.author),3421,175,
+      {color:ink,size:Number(refs.authorSize.value),minSize:18,tracking:8,maxWidth:1430,align:'right'});
+    const message=refs.footerText.value.trim();
+    if (message) {
+      drawTrackedText(message,3421,CANVAS_H-190,
+        {color:ink,size:Number(refs.messageSize.value),minSize:15,tracking:4,maxWidth:1450,align:'right'});
+    }
+    drawTrackedText(refs.date.value || DEFAULT_TEXT.date,3421,CANVAS_H-121,
+      {color:ink,size:Number(refs.dateSize.value),minSize:16,tracking:7,maxWidth:900,align:'right'});
+  }
+  function drawDayNightPoster(theme,line) {
+    const halves=layoutMode==='split'||layoutMode==='diagonal';
+    let nightInk=theme.ink;
+    if(halves){
+      // the night half takes its tone from the night screenshots
+      const geo=dayNightGeometry();
+      const tone=nightTone();
+      const nightBg=currentTheme==='dark'?mixedColor(tone.dark,'#0E1210',.25):tone.dark;
+      ctx.save();tracePolygon(geo.night);ctx.clip();
+      ctx.globalAlpha=(currentTheme==='image'||currentTheme==='glass')?.88:1;
+      ctx.fillStyle=nightBg;ctx.fillRect(0,0,CANVAS_W,CANVAS_H);
+      ctx.restore();
+      nightInk=luminance(nightBg)<125?'#F1F0E7':'#2F3A31';
+    }
+    const placed=dayNightPlacements();
+    lastPlacements=images.map(()=>null);
+    for(const item of placed){
+      drawAdaptiveFrame(item.p,line,theme);drawFittedImage(item.image,item.p);
+      if(item.group===activeGroup)lastPlacements[item.index]=item.p;
+    }
+    if(halves){
+      const geo=dayNightGeometry();
+      ctx.save();tracePolygon(geo.day);ctx.clip();drawPosterText(theme.ink);ctx.restore();
+      ctx.save();tracePolygon(geo.night);ctx.clip();drawPosterText(nightInk);ctx.restore();
+    } else drawPosterText(theme.ink);
+    sortedColors(currentColors).forEach((color,i) => {
+      const x=200+67*i,y=CANVAS_H-160;
+      ctx.beginPath();ctx.arc(x,y,21,0,Math.PI*2);
+      ctx.fillStyle=color;ctx.fill();
+      setStroke(line,2);ctx.stroke();
+    });
   }
 
   function syncPaletteInputs() {
@@ -862,6 +1006,7 @@
     refs.info.textContent=images.some(Boolean)?images.length+' 张图片'+(same?'，均为 942 × 2048 px':'：'+dims.join(' / '))+
       ' · 图片完整保留，可在海报中拖动位置':'尚未添加图片，请选择上方“逐张添加”或“一键添加”';
     renderTiles();
+    syncGroupButtons();
   }
 
   async function loadUserFile(file) {
@@ -972,6 +1117,9 @@
   }
 
   async function resetAll() {
+    if(activeGroup!=='day')setActiveGroup('day');
+    (groupStore.night?.userObjectURLs||[]).forEach(url=>url&&URL.revokeObjectURL(url));
+    groupStore.night={images:[null],userObjectURLs:[null],imageOffsets:[{x:0,y:0}],imageScales:[100],selectedImageIndex:0};
     selectGlobalFont('kinghwa');
     refs.name.value=DEFAULT_TEXT.name;
     refs.author.value=DEFAULT_TEXT.author;
@@ -1155,6 +1303,7 @@
       ref.addEventListener('input',()=>{document.getElementById(valueId).textContent=ref.value;scheduleDraw();});
     }
     document.querySelectorAll('[data-scale-mode]').forEach(button=>button.addEventListener('click',()=>setScaleMode(button.dataset.scaleMode)));
+    document.querySelectorAll('[data-group]').forEach(button=>button.addEventListener('click',()=>setActiveGroup(button.dataset.group)));
     refs.imageScale.addEventListener('input',()=>applyImageScale(Number(refs.imageScale.value)));
     refs.imageScaleNumber.addEventListener('input',()=>{
       const raw=refs.imageScaleNumber.value.trim();
@@ -1406,6 +1555,16 @@
     }
     document.fonts.load('bold 61px "KingHwaOldSong"').then(scheduleDraw).catch(()=>{});
   }
+
+  window.LoviaClassicAPI={
+    imageSources(name){return groupOf(name).images.filter(Boolean).map(img=>img.src);},
+    async loadFiles(name,files){
+      const back=activeGroup;setActiveGroup(name);
+      await importBatch(files);
+      setActiveGroup(back);
+    },
+    setLayout(key){setLayout(key);},
+  };
 
   initialize();
 })();

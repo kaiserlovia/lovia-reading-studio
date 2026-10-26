@@ -118,6 +118,10 @@
               <button type="button" class="ratio-option" data-ratio="1:1" aria-pressed="false"><strong>1:1</strong><small>方形画报</small></button>
             </div>
             </div>
+            <div class="scale-mode-switch group-switch" role="group" aria-label="截图分组">
+              <button type="button" data-group="day" class="active" aria-pressed="true"><strong>日间组</strong><small id="dayGroupCount">尚未添加</small></button>
+              <button type="button" data-group="night" aria-pressed="false"><strong>夜间组</strong><small id="nightGroupCount">尚未添加</small></button>
+            </div>
             <p class="section-note">可选 1–5 张，支持多选或逐张添加。点击缩略图可替换，点击 × 可移除。</p>
             <div class="upload-actions">
               <button class="batch-upload-button" id="batchUploadButton" type="button"><span class="upload-action-icon">▦</span><span class="upload-action-copy"><strong>一键添加</strong><small>同时选择 1–5 张</small></span></button>
@@ -208,7 +212,12 @@
               <button type="button" class="layout-option" data-layout="stagger" aria-pressed="false"><span class="layout-sample layout-stagger"><i></i><i></i><i></i></span><strong>高低错落</strong></button>
               <button type="button" class="layout-option" data-layout="overlap" aria-pressed="false"><span class="layout-sample layout-overlap"><i></i><i></i><i></i></span><strong>交叠层叠</strong></button>
               <button type="button" class="layout-option" data-layout="focus" aria-pressed="false"><span class="layout-sample layout-focus"><i></i><i></i><i></i></span><strong>中央突出</strong></button>
+              <button type="button" class="layout-option" data-layout="pairs" aria-pressed="false"><span class="layout-sample layout-pairs"><i></i><i></i><i></i><i></i><i></i><i></i></span><strong>日夜成对</strong></button>
+              <button type="button" class="layout-option" data-layout="split" aria-pressed="false"><span class="layout-sample layout-split"><i></i><i></i><i></i><i></i></span><strong>日夜对开</strong></button>
+              <button type="button" class="layout-option" data-layout="diagonal" aria-pressed="false"><span class="layout-sample layout-diagonal"><i></i><i></i><i></i><i></i></span><strong>日夜斜切</strong></button>
+              <button type="button" class="layout-option" data-layout="alternate" aria-pressed="false"><span class="layout-sample layout-alternate"><i></i><i></i><i></i><i></i><i></i><i></i></span><strong>日夜交错</strong></button>
             </div>
+            <p class="section-note">后四种会同时放入日间组和夜间组的截图。在「展示图片」切换到夜间组即可添加夜间截图；拖动和缩放作用于当前选中的那一组。</p>
             <div class="direction-panel" id="directionPanel" hidden>
               <span>倾斜方向</span>
               <div class="direction-options">

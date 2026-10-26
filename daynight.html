@@ -1425,6 +1425,8 @@ if(window.LoviaStudio){
     async apply(d){
       if(d.text){for(const k of['title','author','date','message'])if(typeof d.text[k]==='string')setText(k,d.text[k]);}
       const imgs=d.images||{};let any=false;
+      const incoming=(imgs.day||[]).length+(imgs.night||[]).length;
+      if(incoming)status(`正在帶入 ${incoming} 張截圖…`);
       for(const side of['day','night']){
         const list=(imgs[side]||[]).slice(0,MAX_PER_SIDE);if(!list.length)continue;any=true;
         S.shots[side]=[];
@@ -1433,6 +1435,7 @@ if(window.LoviaStudio){
       }
       if(any)for(const side of['day','night'])if(S.shots[side].every(s=>s.sample))S.shots[side]=[];
       refreshDerived();syncColorInputs();renderLists();syncSel();req();
+      if(incoming)status(`已帶入 ${incoming} 張截圖。`);
     },
   });
 }
