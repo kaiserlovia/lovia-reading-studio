@@ -1,0 +1,1453 @@
+<!doctype html>
+<html lang="zh-Hant" data-studio-page="daynight" data-src-lang="tc">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>Day Night · Lovia Reading Studio</title>
+<meta name="description" content="Day Night：把閱讀主題的日間與夜間截圖放進同一張畫報，自動取色，高清 PNG 匯出。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Huninn&family=Iansui&family=LXGW+WenKai+TC:wght@400;700&family=Noto+Sans+TC:wght@400;700&family=Noto+Serif+TC:wght@500;700&display=swap">
+<style>
+/* Layout: poster stage on the left (sticky), control sheet on the right; on phones the stage pins to the top with tabs under it. */
+:root{
+  --paper:#EDF0F2;
+  --sheet:#F8F9FA;
+  --ink:#1D2431;
+  --muted:#5E6777;
+  --line:#D3D9E0;
+  --brass:#946524;
+  --brass-soft:#F0E5D2;
+  --stage:#E1E5E9;
+  --focus:#2F5D9A;
+  --btn-bg:#1B2232;
+  --btn-fg:#EEE9DC;
+  --f-display:"LXGW WenKai TC","Noto Serif TC","Songti TC",serif;
+  --f-ui:-apple-system,BlinkMacSystemFont,"PingFang TC","Noto Sans TC","Microsoft JhengHei",sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#10151F; --sheet:#171D29; --ink:#E3E7ED; --muted:#99A2B2; --line:#2A3344;
+    --brass:#D5A458; --brass-soft:#382D1C; --stage:#0B0F17; --focus:#86ADE3;
+    --btn-bg:#EAE4D3; --btn-fg:#151B27; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#10151F; --sheet:#171D29; --ink:#E3E7ED; --muted:#99A2B2; --line:#2A3344;
+  --brass:#D5A458; --brass-soft:#382D1C; --stage:#0B0F17; --focus:#86ADE3;
+  --btn-bg:#EAE4D3; --btn-fg:#151B27; color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{background:var(--paper)}
+body{color:var(--ink);font-family:var(--f-ui);font-size:15px;line-height:1.55;-webkit-font-smoothing:antialiased}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--paper)}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+.vh{position:absolute!important;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+/* ---------- top bar (matches the Lovia page) ---------- */
+.topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:64px;background:var(--sheet);border-bottom:1px solid var(--line);padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:10px;
+  --ss-ink:var(--ink);--ss-line:var(--line);--ss-bg:var(--paper);--ss-active:var(--btn-bg);--ss-active-ink:var(--btn-fg);--ss-focus:var(--focus)}
+.brand{display:flex;align-items:center;gap:12px;white-space:nowrap;min-width:0}
+.brand-mark{display:flex;align-items:center;justify-content:center;width:38px;height:38px;border:1px solid var(--muted);border-radius:50%;font:italic 24px Georgia,serif;letter-spacing:-4px;padding-right:5px;flex:none}
+.brand-mark span{color:var(--brass)}
+.brand-word{font:500 11px Georgia,serif;letter-spacing:2px;overflow:hidden;text-overflow:ellipsis}
+.brand-word i{display:inline-block;height:12px;border-left:1px solid var(--line);vertical-align:middle;margin:0 10px}
+@media(max-width:580px){.brand-word{font-size:9px;letter-spacing:1px}.brand-word .bw-long{display:none}.brand-word i{margin:0 6px}.brand-mark{width:32px;height:32px;font-size:20px}}
+
+/* ---------- app ---------- */
+.app{display:block}
+.stage-wrap{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--paper);padding-top:10px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.stage{position:relative;height:min(44svh,440px,calc((100vw - 32px) / var(--ar,1.333) + 28px));display:grid;place-items:center;background:var(--stage);border-radius:14px;overflow:hidden}
+#cv{display:block;touch-action:none;box-shadow:0 1px 2px rgba(15,20,30,.12),0 10px 30px rgba(15,20,30,.14);cursor:grab}
+#cv.dragging{cursor:grabbing}
+.stage-meta{position:absolute;left:10px;bottom:8px;font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums;pointer-events:none}
+.tabs{display:flex;gap:2px;overflow-x:auto;scrollbar-width:none;border-bottom:1px solid var(--line);margin-top:6px}
+.tabs::-webkit-scrollbar{display:none}
+.tabs button{flex:1 0 auto;background:none;border:0;padding:10px 12px 9px;font-size:14px;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-1px;white-space:nowrap}
+.tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--brass);font-weight:600}
+
+.panel{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:18px 48px}
+.pane:not(.is-active){display:none}
+.pane{display:grid;gap:22px}
+.pane-title{font-family:var(--f-display);font-weight:700;font-size:22px;margin:0;line-height:1.2}
+.group{display:grid;gap:10px}
+.group h3{font-size:13px;font-weight:600;margin:0;color:var(--muted)}
+.hint{margin:0;font-size:13px;color:var(--muted);text-wrap:pretty}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+
+/* segmented + chips */
+.seg{display:flex;flex-wrap:wrap;gap:6px}
+.seg button,.chip{border:1px solid var(--line);background:var(--sheet);border-radius:8px;padding:7px 12px;font-size:14px;line-height:1.3}
+.seg button[aria-pressed="true"],.chip[aria-pressed="true"]{background:var(--btn-bg);color:var(--btn-fg);border-color:var(--btn-bg)}
+
+/* layout picker */
+.layouts{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px}
+.layouts button{display:grid;gap:6px;justify-items:center;padding:10px 6px 8px;border:1px solid var(--line);background:var(--sheet);border-radius:10px;font-size:13px}
+.layouts button svg{width:64px;height:46px;display:block;border-radius:4px}
+.layouts button[aria-pressed="true"]{border-color:var(--brass);box-shadow:inset 0 0 0 1px var(--brass);background:var(--brass-soft)}
+.ratios{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.ratios button{display:grid;gap:4px;justify-items:center;align-content:end;padding:10px 4px 8px;border:1px solid var(--line);background:var(--sheet);border-radius:10px;font-size:13px;min-height:96px}
+.ratios .shape{border:1.5px solid currentColor;border-radius:2px;opacity:.75}
+.ratios small{font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums}
+.ratios button[aria-pressed="true"]{border-color:var(--brass);box-shadow:inset 0 0 0 1px var(--brass);background:var(--brass-soft)}
+
+/* sliders */
+.slider{display:grid;grid-template-columns:5.5em minmax(0,1fr) 3.4em;align-items:center;gap:10px;font-size:14px}
+.slider input{width:100%;accent-color:var(--brass)}
+.slider output{text-align:right;font-variant-numeric:tabular-nums;color:var(--muted);font-size:13px}
+
+/* fields */
+.field{display:grid;gap:5px;font-size:14px}
+.field input[type=text]{width:100%;border:1px solid var(--line);background:var(--sheet);border-radius:8px;padding:9px 11px;font-size:16px}
+.toggle{display:flex;align-items:center;gap:10px;font-size:14px}
+.toggle input{width:18px;height:18px;accent-color:var(--brass)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+
+/* shots */
+.sides{display:grid;grid-template-columns:1fr;gap:16px}
+.side{border:1px solid var(--line);border-radius:12px;padding:12px;display:grid;gap:10px;background:var(--sheet)}
+.side-head{display:flex;justify-content:space-between;align-items:baseline}
+.side-head h3{margin:0;font-family:var(--f-display);font-size:18px;font-weight:700}
+.side-head .count{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+.side .swatch-dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:1px;border:1px solid var(--line)}
+.shots{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.shots li{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:10px;align-items:center;padding:6px;border-radius:9px;border:1px solid transparent}
+.shots li.sel{border-color:var(--brass);background:var(--brass-soft)}
+.shots canvas{display:block;border-radius:5px;border:1px solid var(--line);cursor:pointer}
+.shots input{width:100%;min-width:0;border:1px solid var(--line);background:var(--paper);border-radius:7px;padding:6px 8px;font-size:15px}
+.shot-tools{display:flex;gap:4px}
+.icon-btn{width:32px;height:32px;display:grid;place-items:center;border:1px solid var(--line);background:var(--paper);border-radius:7px;font-size:15px;line-height:1;padding:0}
+.tag{font-size:11px;padding:1px 6px;border-radius:4px;background:var(--brass-soft);color:var(--brass);margin-left:6px;vertical-align:1px}
+.add{display:flex;justify-content:center;align-items:center;gap:6px;border:1.5px dashed var(--line);border-radius:9px;padding:10px;font-size:14px;cursor:pointer;color:var(--ink)}
+.add:hover{border-color:var(--brass)}
+.add input{position:absolute;width:1px;height:1px;opacity:0}
+.add:focus-within{outline:2px solid var(--focus);outline-offset:2px}
+.selbox{border:1px solid var(--brass);background:var(--brass-soft);border-radius:12px;padding:12px;display:grid;gap:10px}
+.selbox p{margin:0;font-size:14px}
+
+/* colours */
+.colors{display:grid;gap:8px}
+.color-row{display:grid;grid-template-columns:3.4em 44px minmax(0,1fr);gap:10px;align-items:center;font-size:14px}
+.color-row input[type=color]{width:44px;height:34px;border:1px solid var(--line);border-radius:8px;padding:2px;background:var(--sheet)}
+.color-row input[type=text]{width:100%;min-width:0;border:1px solid var(--line);background:var(--sheet);border-radius:8px;padding:7px 10px;font-size:15px;font-variant-numeric:tabular-nums;text-transform:uppercase}
+
+/* fonts */
+.fonts{display:grid;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:8px}
+.fonts button{border:1px solid var(--line);background:var(--sheet);border-radius:10px;padding:10px 8px;display:grid;gap:2px;justify-items:start;text-align:left}
+.fonts button b{font-size:20px;font-weight:400;line-height:1.25}
+.fonts button span{font-size:12px;color:var(--muted)}
+.fonts button[aria-pressed="true"]{border-color:var(--brass);box-shadow:inset 0 0 0 1px var(--brass);background:var(--brass-soft)}
+
+/* buttons */
+.btn{border:0;border-radius:10px;padding:13px 18px;font-size:15px;font-weight:600;background:var(--btn-bg);color:var(--btn-fg)}
+.btn.ghost{background:var(--sheet);color:var(--ink);border:1px solid var(--line);font-weight:500}
+.btn.small{padding:8px 12px;font-size:14px;font-weight:500}
+.btn:disabled{opacity:.5;cursor:progress}
+.stack{display:grid;gap:8px}
+.status{min-height:1.5em;font-size:13px;color:var(--muted);margin:0}
+.foot{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 28px;font-size:12px;color:var(--muted)}
+
+/* result sheet */
+.result{-webkit-user-select:none;user-select:none;position:fixed;inset:0;z-index:20;background:rgba(10,13,20,.72);display:grid;place-items:center;padding:max(16px,env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) max(16px,env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+.result-card{background:var(--sheet);border-radius:16px;max-width:720px;width:100%;max-height:100%;overflow:auto;padding:16px;display:grid;gap:12px}
+.result-card h2{margin:0;font-family:var(--f-display);font-size:20px}
+.result-card p{margin:0;font-size:14px;color:var(--muted)}
+.result-imgs{display:grid;gap:10px}
+.result-imgs img{width:100%;height:auto;border-radius:8px;border:1px solid var(--line);-webkit-touch-callout:default;-webkit-user-select:none;user-select:none;pointer-events:auto}
+
+@media (min-width:640px){ .sides{grid-template-columns:1fr 1fr} }
+@media (min-width:960px){
+  .topbar{min-height:72px;padding-left:max(24px,env(safe-area-inset-left,0px));padding-right:max(24px,env(safe-area-inset-right,0px))}
+  .app{display:grid;grid-template-columns:minmax(0,1fr) 410px;gap:28px;align-items:start;padding-left:max(24px,env(safe-area-inset-left,0px));padding-right:max(24px,env(safe-area-inset-right,0px));padding-block:20px 0}
+  .stage-wrap{top:calc(env(safe-area-inset-top,0px) + 16px);padding:0}
+  .stage{height:calc(100svh - 120px);min-height:420px;border-radius:18px}
+  .tabs{display:none}
+  .panel{padding:0 0 48px}
+  .pane,.pane:not(.is-active){display:grid}
+  .pane + .pane{border-top:1px solid var(--line);padding-top:26px;margin-top:30px}
+  .sides{grid-template-columns:1fr}
+  .foot{padding-left:max(24px,env(safe-area-inset-left,0px))}
+}
+@media (prefers-reduced-motion:no-preference){
+  .seg button,.chip,.layouts button,.ratios button,.fonts button,.tabs button{transition:background-color .15s,border-color .15s,color .15s}
+}
+/* ---------- additions: Lovia features in Day Night ---------- */
+.stage-zoom{position:absolute;right:10px;top:10px;border:1px solid var(--line);background:var(--sheet);color:var(--ink);border-radius:999px;padding:6px 11px;font-size:12px;opacity:.92}
+.add-row{display:grid;grid-template-columns:1fr auto;gap:8px}
+.add-alt{padding-inline:12px;white-space:nowrap}
+.slider-num{grid-template-columns:3.4em minmax(0,1fr) auto}
+.num{display:inline-flex;align-items:center;gap:3px;font-size:13px;color:var(--muted)}
+.num input{width:4.2em;border:1px solid var(--line);background:var(--paper);border-radius:7px;padding:5px 6px;font-size:15px;font-variant-numeric:tabular-nums}
+.muted-note{font-size:12px;color:var(--muted);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.add .muted-note{margin-left:8px}
+.date-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px}
+.date-row input,.plain-input{border:1px solid var(--line);background:var(--sheet);border-radius:8px;padding:9px 11px;font-size:16px;width:100%;min-width:0}
+.five{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}
+.five-cell{display:grid;gap:4px;justify-items:center;font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums}
+.five-cell input{width:100%;height:36px;border:1px solid var(--line);border-radius:8px;padding:2px;background:var(--sheet)}
+.seg-col{display:grid;grid-template-columns:repeat(auto-fill,minmax(132px,1fr))}
+.seg-col button{display:grid;gap:2px;text-align:left}
+.seg-col button b{font-weight:600;font-size:14px}
+.seg-col button small{font-size:11.5px;opacity:.75;font-variant-numeric:tabular-nums}
+.large-card{max-width:min(1100px,100%);height:100%;grid-template-rows:auto minmax(0,1fr)}
+.large-head{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:8px}
+.large-head output{font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums;min-width:3.2em;text-align:right}
+.large-box{overflow:auto;border:1px solid var(--line);border-radius:10px;background:var(--stage);min-height:0}
+.large-box img{display:block;max-width:none;height:auto;margin:0 auto}
+.hsv-card{max-width:320px;justify-items:center}
+#hsvSquare{width:240px;height:240px;border-radius:10px;touch-action:none;cursor:crosshair}
+.hsv-card .slider{width:100%}
+</style>
+
+<header class="topbar">
+  <div class="brand" aria-label="Lovia Reading Studio · Day Night"><span class="brand-mark" aria-hidden="true">L<span>.</span></span><span class="brand-word"><span class="bw-long">LOVIA READING STUDIO</span><i></i>DAY NIGHT</span></div>
+  <div id="studioShell"></div>
+  <h1 class="vh">Day Night</h1>
+</header>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <linearGradient id="gDN" x1="0" x2="1" y1="0" y2="0"><stop offset=".25" stop-color="#E4E9EC"/><stop offset=".75" stop-color="#1F2738"/></linearGradient>
+  </defs>
+</svg>
+
+<main class="app">
+  <section class="stage-wrap" aria-label="畫報預覽">
+    <div class="stage" id="stage">
+      <canvas id="cv" role="img" aria-label="畫報預覽，可拖動截圖調整位置"></canvas>
+      <span class="stage-meta" id="stageMeta"></span>
+      <button class="stage-zoom" id="openLarge" type="button">⤢ 放大預覽</button>
+    </div>
+    <nav class="tabs" role="tablist" aria-label="設定分頁">
+      <button role="tab" id="tab-shots" aria-controls="pane-shots" aria-selected="true">截圖</button>
+      <button role="tab" id="tab-layout" aria-controls="pane-layout" aria-selected="false">版型</button>
+      <button role="tab" id="tab-color" aria-controls="pane-color" aria-selected="false">色彩</button>
+      <button role="tab" id="tab-text" aria-controls="pane-text" aria-selected="false">文字</button>
+      <button role="tab" id="tab-export" aria-controls="pane-export" aria-selected="false">匯出</button>
+    </nav>
+  </section>
+
+  <div class="panel">
+    <!-- SHOTS -->
+    <section class="pane is-active" id="pane-shots" role="tabpanel" aria-labelledby="tab-shots">
+      <h2 class="pane-title">截圖</h2>
+      <p class="hint">日間、夜間各放 1 到 5 張，順序就是畫報上的順序。點預覽裡的截圖可以拖動位置。</p>
+      <div class="sides">
+        <div class="side" data-side="day">
+          <div class="side-head"><h3>日間</h3><span class="count" id="count-day"></span></div>
+          <ul class="shots" id="list-day"></ul>
+          <div class="add-row">
+            <label class="add"><input type="file" id="file-day" accept="image/*" multiple>＋ 加入日間截圖</label>
+            <label class="add add-alt" title="一次選 1–5 張，取代目前的日間截圖"><input type="file" id="batch-day" accept="image/*" multiple>▦ 一鍵替換</label>
+          </div>
+        </div>
+        <div class="side" data-side="night">
+          <div class="side-head"><h3>夜間</h3><span class="count" id="count-night"></span></div>
+          <ul class="shots" id="list-night"></ul>
+          <div class="add-row">
+            <label class="add"><input type="file" id="file-night" accept="image/*" multiple>＋ 加入夜間截圖</label>
+            <label class="add add-alt" title="一次選 1–5 張，取代目前的夜間截圖"><input type="file" id="batch-night" accept="image/*" multiple>▦ 一鍵替換</label>
+          </div>
+        </div>
+      </div>
+      <input type="file" id="replaceFile" accept="image/*" class="vh" tabindex="-1" aria-hidden="true">
+      <div class="group">
+        <h3>調整大小</h3>
+        <div class="seg" data-seg="scaleMode"><button data-v="single" aria-pressed="true">單張調整</button><button data-v="all" aria-pressed="false">全部調整</button></div>
+      </div>
+      <div class="selbox" id="selbox" hidden>
+        <p id="selText"></p>
+        <div class="slider slider-num"><label for="selScale">大小</label><input type="range" id="selScale" min="20" max="300" step="1" value="100"><span class="num"><input type="number" id="selScaleNum" min="20" max="300" step="1" value="100" aria-label="大小百分比">%</span></div>
+        <div class="row">
+          <button class="btn ghost small" id="selReset">復位</button>
+          <button class="btn ghost small" id="selDone">完成</button>
+        </div>
+      </div>
+      <p class="hint" id="selHint">點選預覽裡的截圖後，可以拖動位置、調整大小（20–300%）。</p>
+      <div class="row">
+        <button class="btn ghost small" id="clearSamples">移除示範截圖</button>
+        <button class="btn ghost small" id="resetPos">全部復位</button>
+      </div>
+      <datalist id="labelOptions"><option value="首頁"><option value="書架"><option value="閱讀頁"><option value="目錄"><option value="筆記"><option value="書籍詳情"><option value="搜尋"></datalist>
+    </section>
+
+    <!-- LAYOUT -->
+    <section class="pane" id="pane-layout" role="tabpanel" aria-labelledby="tab-layout">
+      <h2 class="pane-title">版型</h2>
+      <div class="group">
+        <h3>日夜怎麼同框</h3>
+        <div class="layouts" id="layouts">
+          <button data-layout="pairs" aria-pressed="true"><svg viewBox="0 0 64 46"><rect width="64" height="46" fill="url(#gDN)"/><rect x="13" y="10" width="10" height="21" rx="1.5" fill="#2A3244"/><rect x="10" y="13" width="10" height="21" rx="1.5" fill="#F4F6F7" stroke="#9AA3AD" stroke-width=".6"/><rect x="30" y="10" width="10" height="21" rx="1.5" fill="#2A3244"/><rect x="27" y="13" width="10" height="21" rx="1.5" fill="#F4F6F7" stroke="#9AA3AD" stroke-width=".6"/><rect x="47" y="10" width="10" height="21" rx="1.5" fill="#2A3244"/><rect x="44" y="13" width="10" height="21" rx="1.5" fill="#F4F6F7" stroke="#9AA3AD" stroke-width=".6"/></svg>成對疊放</button>
+          <button data-layout="split" aria-pressed="false"><svg viewBox="0 0 64 46"><rect width="32" height="46" fill="#E4E9EC"/><rect x="32" width="32" height="46" fill="#1F2738"/><rect x="7" y="13" width="8" height="18" rx="1.2" fill="#fff" stroke="#9AA3AD" stroke-width=".6"/><rect x="18" y="13" width="8" height="18" rx="1.2" fill="#fff" stroke="#9AA3AD" stroke-width=".6"/><rect x="38" y="13" width="8" height="18" rx="1.2" fill="#3A4459"/><rect x="49" y="13" width="8" height="18" rx="1.2" fill="#3A4459"/></svg>對開</button>
+          <button data-layout="diagonal" aria-pressed="false"><svg viewBox="0 0 64 46"><polygon points="0,0 38,0 26,46 0,46" fill="#E4E9EC"/><polygon points="38,0 64,0 64,46 26,46" fill="#1F2738"/><rect x="5" y="13" width="8" height="18" rx="1.2" fill="#fff" stroke="#9AA3AD" stroke-width=".6"/><rect x="15" y="13" width="8" height="18" rx="1.2" fill="#fff" stroke="#9AA3AD" stroke-width=".6"/><rect x="41" y="13" width="8" height="18" rx="1.2" fill="#3A4459"/><rect x="51" y="13" width="8" height="18" rx="1.2" fill="#3A4459"/></svg>斜切</button>
+          <button data-layout="alternate" aria-pressed="false"><svg viewBox="0 0 64 46"><rect width="64" height="46" fill="url(#gDN)"/><rect x="5" y="13" width="8" height="18" rx="1.2" fill="#fff" stroke="#9AA3AD" stroke-width=".6"/><rect x="15" y="13" width="8" height="18" rx="1.2" fill="#2A3244"/><rect x="25" y="13" width="8" height="18" rx="1.2" fill="#fff" stroke="#9AA3AD" stroke-width=".6"/><rect x="35" y="13" width="8" height="18" rx="1.2" fill="#2A3244"/><rect x="45" y="13" width="8" height="18" rx="1.2" fill="#fff"/><rect x="55" y="13" width="8" height="18" rx="1.2" fill="#3A4459"/></svg>日夜交錯</button>
+          <button data-layout="single-even" aria-pressed="false"><svg viewBox="0 0 64 46"><rect width="64" height="46" fill="#E4E9EC"/><rect x="12" y="13" width="10" height="21" rx="1.2" fill="#fff" stroke="#9AA3AD" stroke-width=".6"/><rect x="27" y="13" width="10" height="21" rx="1.2" fill="#fff" stroke="#9AA3AD" stroke-width=".6"/><rect x="42" y="13" width="10" height="21" rx="1.2" fill="#fff" stroke="#9AA3AD" stroke-width=".6"/></svg>單面等距</button>
+          <button data-layout="single-stagger" aria-pressed="false"><svg viewBox="0 0 64 46"><rect width="64" height="46" fill="#E4E9EC"/><rect x="12" y="9" width="10" height="21" rx="1.2" fill="#fff" stroke="#9AA3AD" stroke-width=".6"/><rect x="27" y="16" width="10" height="21" rx="1.2" fill="#fff" stroke="#9AA3AD" stroke-width=".6"/><rect x="42" y="9" width="10" height="21" rx="1.2" fill="#fff" stroke="#9AA3AD" stroke-width=".6"/></svg>單面錯落</button>
+          <button data-layout="single-overlap" aria-pressed="false"><svg viewBox="0 0 64 46"><rect width="64" height="46" fill="#E4E9EC"/><rect x="14" y="9" width="12" height="24" rx="1.2" fill="#fff" stroke="#9AA3AD" stroke-width=".6"/><rect x="25" y="12" width="12" height="24" rx="1.2" fill="#fff" stroke="#9AA3AD" stroke-width=".6"/><rect x="36" y="15" width="12" height="24" rx="1.2" fill="#fff" stroke="#9AA3AD" stroke-width=".6"/></svg>交疊層疊</button>
+          <button data-layout="single-focus" aria-pressed="false"><svg viewBox="0 0 64 46"><rect width="64" height="46" fill="#E4E9EC"/><rect x="11" y="14" width="9" height="19" rx="1.2" fill="#fff" stroke="#9AA3AD" stroke-width=".6"/><rect x="44" y="14" width="9" height="19" rx="1.2" fill="#fff" stroke="#9AA3AD" stroke-width=".6"/><rect x="25" y="9" width="14" height="28" rx="1.5" fill="#fff" stroke="#9AA3AD" stroke-width=".6"/></svg>中央突出</button>
+        </div>
+      </div>
+      <div class="group" id="grpSingle" hidden>
+        <h3>單面顯示</h3>
+        <div class="seg" data-seg="single"><button data-v="day" aria-pressed="true">日間</button><button data-v="night" aria-pressed="false">夜間</button></div>
+        <p class="hint">單面版型可以在「匯出」一次存下日間、夜間兩張。</p>
+      </div>
+      <div class="group" id="grpTilt" hidden>
+        <h3>傾斜方向</h3>
+        <div class="seg" data-seg="tilt"><button data-v="alt" aria-pressed="true" id="tiltAlt">一高一低</button><button data-v="left-high" aria-pressed="false">左高右低 ↘</button><button data-v="left-low" aria-pressed="false">左低右高 ↗</button></div>
+      </div>
+      <div class="group" id="grpDir" hidden>
+        <h3>分割方向</h3>
+        <div class="seg" data-seg="splitDir"><button data-v="auto" aria-pressed="true">自動</button><button data-v="v" aria-pressed="false">左右</button><button data-v="h" aria-pressed="false">上下</button></div>
+      </div>
+      <div class="group">
+        <h3>畫布比例</h3>
+        <div class="ratios" id="ratios">
+          <button data-ratio="4:3" aria-pressed="true"><span class="shape" style="width:40px;height:30px"></span>4:3 橫版<small>3600×2700</small></button>
+          <button data-ratio="1:1" aria-pressed="false"><span class="shape" style="width:34px;height:34px"></span>1:1 方形<small>3000×3000</small></button>
+          <button data-ratio="3:4" aria-pressed="false"><span class="shape" style="width:30px;height:40px"></span>3:4 小紅書<small>2700×3600</small></button>
+          <button data-ratio="9:16" aria-pressed="false"><span class="shape" style="width:25px;height:44px"></span>9:16 長圖<small>2160×3840</small></button>
+        </div>
+      </div>
+      <div class="group">
+        <h3>截圖</h3>
+        <div class="slider"><label for="size">整體大小</label><input type="range" id="size" min="55" max="115" value="100"><output for="size" id="sizeOut">100%</output></div>
+        <div class="slider"><label for="gap">間距</label><input type="range" id="gap" min="0" max="250" value="100"><output for="gap" id="gapOut">100%</output></div>
+        <div class="slider"><label for="radius">圓角</label><input type="range" id="radius" min="0" max="16" value="6"><output for="radius" id="radiusOut">6</output></div>
+      </div>
+      <div class="group">
+        <h3>外框</h3>
+        <div class="seg" data-seg="frame"><button data-v="none" aria-pressed="false">無框</button><button data-v="line" aria-pressed="false">細線</button><button data-v="shadow" aria-pressed="true">柔影</button><button data-v="phone" aria-pressed="false">手機外框</button><button data-v="corners" aria-pressed="false">四角定位</button></div>
+        <p class="hint">截圖尺寸不同時，外框會跟著各張截圖貼合；所有效果都不裁切原圖。</p>
+      </div>
+      <div class="group">
+        <h3>裝飾線條</h3>
+        <label class="toggle"><input type="checkbox" id="rules">顯示頂部、底部及畫報邊緣細線</label>
+        <div class="color-row" id="ruleColorRow" hidden><span>顏色</span><input type="color" id="ruleColor" value="#000000" aria-label="裝飾線條顏色"><span class="muted-note">線條顏色</span></div>
+        <div class="slider" id="ruleOpRow" hidden><label for="ruleOpacity">透明度</label><input type="range" id="ruleOpacity" min="0" max="100" value="40"><output for="ruleOpacity" id="ruleOpacityOut">40%</output></div>
+      </div>
+    </section>
+
+    <!-- COLOUR -->
+    <section class="pane" id="pane-color" role="tabpanel" aria-labelledby="tab-color">
+      <h2 class="pane-title">色彩</h2>
+      <p class="hint">加入截圖後會自動取色：底色是截圖裡面積最大的顏色，文字色和點綴色從對比與彩度挑出。手動改過的顏色會保留。</p>
+      <div class="group" data-colors="day">
+        <h3>日間色票</h3>
+        <div class="colors">
+          <div class="color-row"><span>底色</span><input type="color" data-c="bg" aria-label="日間底色"><input type="text" data-hex="bg" aria-label="日間底色色碼" maxlength="7" spellcheck="false"></div>
+          <div class="color-row"><span>文字</span><input type="color" data-c="ink" aria-label="日間文字色"><input type="text" data-hex="ink" aria-label="日間文字色色碼" maxlength="7" spellcheck="false"></div>
+          <div class="color-row"><span>點綴</span><input type="color" data-c="accent" aria-label="日間點綴色"><input type="text" data-hex="accent" aria-label="日間點綴色色碼" maxlength="7" spellcheck="false"></div>
+        </div>
+        <div class="row"><button class="btn ghost small" data-reextract="day">從日間截圖重新取色</button></div>
+      </div>
+      <div class="group" data-colors="night">
+        <h3>夜間色票</h3>
+        <div class="colors">
+          <div class="color-row"><span>底色</span><input type="color" data-c="bg" aria-label="夜間底色"><input type="text" data-hex="bg" aria-label="夜間底色色碼" maxlength="7" spellcheck="false"></div>
+          <div class="color-row"><span>文字</span><input type="color" data-c="ink" aria-label="夜間文字色"><input type="text" data-hex="ink" aria-label="夜間文字色色碼" maxlength="7" spellcheck="false"></div>
+          <div class="color-row"><span>點綴</span><input type="color" data-c="accent" aria-label="夜間點綴色"><input type="text" data-hex="accent" aria-label="夜間點綴色色碼" maxlength="7" spellcheck="false"></div>
+        </div>
+        <div class="row"><button class="btn ghost small" data-reextract="night">從夜間截圖重新取色</button></div>
+      </div>
+      <div class="group">
+        <h3>底圖</h3>
+        <div class="seg" data-seg="bg">
+          <button data-v="solid" aria-pressed="true">純色</button><button data-v="light" aria-pressed="false">淡色取色</button><button data-v="dark" aria-pressed="false">深色取色</button><button data-v="custom" aria-pressed="false">自選顏色</button><button data-v="gradient" aria-pressed="false">漸層</button><button data-v="tb" aria-pressed="false">上下漸層</button><button data-v="blur" aria-pressed="false">模糊截圖</button><button data-v="image" aria-pressed="false">圖片底圖</button><button data-v="glass" aria-pressed="false">封面玻璃</button>
+        </div>
+        <p class="hint" id="bgDesc"></p>
+        <div class="color-row" id="customRow" hidden><span>背景</span><input type="color" id="customBg" value="#E9E6DB" aria-label="背景顏色"><input type="text" id="customBgHex" maxlength="7" spellcheck="false" aria-label="背景顏色色碼"></div>
+        <div id="tbRow" class="stack" hidden>
+          <div class="color-row"><span>頂部</span><input type="color" id="tbTop" aria-label="頂部顏色"><span class="muted-note" id="tbTopHex"></span></div>
+          <div class="color-row"><span>底部</span><input type="color" id="tbBottom" aria-label="底部顏色"><span class="muted-note" id="tbBottomHex"></span></div>
+          <div class="row"><button class="btn ghost small" id="tbAuto">從截圖重新取色</button></div>
+        </div>
+        <div class="slider" id="tintRow" hidden><label for="tint">底色覆蓋</label><input type="range" id="tint" min="20" max="92" value="70"><output for="tint" id="tintOut">70%</output></div>
+        <div id="imageRow" class="stack" hidden>
+          <label class="add"><input type="file" id="bgFile" accept="image/*">＋ 選擇底圖圖片<span class="muted-note" id="bgFileName">未選擇</span></label>
+          <div class="slider"><label for="bgBlur">模糊程度</label><input type="range" id="bgBlur" min="0" max="120" value="40"><output for="bgBlur" id="bgBlurOut">40 px</output></div>
+          <div class="slider"><label for="bgOpacity">底圖透明度</label><input type="range" id="bgOpacity" min="0" max="100" value="100"><output for="bgOpacity" id="bgOpacityOut">100%</output></div>
+        </div>
+        <div id="glassRow" class="stack" hidden>
+          <label class="add"><input type="file" id="coverFile" accept="image/*">＋ 上傳書籍封面<span class="muted-note" id="coverFileName">未選擇，暫用各自第一張截圖</span></label>
+          <div class="slider"><label for="glass">朦朧程度</label><input type="range" id="glass" min="20" max="100" value="70"><output for="glass" id="glassOut">70%</output></div>
+        </div>
+        <p class="hint" id="blendNote" hidden>成對疊放和日夜交錯會以日到夜的漸層為底。</p>
+        <div class="slider"><label for="grain">紙紋顆粒</label><input type="range" id="grain" min="0" max="100" value="30"><output for="grain" id="grainOut">30</output></div>
+      </div>
+      <div class="group">
+        <h3>畫報上的色票</h3>
+        <div class="seg" data-seg="palette"><button data-v="three" aria-pressed="true">日夜各三色</button><button data-v="five" aria-pressed="false">五色圓點</button></div>
+        <div id="fiveRow" class="stack" hidden>
+          <p class="hint">由淺至深，從全部截圖取色，可以手動改。</p>
+          <div class="five" id="five"></div>
+          <div class="row"><button class="btn ghost small" id="fiveAuto">重新取色</button></div>
+        </div>
+        <label class="toggle"><input type="checkbox" id="swatches" checked>顯示色票圓點</label>
+        <label class="toggle"><input type="checkbox" id="hexes" checked>顯示色碼</label>
+      </div>
+    </section>
+
+    <!-- TEXT -->
+    <section class="pane" id="pane-text" role="tabpanel" aria-labelledby="tab-text">
+      <h2 class="pane-title">文字</h2>
+      <div class="group">
+        <label class="field">主題名稱<input type="text" id="title" value="Weather" maxlength="40"></label>
+        <label class="field">副標<input type="text" id="tagline" value="一套日間與夜間的閱讀主題" maxlength="60" data-i18n-value></label>
+        <label class="field">作者<input type="text" id="author" value="Chi" maxlength="40" placeholder="例如 @你的小紅書名稱"></label>
+        <div class="field">日期
+          <div class="date-row">
+            <input type="text" id="date" aria-label="日期文字" maxlength="30">
+            <button class="btn ghost small" id="today" type="button">今天</button>
+          </div>
+        </div>
+        <label class="toggle"><input type="checkbox" id="showDate" checked>顯示日期</label>
+        <label class="field">想說的話<input type="text" id="message" value="" maxlength="60" placeholder="可留空，和日期一起顯示"></label>
+      </div>
+      <div class="group">
+        <h3>標籤</h3>
+        <label class="toggle"><input type="checkbox" id="sideLabels" checked>顯示日夜標籤</label>
+        <div class="two">
+          <input type="text" id="labelDay" value="日間" aria-label="日間標籤文字" maxlength="12" class="plain-input" data-i18n-value>
+          <input type="text" id="labelNight" value="夜間" aria-label="夜間標籤文字" maxlength="12" class="plain-input" data-i18n-value>
+        </div>
+        <label class="toggle"><input type="checkbox" id="captions" checked>在截圖下方顯示頁面名稱</label>
+      </div>
+      <div class="group">
+        <h3>字體</h3>
+        <p class="hint">整張畫報的主題名稱、作者、日期和留言一起切換。</p>
+        <div class="fonts" id="fonts"></div>
+        <label class="add"><input type="file" id="fontFile" accept=".ttf,.otf,.woff,.woff2,font/*">＋ 匯入我的字體（TTF、OTF、WOFF、WOFF2）</label>
+        <p class="hint">匯入的字體只在這台裝置使用，重新整理後需要再匯入。</p>
+      </div>
+      <div class="group">
+        <h3>字級</h3>
+        <div class="slider"><label for="titleSize">主題名稱</label><input type="range" id="titleSize" min="40" max="170" value="100"><output for="titleSize" id="titleSizeOut">100%</output></div>
+        <div class="slider"><label for="authorSize">作者</label><input type="range" id="authorSize" min="40" max="200" value="100"><output for="authorSize" id="authorSizeOut">100%</output></div>
+        <div class="slider"><label for="dateSize">日期</label><input type="range" id="dateSize" min="40" max="200" value="100"><output for="dateSize" id="dateSizeOut">100%</output></div>
+        <div class="slider"><label for="messageSize">想說的話</label><input type="range" id="messageSize" min="40" max="200" value="100"><output for="messageSize" id="messageSizeOut">100%</output></div>
+        <h3>對齊</h3>
+        <div class="seg" data-seg="align"><button data-v="left" aria-pressed="true">置左</button><button data-v="center" aria-pressed="false">置中</button></div>
+      </div>
+    </section>
+
+    <!-- EXPORT -->
+    <section class="pane" id="pane-export" role="tabpanel" aria-labelledby="tab-export">
+      <h2 class="pane-title">匯出</h2>
+      <div class="group">
+        <h3>圖片尺寸</h3>
+        <p class="hint">無損 PNG，可以依用途選擇尺寸。</p>
+        <div class="seg seg-col" data-seg="quality" id="qualitySeg"></div>
+      </div>
+      <div class="stack">
+        <button class="btn" id="exportOne">下載 PNG</button>
+        <button class="btn ghost" id="exportPair">日間、夜間各存一張</button>
+        <button class="btn ghost" id="shareOne" hidden>存到相簿</button>
+        <button class="btn ghost" id="openLarge2">放大預覽</button>
+        <p class="status" id="status" aria-live="polite"></p>
+      </div>
+      <p class="hint">iPhone：按下儲存後會出現分享選單，選「儲存影像」就會存進相簿。</p>
+      <p class="hint">圖片只在你的瀏覽器裡處理，不會上傳到任何地方。</p>
+      <div class="row"><button class="btn ghost small" id="resetAll">↺ 全部重置</button></div>
+    </section>
+  </div>
+</main>
+<p class="foot">Day Night · Lovia Reading Studio。把閱讀主題的日間和夜間截圖放進同一張畫報。</p>
+
+<div class="result" id="result" hidden role="dialog" aria-modal="true" aria-labelledby="resultTitle">
+  <div class="result-card">
+    <h2 id="resultTitle">畫報完成</h2>
+    <p id="resultText">如果沒有自動下載，手機請長按圖片選「儲存到照片」，電腦請按右鍵另存。</p>
+    <div class="result-imgs" id="resultImgs"></div>
+    <button class="btn" id="resultClose">關閉</button>
+  </div>
+</div>
+
+<div class="result" id="large" hidden role="dialog" aria-modal="true" aria-labelledby="largeTitle">
+  <div class="result-card large-card">
+    <div class="large-head">
+      <h2 id="largeTitle">放大預覽</h2>
+      <div class="row">
+        <button class="icon-btn" id="zoomOut" aria-label="縮小">−</button>
+        <button class="btn ghost small" id="zoomFit">適應螢幕</button>
+        <button class="icon-btn" id="zoomIn" aria-label="放大">＋</button>
+        <output id="zoomOutVal">100%</output>
+        <button class="icon-btn" id="largeClose" aria-label="關閉">×</button>
+      </div>
+    </div>
+    <div class="large-box" id="largeBox"><img id="largeImg" alt="畫報放大預覽"></div>
+  </div>
+</div>
+
+<div class="result" id="hsv" hidden role="dialog" aria-modal="true" aria-labelledby="hsvTitle">
+  <div class="result-card hsv-card">
+    <h2 id="hsvTitle">HSV 調色盤</h2>
+    <canvas id="hsvSquare" width="240" height="240" aria-label="飽和度與明度"></canvas>
+    <div class="slider"><label for="hsvHue">色相</label><input type="range" id="hsvHue" min="0" max="360" value="0"><output id="hsvHex">#FFFFFF</output></div>
+    <button class="btn" id="hsvDone">完成</button>
+  </div>
+</div>
+
+<script src="./studio-shell.js"></script>
+<script>
+(()=>{
+'use strict';
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const T=s=>window.LoviaStudio?window.LoviaStudio.t(s):s;
+
+/* ---------------- constants ---------------- */
+const RATIOS={'4:3':[3600,2700],'1:1':[3000,3000],'3:4':[2700,3600],'9:16':[2160,3840]};
+const FONTS={
+  wenkai:{name:'霞鶩文楷',stack:'"LXGW WenKai TC","Noto Serif TC",serif',fam:'LXGW WenKai TC',tw:700,bw:400},
+  serif:{name:'思源宋體',stack:'"Noto Serif TC","Songti TC",serif',fam:'Noto Serif TC',tw:700,bw:500},
+  sans:{name:'思源黑體',stack:'"Noto Sans TC","PingFang TC",sans-serif',fam:'Noto Sans TC',tw:700,bw:400},
+  iansui:{name:'芫荽',stack:'Iansui,"LXGW WenKai TC",serif',fam:'Iansui',tw:400,bw:400},
+  huninn:{name:'粉圓',stack:'Huninn,"Noto Sans TC",sans-serif',fam:'Huninn',tw:400,bw:400},
+  garamond:{name:'英文襯線',stack:'"Cormorant Garamond","Noto Serif TC",serif',fam:'Cormorant Garamond',tw:600,bw:500},
+  /* Lovia presets (native stacks, same as the Lovia page) */
+  kinghwa:{name:'京華老宋',stack:'"KingHwaOldSong","KingHwa_OldSong","京華老宋体","京华老宋体","Songti SC",serif',fam:'KingHwaOldSong',tw:400,bw:400},
+  song:{name:'典雅宋體',stack:'"Songti SC","STSong","Noto Serif CJK SC","SimSun",serif',fam:'Songti SC',tw:400,bw:400},
+  lsans:{name:'現代黑體',stack:'"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans CJK SC",sans-serif',fam:'PingFang SC',tw:600,bw:400},
+  light:{name:'輕盈無襯線',stack:'"Helvetica Neue","Avenir Next","PingFang SC","Microsoft YaHei",sans-serif',fam:'Helvetica Neue',tw:300,bw:300},
+  editorial:{name:'雜誌襯線',stack:'"Didot","Bodoni MT","Times New Roman","Songti SC",serif',fam:'Didot',tw:400,bw:400},
+  kai:{name:'書卷楷體',stack:'"Kaiti SC","STKaiti","KaiTi","Noto Serif CJK SC",serif',fam:'Kaiti SC',tw:400,bw:400},
+  mono:{name:'復古打字機',stack:'"Courier New","SFMono-Regular","Menlo","Noto Serif CJK SC",monospace',fam:'Courier New',tw:400,bw:400},
+  round:{name:'溫柔圓體',stack:'"Hiragino Maru Gothic ProN","Arial Rounded MT Bold","PingFang SC","Microsoft YaHei",sans-serif',fam:'Hiragino Maru Gothic ProN',tw:400,bw:400},
+};
+const SAMPLE_IMGS={day:[['首頁','assets/weather/day-home.jpg'],['書架','assets/weather/day-shelf.jpg'],['閱讀頁','assets/weather/day-read.jpg']],night:[['首頁','assets/weather/night-home.jpg'],['書架','assets/weather/night-shelf.jpg'],['閱讀頁','assets/weather/night-read.jpg']]};
+const MAX_PER_SIDE=5;
+const DEFAULT_LABELS=['首頁','書架','閱讀頁','目錄','筆記'];
+const BG_DESC={
+  solid:'用日間、夜間各自的底色。',
+  light:'自動提取截圖中的柔和淺色作為底圖。',
+  dark:'從截圖提取深色，形成鮮明的畫廊對比。',
+  custom:'自選一個純色背景，不加漸層或紋理。',
+  gradient:'用各自的底色做出柔和的斜向漸層。',
+  tb:'從上到下的柔和漸層，預設從截圖取色，也可以自選。',
+  blur:'把第一張截圖模糊後當底圖，再蓋上一層底色。',
+  image:'上傳自己的底圖，可以調整模糊程度和透明度。',
+  glass:'取封面顏色，形成柔和的液態玻璃朦朧背景。',
+};
+
+/* ---------------- state ---------------- */
+const today=new Date();
+const fmtToday=()=>{const d=new Date();return`${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getDate()).padStart(2,'0')}`;};
+const S={
+  ratio:'4:3', layout:'pairs', single:'day', splitDir:'auto', tilt:'alt',
+  size:1, gap:1, radius:.06, frame:'shadow',
+  rules:false, ruleColor:'#000000', ruleOpacity:.4,
+  bg:'solid', tint:.7, grain:.30, customBg:'#E9E6DB', tbTop:'#EDE9DE', tbBottom:'#A5B09E', tbCustom:false,
+  bgImage:null, bgBlur:40, bgOpacity:1, cover:null, glass:.7,
+  palette:'three', five:['#F1EEE3','#A5B09E','#CA9194','#667966','#283029'], fiveCustom:false,
+  swatches:true, hexes:true,
+  title:'Weather', tagline:'一套日間與夜間的閱讀主題', author:'Chi', message:'',
+  showDate:true, date:fmtToday(),
+  sideLabels:true, labelDay:'日間', labelNight:'夜間', captions:true,
+  font:'wenkai', titleSize:1, authorSize:1, dateSize:1, messageSize:1, align:'left', quality:'高清',
+  colors:{day:{bg:'#F4EDE5',ink:'#342E2A',accent:'#ECAC81'},night:{bg:'#3A3D45',ink:'#E7E7EB',accent:'#A5A6AC'}},
+  autoColor:{day:true,night:true},
+  shots:{day:[],night:[]},
+  sel:null, scaleMode:'single'
+};
+let uid=0, localFont=null;
+try{
+  const a=localStorage.getItem('showcase.author'); if(a!==null&&a!=='') S.author=a;
+  const f=localStorage.getItem('showcase.font'); if(f&&FONTS[f]) S.font=f;
+}catch(e){}
+
+/* ---------------- colour utils ---------------- */
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+function hexToRgb(h){h=h.replace('#','');if(h.length===3)h=[...h].map(c=>c+c).join('');const n=parseInt(h,16);return[(n>>16)&255,(n>>8)&255,n&255];}
+function rgbToHex(r,g,b){return'#'+[r,g,b].map(v=>clamp(Math.round(v),0,255).toString(16).padStart(2,'0')).join('').toUpperCase();}
+function mix(a,b,t){const A=hexToRgb(a),B=hexToRgb(b);return rgbToHex(A[0]+(B[0]-A[0])*t,A[1]+(B[1]-A[1])*t,A[2]+(B[2]-A[2])*t);}
+function relLum(c){const [r,g,b]=(Array.isArray(c)?c:hexToRgb(c)).map(v=>{v/=255;return v<=.03928?v/12.92:Math.pow((v+.055)/1.055,2.4);});return .2126*r+.7152*g+.0722*b;}
+function contrast(a,b){const x=relLum(a),y=relLum(b);return(Math.max(x,y)+.05)/(Math.min(x,y)+.05);}
+function rgba(hex,a){const[r,g,b]=hexToRgb(hex);return`rgba(${r},${g},${b},${a})`;}
+const isHex=v=>/^#?[0-9a-fA-F]{6}$/.test(v);
+const normHex=v=>('#'+v.replace('#','')).toUpperCase();
+
+/* ---------------- drawing helpers ---------------- */
+function rr(ctx,x,y,w,h,r){r=Math.max(0,Math.min(r,w/2,h/2));ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();}
+function polyPath(ctx,pts){ctx.beginPath();pts.forEach(([x,y],i)=>i?ctx.lineTo(x,y):ctx.moveTo(x,y));ctx.closePath();}
+function panelPath(ctx,p){if(p.poly)polyPath(ctx,p.poly);else{ctx.beginPath();ctx.rect(p.x,p.y,p.w,p.h);}}
+function curFont(){return S.font==='local'&&localFont?localFont:FONTS[S.font]||FONTS.wenkai;}
+function font(size,weight,f=curFont()){return`${weight} ${size}px ${f.stack}`;}
+const iw=im=>im.naturalWidth||im.width, ih=im=>im.naturalHeight||im.height;
+function drawCover(ctx,img,p,scale=1){const k=Math.max(p.w/iw(img),p.h/ih(img))*scale;ctx.imageSmoothingQuality='high';ctx.drawImage(img,p.x+(p.w-iw(img)*k)/2,p.y+(p.h-ih(img)*k)/2,iw(img)*k,ih(img)*k);}
+
+let noiseCanvas=null;
+function noise(){
+  if(noiseCanvas)return noiseCanvas;
+  const c=document.createElement('canvas');c.width=c.height=220;const x=c.getContext('2d');const d=x.createImageData(220,220);
+  for(let i=0;i<d.data.length;i+=4){const v=Math.random()*255;d.data[i]=d.data[i+1]=d.data[i+2]=v;d.data[i+3]=255;}
+  x.putImageData(d,0,0);return noiseCanvas=c;
+}
+const blurCache=new Map();
+function blurredImage(img,amount){ // amount in px on a 3600-wide poster; 0 = sharp
+  if(!img)return null; if(amount<=0)return img;
+  const key=(img.__id||(img.__id=++uid))+':'+amount;
+  if(blurCache.has(key))return blurCache.get(key);
+  const w=Math.max(6,Math.round(1600/(1+amount/3))),h=Math.max(6,Math.round(w*ih(img)/iw(img)));
+  const a=document.createElement('canvas');a.width=w;a.height=h;const ax=a.getContext('2d');ax.imageSmoothingQuality='high';ax.drawImage(img,0,0,w,h);
+  const b=document.createElement('canvas');b.width=Math.min(1600,w*4);b.height=Math.round(b.width*h/w);const bx=b.getContext('2d');bx.imageSmoothingQuality='high';bx.drawImage(a,0,0,b.width,b.height);
+  if(blurCache.size>24)blurCache.clear();blurCache.set(key,b);return b;
+}
+
+/* ---------------- shots ---------------- */
+function downscale(src,maxH){
+  const w=iw(src),h=ih(src);
+  if(h<=maxH)return src;
+  const k=maxH/h,c=document.createElement('canvas');c.width=Math.round(w*k);c.height=maxH;
+  const x=c.getContext('2d');x.imageSmoothingQuality='high';x.drawImage(src,0,0,c.width,c.height);return c;
+}
+function makeShot(src,label,sample=false){
+  const w=iw(src),h=ih(src),shown=T(label||'');
+  return{id:++uid,src,prev:downscale(src,1000),w,h,a:w/h,label:shown,labelSrc:label||'',labelOut:shown,sample,dx:0,dy:0,scale:1,blur:null};
+}
+function blurredShot(shot){
+  if(shot.blur)return shot.blur;
+  const a=document.createElement('canvas');a.width=16;a.height=Math.max(8,Math.round(16/shot.a));
+  a.getContext('2d').drawImage(shot.prev,0,0,a.width,a.height);
+  const b=document.createElement('canvas');b.width=64;b.height=Math.round(64/shot.a);
+  const bx=b.getContext('2d');bx.imageSmoothingQuality='high';bx.drawImage(a,0,0,b.width,b.height);
+  return shot.blur=b;
+}
+function fileToImage(file){
+  return new Promise((res,rej)=>{const url=URL.createObjectURL(file);const im=new Image();im.decoding='async';
+    im.onload=()=>res(im);im.onerror=()=>{URL.revokeObjectURL(url);rej(new Error(`無法讀取「${file.name||'圖片'}」，請改用 PNG 或 JPG`));};im.src=url;});
+}
+function imgFrom(src){return new Promise((res,rej)=>{const im=new Image();im.onload=()=>res(im);im.onerror=rej;im.src=src;});}
+
+/* ---------------- colour extraction ---------------- */
+function samplePixels(shots){
+  const c=document.createElement('canvas');c.width=c.height=96;const x=c.getContext('2d',{willReadFrequently:true});
+  const px=[];
+  for(const s of shots){x.clearRect(0,0,96,96);const sw=iw(s.prev),sh=ih(s.prev),top=sh*.065;x.drawImage(s.prev,0,top,sw,sh-top,0,0,96,96);
+    const d=x.getImageData(0,0,96,96).data;
+    for(let i=0;i<d.length;i+=4){if(d[i+3]<200)continue;px.push([d[i],d[i+1],d[i+2]]);}}
+  return px;
+}
+const qkey=p=>((p[0]>>4)<<8)|((p[1]>>4)<<4)|(p[2]>>4);
+function binsOf(list){const m=new Map();for(const p of list){const k=qkey(p);let e=m.get(k);if(!e)m.set(k,e={n:0,r:0,g:0,b:0});e.n++;e.r+=p[0];e.g+=p[1];e.b+=p[2];}return[...m.values()].map(e=>({n:e.n,c:[e.r/e.n,e.g/e.n,e.b/e.n]}));}
+function mode(list){let t=null;for(const e of binsOf(list))if(!t||e.n>t.n)t=e;return t?t.c:null;}
+function extract(shots){
+  const px=samplePixels(shots);
+  if(!px.length)return null;
+  const bg=mode(px),Lb=relLum(bg);
+  const inkPx=px.filter(p=>{const L=relLum(p);return(Math.max(L,Lb)+.05)/(Math.min(L,Lb)+.05)>4;});
+  let ink=inkPx.length>px.length*.004?mode(inkPx):null;
+  if(!ink)ink=Lb>.4?[40,46,56]:[226,229,234];
+  const bins=Array.from({length:24},()=>({w:0,r:0,g:0,b:0}));
+  for(const p of px){
+    const [r,g,b]=p.map(v=>v/255),mx=Math.max(r,g,b),mn=Math.min(r,g,b),d=mx-mn,l=(mx+mn)/2;
+    if(d<.12||l<.12||l>.82)continue;
+    const s=d/(1-Math.abs(2*l-1)+1e-4);if(s<.25)continue;
+    let h=mx===r?((g-b)/d)%6:mx===g?(b-r)/d+2:(r-g)/d+4;h=(h*60+360)%360;
+    const bi=Math.floor(h/15)%24,wt=Math.pow(s,2.4)*(1-Math.abs(l-.55));bins[bi].w+=wt;bins[bi].r+=p[0]*wt;bins[bi].g+=p[1]*wt;bins[bi].b+=p[2]*wt;
+  }
+  const best=bins.reduce((a,b)=>b.w>a.w?b:a,bins[0]);
+  const bgHex=rgbToHex(...bg),inkHex=rgbToHex(...ink);
+  const accent=best.w>2?rgbToHex(best.r/best.w,best.g/best.w,best.b/best.w):mix(inkHex,bgHex,.38);
+  return{bg:bgHex,ink:inkHex,accent};
+}
+function autoColors(side){
+  toneCache.clear();
+  if(!S.autoColor[side])return;
+  const shots=S.shots[side];
+  if(!shots.length)return;
+  const own=shots.filter(s=>!s.sample);
+  const r=extract(own.length?own:shots);if(r)Object.assign(S.colors[side],r);
+}
+const toneCache=new Map();
+function tonesFor(side){
+  const shots=S.shots[side]||[];const key=side+':'+shots.map(s=>s.id).join(',');
+  if(toneCache.has(key))return toneCache.get(key);
+  let light=mix(S.colors[side].bg,'#FFFFFF',.2),dark=mix(S.colors[side].bg,'#000000',.55);
+  const px=samplePixels(shots);
+  if(px.length){
+    const avg=a=>rgbToHex(...[0,1,2].map(k=>a.reduce((s,p)=>s+p[k],0)/a.length));
+    const L=px.filter(p=>relLum(p)>.5),D=px.filter(p=>relLum(p)<.1);
+    if(L.length)light=mix(avg(L),'#EEEADF',.28);
+    if(D.length)dark=mix(avg(D),'#27312B',.45);
+  }
+  const r={light,dark};toneCache.set(key,r);return r;
+}
+function autoTB(){
+  const all=[...S.shots.day,...S.shots.night];if(!all.length)return;
+  const px=samplePixels(all);if(!px.length)return;
+  const sorted=px.slice().sort((a,b)=>relLum(b)-relLum(a));
+  const avg=a=>rgbToHex(...[0,1,2].map(k=>a.reduce((s,p)=>s+p[k],0)/a.length));
+  const n=Math.max(1,Math.floor(sorted.length*.2));
+  S.tbTop=mix(avg(sorted.slice(0,n)),'#EEEADF',.25);S.tbBottom=mix(avg(sorted.slice(Math.floor(sorted.length*.45),Math.floor(sorted.length*.65)+1)),'#7B8A7C',.15);
+}
+function autoFive(){
+  const all=[...S.shots.day,...S.shots.night];const px=samplePixels(all);if(!px.length)return;
+  const bins=binsOf(px).sort((a,b)=>b.n-a.n);const picked=[];
+  const dist=(a,b)=>Math.hypot(a[0]-b[0],a[1]-b[1],a[2]-b[2]);
+  for(const e of bins){if(picked.every(p=>dist(p,e.c)>48))picked.push(e.c);if(picked.length===5)break;}
+  while(picked.length<5)picked.push(picked.length?picked[picked.length-1].map(v=>v*.7):[200,200,200]);
+  S.five=picked.sort((a,b)=>relLum(b)-relLum(a)).map(c=>rgbToHex(...c));
+}
+function refreshDerived(){if(!S.tbCustom)autoTB();if(!S.fiveCustom)autoFive();toneCache.clear();}
+
+/* ---------------- layout engine ---------------- */
+function fit(items,box,gap,capH,maxRows=3){
+  const n=items.length;if(!n||box.w<=0||box.h<=0)return[];
+  let best=null;
+  for(let rows=1;rows<=Math.min(n,maxRows);rows++){
+    const per=Math.ceil(n/rows),groups=[];for(let i=0;i<n;i+=per)groups.push(items.slice(i,i+per));
+    const mw=g=>Math.max(...g.map(i=>i.wt||1));
+    let h=(box.h-gap*(groups.length-1)-capH*groups.length)/groups.reduce((s,g)=>s+mw(g),0);
+    for(const g of groups){const sa=g.reduce((s,i)=>s+i.a*(i.wt||1),0);h=Math.min(h,(box.w-gap*(g.length-1))/sa);}
+    if(h>0&&(!best||h>best.h*1.02))best={h,groups};
+  }
+  if(!best)return[];
+  const{h,groups}=best,mw=g=>Math.max(...g.map(i=>i.wt||1));
+  const total=groups.reduce((s,g)=>s+mw(g)*h+capH,0)+gap*(groups.length-1);
+  let y=box.y+(box.h-total)/2;const out=[];
+  for(const g of groups){
+    const rh=mw(g)*h,rw=g.reduce((s,i)=>s+i.a*(i.wt||1)*h,0)+gap*(g.length-1);let x=box.x+(box.w-rw)/2;
+    for(const it of g){const ih_=(it.wt||1)*h,iw_=it.a*ih_;out.push({it,x,y:y+(rh-ih_)/2,w:iw_,h:ih_});x+=iw_+gap;}
+    y+=rh+capH+gap;
+  }
+  return out;
+}
+function shrinkBox(b,k){const w=b.w*k,h=b.h*k;return{x:b.x+(b.w-w)/2,y:b.y+(b.h-h)/2,w,h};}
+function isSingle(l){return l.startsWith('single');}
+function geometry(W,H,lay,side){
+  if(isSingle(lay))return{kind:'single',panels:[{side,x:0,y:0,w:W,h:H}]};
+  const dir=S.splitDir==='auto'?(W>=H?'v':'h'):S.splitDir;
+  if(lay==='split'||lay==='diagonal'){
+    const k=lay==='diagonal'?.07:0;
+    let d,n,pd=null,pn=null;
+    if(dir==='v'){d={x:0,y:0,w:W/2,h:H};n={x:W/2,y:0,w:W/2,h:H};
+      if(k){pd=[[0,0],[W*(.5+k),0],[W*(.5-k),H],[0,H]];pn=[[W*(.5+k),0],[W,0],[W,H],[W*(.5-k),H]];}}
+    else{d={x:0,y:0,w:W,h:H/2};n={x:0,y:H/2,w:W,h:H/2};
+      if(k){pd=[[0,0],[W,0],[W,H*(.5-k)],[0,H*(.5+k)]];pn=[[0,H*(.5+k)],[W,H*(.5-k)],[W,H],[0,H]];}}
+    return{kind:'split',dir,k,panels:[{side:'day',...d,poly:pd},{side:'night',...n,poly:pn}]};
+  }
+  return{kind:'blend',dir:W>=H?'v':'h',panels:[{side:'blend',x:0,y:0,w:W,h:H}]};
+}
+function bestInkFor(bg,prefer){
+  const cands=[prefer,S.colors.day.ink,S.colors.night.ink].filter(Boolean);
+  if(prefer&&contrast(prefer,bg)>=3.2)return prefer;
+  let best=cands[0];for(const c of cands)if(contrast(c,bg)>contrast(best,bg))best=c;
+  if(contrast(best,bg)<3)best=relLum(bg)>.3?'#1E2024':'#F4F2EC';
+  return best;
+}
+
+/* ---------------- backgrounds ---------------- */
+function sideBase(side){
+  if(S.bg==='light')return tonesFor(side).light;
+  if(S.bg==='dark')return tonesFor(side).dark;
+  if(S.bg==='custom')return S.customBg;
+  return S.colors[side].bg;
+}
+function overlayImageModes(ctx,p,side,base){
+  if(S.bg==='image'&&S.bgImage){ctx.save();ctx.globalAlpha=S.bgOpacity;drawCover(ctx,blurredImage(S.bgImage,S.bgBlur),p);ctx.restore();}
+  else if(S.bg==='glass'){
+    const src=S.cover||(S.shots[side==='blend'?'day':side][0]||S.shots.day[0]||S.shots.night[0]||{}).prev;
+    if(src){
+      drawCover(ctx,blurredImage(src,110+S.glass*80),p,1.25);
+      ctx.fillStyle=rgba(base,.12+.5*(1-S.glass));ctx.fillRect(p.x,p.y,p.w,p.h);
+      const g=ctx.createLinearGradient(p.x,p.y,p.x,p.y+p.h);g.addColorStop(0,'rgba(255,255,255,.16)');g.addColorStop(.5,'rgba(255,255,255,0)');g.addColorStop(1,'rgba(255,255,255,.06)');
+      ctx.fillStyle=g;ctx.fillRect(p.x,p.y,p.w,p.h);
+    }
+  }
+}
+function paintPanel(ctx,panel,W,H){
+  const p=panel.poly?{...panel,x:0,y:0,w:W,h:H}:panel,side=panel.side,base=sideBase(side);
+  ctx.save();panelPath(ctx,panel);ctx.clip();
+  ctx.fillStyle=base;ctx.fillRect(p.x,p.y,p.w,p.h);
+  const sh=S.shots[side][0];
+  if(S.bg==='blur'&&sh){
+    const b=blurredShot(sh),k=Math.max(p.w/b.width,p.h/b.height)*1.15;
+    ctx.imageSmoothingQuality='high';ctx.drawImage(b,p.x+(p.w-b.width*k)/2,p.y+(p.h-b.height*k)/2,b.width*k,b.height*k);
+    ctx.fillStyle=rgba(base,S.tint);ctx.fillRect(p.x,p.y,p.w,p.h);
+  }else if(S.bg==='gradient'){
+    const g=ctx.createLinearGradient(p.x,p.y,p.x+p.w*.3,p.y+p.h),dark=relLum(base)<.25;
+    g.addColorStop(0,mix(base,'#FFFFFF',dark?.07:.35));g.addColorStop(1,mix(base,dark?'#000000':S.colors[side].ink,dark?.28:.10));
+    ctx.fillStyle=g;ctx.fillRect(p.x,p.y,p.w,p.h);
+  }else if(S.bg==='tb'){
+    const g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,S.tbTop);g.addColorStop(1,S.tbBottom);ctx.fillStyle=g;ctx.fillRect(p.x,p.y,p.w,p.h);
+  }else overlayImageModes(ctx,p,side,base);
+  ctx.restore();
+}
+/* blend layouts: one background across the canvas; returns a function giving the colour at a point */
+function paintBlend(ctx,geo,W,H){
+  const full={x:0,y:0,w:W,h:H};
+  if(S.bg==='custom'){ctx.fillStyle=S.customBg;ctx.fillRect(0,0,W,H);return()=>S.customBg;}
+  if(S.bg==='tb'){const g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,S.tbTop);g.addColorStop(1,S.tbBottom);ctx.fillStyle=g;ctx.fillRect(0,0,W,H);return(x,y)=>mix(S.tbTop,S.tbBottom,clamp(y/H,0,1));}
+  const dc=S.bg==='light'?tonesFor('day').light:S.bg==='dark'?tonesFor('day').dark:S.colors.day.bg;
+  const nc=S.bg==='light'?tonesFor('night').light:S.bg==='dark'?tonesFor('night').dark:S.colors.night.bg;
+  const g=geo.dir==='v'?ctx.createLinearGradient(0,0,W,0):ctx.createLinearGradient(0,0,0,H);
+  g.addColorStop(0,dc);g.addColorStop(.28,dc);g.addColorStop(.72,nc);g.addColorStop(1,nc);
+  ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+  overlayImageModes(ctx,full,'blend',mix(dc,nc,.5));
+  return(x,y)=>{const t=geo.dir==='v'?x/W:y/H;return mix(dc,nc,clamp((t-.28)/.44,0,1));};
+}
+
+/* ---------------- poster ---------------- */
+function drawPoster(ctx,W,H,opt={}){
+  const lay=opt.layout||S.layout, singleSide=opt.side||S.single;
+  const u=Math.min(W,H)/100, m=u*6;
+  const geo=geometry(W,H,lay,singleSide);
+  const f=curFont();
+  const hits=[];
+  let bgAt=null;
+
+  /* backgrounds */
+  if(geo.kind==='blend')bgAt=paintBlend(ctx,geo,W,H);
+  else for(const p of geo.panels)paintPanel(ctx,p,W,H);
+  if(S.grain>0){
+    ctx.save();const k=W/1400;ctx.globalCompositeOperation='soft-light';ctx.globalAlpha=S.grain*.55;
+    ctx.scale(k,k);ctx.fillStyle=ctx.createPattern(noise(),'repeat');ctx.fillRect(0,0,W/k,H/k);ctx.restore();
+  }
+
+  /* text block */
+  const ts=u*6.4*S.titleSize, ss=u*2.25;
+  const as_=ss*S.authorSize, ds=ss*.88*S.dateSize, ms=ss*.88*S.messageSize;
+  const title=S.title.trim(),sub=S.tagline.trim(),author=S.author.trim(),date=S.showDate?S.date.trim():'',msg=S.message.trim();
+  const els=[];let top=m;
+  ctx.textBaseline='alphabetic';
+  if(S.align==='left'){
+    let rw=0;
+    if(author){ctx.font=font(as_,f.bw,f);rw=Math.max(rw,ctx.measureText(author).width);}
+    if(date){ctx.font=font(ds,f.bw,f);rw=Math.max(rw,ctx.measureText(date).width);}
+    if(msg){ctx.font=font(ms,f.bw,f);rw=Math.max(rw,Math.min(ctx.measureText(msg).width,W*.34));}
+    let ry=m;
+    if(author){ry+=as_*.95;els.push({t:author,x:W-m,y:ry,size:as_,w:f.bw,align:'right',alpha:.92});ry+=as_*.6;}
+    if(date){ry+=ds*.95;els.push({t:date,x:W-m,y:ry,size:ds,w:f.bw,align:'right',alpha:.62});ry+=ds*.6;}
+    if(msg){ry+=ms*.95;els.push({t:msg,x:W-m,y:ry,size:ms,w:f.bw,align:'right',alpha:.72,maxW:W*.34});ry+=ms*.6;}
+    const maxW=W-2*m-(rw?rw+u*5:0);
+    let y=m;
+    if(title){let s=ts;ctx.font=font(s,f.tw,f);while(ctx.measureText(title).width>maxW&&s>u*2.5){s*=.94;ctx.font=font(s,f.tw,f);}
+      els.push({t:title,x:m,y:m+s*.86,size:s,w:f.tw,align:'left',alpha:1});y=m+s*1.1;}
+    if(sub){y+=ss*.35;els.push({t:sub,x:m,y:y+ss*.9,size:ss,w:f.bw,align:'left',alpha:.7,maxW});y+=ss*1.5;}
+    top=Math.max(y,ry);
+  }else{
+    let y=m;
+    if(title){let s=ts;ctx.font=font(s,f.tw,f);while(ctx.measureText(title).width>W-2*m&&s>u*2.5){s*=.94;ctx.font=font(s,f.tw,f);}
+      els.push({t:title,x:W/2,y:m+s*.86,size:s,w:f.tw,align:'center',alpha:1});y=m+s*1.1;}
+    const line=[sub,author].filter(Boolean).join('　／　');
+    if(line){y+=ss*.35;els.push({t:line,x:W/2,y:y+ss*.9,size:Math.max(ss,author?as_*.9:ss),w:f.bw,align:'center',alpha:.75,maxW:W-2*m});y+=Math.max(ss,as_*.9)*1.5;}
+    const line2=[date,msg].filter(Boolean).join('　');
+    if(line2){const sz=Math.max(date?ds:0,msg?ms:0);els.push({t:line2,x:W/2,y:y+sz*.85,size:sz,w:f.bw,align:'center',alpha:.6,maxW:W-2*m});y+=sz*1.45;}
+    top=y;
+  }
+  const hasTop=els.length>0;
+  const topEdge=hasTop?top+u*3.2:m;
+  const fivePal=S.palette==='five'&&S.swatches;
+  const panelBg=(side,y)=>S.bg==='tb'?mix(S.tbTop,S.tbBottom,clamp(y/H,0,1)):sideBase(side);
+  const inkAt=(side,y)=>(S.bg==='image'||S.bg==='glass')?S.colors[side].ink:bestInkFor(panelBg(side,y),S.colors[side].ink);
+  const footOn=S.sideLabels||(S.swatches&&!fivePal)||fivePal;
+  const footH=footOn?u*8.2:0;
+  const capOn=S.captions&&(S.shots.day.some(s=>s.label)||S.shots.night.some(s=>s.label));
+  const capH=capOn?u*4.2:0;
+  const gap=u*3.2*S.gap;
+
+  /* placements */
+  const placed=[];
+  const areaOf=(p,innerL=0,innerR=0,innerT=0,innerB=0)=>{
+    const x=p.x+m+innerL,w=p.w-2*m-innerL-innerR;
+    const yTop=p.y===0?topEdge:p.y+m+innerT;
+    const yBot=p.y+p.h-(footOn?footH+m*.55:m)-innerB;
+    return{x,y:yTop,w,h:yBot-yTop};
+  };
+  const frameScale=S.frame==='phone'?1.09:1;
+  const phoneGap=S.frame==='phone'?u*1.4:0;
+  const pushFit=(list,box,sideOf,opts={})=>{
+    const items=list.map((sh,i)=>({a:sh.a,wt:opts.wts?opts.wts[i]:1,sh,side:sideOf(sh,i),i}));
+    let b=shrinkBox(box,S.size);
+    const tilted=opts.stagger||opts.overlap;
+    if(tilted)b={x:b.x,y:b.y+b.h*.07,w:b.w,h:b.h*.86};
+    const g=opts.overlap?-Math.min(b.w,b.h)*.09:gap+phoneGap;
+    const r=fit(items,b,g,capH,opts.maxRows||3);
+    const n=r.length;
+    r.forEach((q,j)=>{
+      let y=q.y;
+      if(n>1&&tilted){
+        if(opts.stagger&&S.tilt==='alt')y+=(j%2?1:-1)*b.h*.065;
+        else{const sign=S.tilt==='left-low'?-1:1;y+=(j/(n-1)-.5)*2*b.h*.065*sign;}
+      }
+      placed.push({shot:q.it.sh,side:q.it.side,x:q.x,y,w:q.w/frameScale,h:q.h/frameScale,ox:q.w*(1-1/frameScale)/2,oy:q.h*(1-1/frameScale)/2,z:opts.z?opts.z(q.it):(opts.overlap?j:0),cap:true});
+    });
+  };
+  if(geo.kind==='single'){
+    const list=S.shots[singleSide],box=areaOf(geo.panels[0]);
+    if(lay==='single-focus'){
+      const n=list.length,c=Math.floor((n-1)/2);const wts=list.map((_,i)=>n<2?1:i===c?1.22:.84);
+      pushFit(list,box,()=>singleSide,{wts,maxRows:1,z:it=>it.wt});
+    }else pushFit(list,box,()=>singleSide,{stagger:lay==='single-stagger',overlap:lay==='single-overlap',maxRows:lay==='single-even'?3:1});
+  }else if(geo.kind==='split'){
+    for(const p of geo.panels){
+      const extra=geo.k?geo.k*(geo.dir==='v'?W:H)*.75:0;
+      const box=geo.dir==='v'
+        ?areaOf(p,p.side==='night'?extra:0,p.side==='day'?extra:0)
+        :areaOf(p,0,0,p.side==='night'?extra:0,p.side==='day'?extra:0);
+      pushFit(S.shots[p.side],box,()=>p.side);
+    }
+  }else{
+    const box=areaOf(geo.panels[0]);
+    if(lay==='alternate'){
+      const seq=[];const n=Math.max(S.shots.day.length,S.shots.night.length);
+      for(let i=0;i<n;i++){if(S.shots.day[i])seq.push(['day',S.shots.day[i]]);if(S.shots.night[i])seq.push(['night',S.shots.night[i]]);}
+      pushFit(seq.map(s=>s[1]),box,(sh,i)=>seq[i][0]);
+    }else{
+      const n=Math.max(S.shots.day.length,S.shots.night.length);
+      const units=[];const OX=.2,OY=.075;
+      for(let i=0;i<n;i++){const d=S.shots.day[i],nn=S.shots.night[i];const front=d||nn;
+        units.push({a:d&&nn?front.a*(1+OX)/(1+OY):front.a,d,nn});}
+      const b=shrinkBox(box,S.size);
+      const r=fit(units.map(un=>({a:un.a,un})),b,gap*1.1+phoneGap,capH,2);
+      for(const q of r){const{d,nn}=q.it.un;
+        if(d&&nn){const fw=q.w/(1+OX),fh=q.h/(1+OY);
+          placed.push({shot:nn,side:'night',x:q.x+fw*OX,y:q.y,w:fw/frameScale,h:fh/frameScale,ox:fw*(1-1/frameScale)/2,oy:fh*(1-1/frameScale)/2,z:0,cap:false});
+          placed.push({shot:d,side:'day',x:q.x,y:q.y+fh*OY,w:fw/frameScale,h:fh/frameScale,ox:fw*(1-1/frameScale)/2,oy:fh*(1-1/frameScale)/2,z:1,cap:true,capW:q.w,capX:q.x});
+        }else{const s=d||nn;placed.push({shot:s,side:d?'day':'night',x:q.x,y:q.y,w:q.w/frameScale,h:q.h/frameScale,ox:q.w*(1-1/frameScale)/2,oy:q.h*(1-1/frameScale)/2,z:1,cap:true});}
+      }
+    }
+  }
+
+  /* shots */
+  const mn=Math.min(W,H);
+  placed.sort((a,b)=>a.z-b.z);
+  for(const pl of placed){
+    const s=pl.shot;
+    let x=pl.x+pl.ox,y=pl.y+pl.oy,w=pl.w,h=pl.h;
+    const cx=x+w/2,cy=y+h/2;w*=s.scale;h*=s.scale;x=cx-w/2+s.dx*mn;y=cy-h/2+s.dy*mn;
+    drawShot(ctx,s,{x,y,w,h},pl.side,u,opt.preview);
+    hits.push({shot:s,side:pl.side,x,y,w,h});
+    if(capOn&&pl.cap&&s.label){
+      const ink=bgAt?bestInkFor(bgAt(x+w/2,y+h)):inkAt(pl.side,y+h);
+      const pad=S.frame==='phone'?w*.045:S.frame==='corners'?u*1.2:0;
+      ctx.font=font(u*1.85,f.bw,f);ctx.textAlign='center';ctx.fillStyle=rgba(ink,.74);
+      const capX=pl.capX!==undefined?pl.capX+pl.capW/2+s.dx*mn:x+w/2;
+      ctx.fillText(s.label,capX,y+h+pad+u*2.9);
+    }
+  }
+
+  /* text */
+  const drawEl=(e,ink)=>{ctx.font=font(e.size,e.w,f);ctx.textAlign=e.align;ctx.fillStyle=rgba(ink,e.alpha);if(e.maxW)fitText(ctx,e.t,e.x,e.y,e.maxW);else ctx.fillText(e.t,e.x,e.y);};
+  if(geo.kind==='split'){
+    for(const p of geo.panels){ctx.save();panelPath(ctx,p);ctx.clip();els.forEach(e=>drawEl(e,inkAt(p.side,e.y)));ctx.restore();}
+  }else if(geo.kind==='blend'){
+    for(const e of els){const bx=e.align==='left'?e.x+u*10:e.align==='right'?e.x-u*10:e.x;drawEl(e,bestInkFor(bgAt(bx,e.y)));}
+  }else els.forEach(e=>drawEl(e,inkAt(singleSide,e.y)));
+
+  /* decorative rules (Lovia) */
+  if(S.rules){
+    ctx.save();ctx.strokeStyle=rgba(S.ruleColor,S.ruleOpacity);ctx.lineWidth=u*.09;
+    const e=m*.36;ctx.strokeRect(e,e,W-2*e,H-2*e);
+    if(hasTop){const y=topEdge-u*1.7;ctx.beginPath();ctx.moveTo(m,y);ctx.lineTo(W-m,y);ctx.stroke();}
+    const yb=H-(footOn?footH+m*.25:m*.8);ctx.beginPath();ctx.moveTo(m,yb);ctx.lineTo(W-m,yb);ctx.stroke();
+    ctx.restore();
+  }
+
+  /* footers */
+  if(footOn){
+    const fy=p=>p.y+p.h-m*.95-u*1.2;
+    const sw=S.swatches&&!fivePal;
+    let dotsLeft=m;
+    if(geo.kind==='single'){const p=geo.panels[0];drawFooter(ctx,singleSide,m,fy(p),'left',inkAt(singleSide,fy(p)),u,f,sw);dotsLeft=m+footLabelWidth(ctx,singleSide,u,f);}
+    else if(geo.kind==='split'){
+      for(const p of geo.panels){let x=p.x+m;if(geo.k&&geo.dir==='v'&&p.side==='night')x=p.x-geo.k*W+m;drawFooter(ctx,p.side,x,fy(p),'left',inkAt(p.side,fy(p)),u,f,sw);
+        if(p.y+p.h>=H-1)dotsLeft=Math.max(dotsLeft,x+footLabelWidth(ctx,p.side,u,f));}
+    }else{
+      const y=H-m*.95-u*1.2;
+      drawFooter(ctx,'day',m,y,'left',bestInkFor(bgAt(m+u*8,y)),u,f,sw);
+      if(!fivePal)drawFooter(ctx,'night',W-m,y,'right',bestInkFor(bgAt(W-m-u*8,y)),u,f,sw);
+      else if(S.sideLabels)drawFooter(ctx,'night',m+footLabelWidth(ctx,'day',u,f),y,'left',bestInkFor(bgAt(m+u*20,y)),u,f,false);
+      dotsLeft=m+footLabelWidth(ctx,'day',u,f)+(fivePal?footLabelWidth(ctx,'night',u,f):0);
+    }
+    if(fivePal){
+      const y=H-m*.95-u*1.2,x=W-m;
+      let ink;
+      if(geo.kind==='single')ink=inkAt(singleSide,y);
+      else if(geo.kind==='split')ink=inkAt('night',y);
+      else ink=bestInkFor(bgAt(x-u*10,y));
+      drawDots(ctx,S.five,x,y,'right',ink,u,x-dotsLeft-u*2);
+    }
+  }
+  return hits;
+}
+function fitText(ctx,t,x,y,maxW){
+  if(ctx.measureText(t).width<=maxW){ctx.fillText(t,x,y);return;}
+  let s=t;while(s.length>1&&ctx.measureText(s+'…').width>maxW)s=s.slice(0,-1);ctx.fillText(s+'…',x,y);
+}
+const HEXFONT=hs=>`500 ${hs}px -apple-system,"PingFang TC","Noto Sans TC",sans-serif`;
+function footLabelWidth(ctx,side,u,f){const l=S.sideLabels?(side==='day'?S.labelDay:S.labelNight).trim():'';if(!l)return 0;ctx.font=font(u*2.05,f.tw,f);return ctx.measureText(l).width+u*5;}
+function drawDots(ctx,cols,x,y,align,ink,u,maxW=Infinity){
+  const r=u*1.45,hs=u*1.45,gapC=u*1.9;ctx.font=HEXFONT(hs);
+  let hex=S.hexes;
+  let ws=cols.map(c=>r*2+(hex?u*.9+ctx.measureText(c).width:0));
+  if(hex&&ws.reduce((a,b)=>a+b,0)+gapC*(cols.length-1)>maxW){hex=false;ws=cols.map(()=>r*2);}
+  const total=ws.reduce((a,b)=>a+b,0)+gapC*(cols.length-1);
+  let cx=align==='right'?x-total:x;ctx.textBaseline='middle';
+  cols.forEach((c,i)=>{ctx.beginPath();ctx.arc(cx+r,y,r,0,Math.PI*2);ctx.fillStyle=c;ctx.fill();ctx.lineWidth=u*.14;ctx.strokeStyle=rgba(ink,.28);ctx.stroke();
+    if(hex){ctx.font=HEXFONT(hs);ctx.textAlign='left';ctx.fillStyle=rgba(ink,.66);ctx.fillText(c.toUpperCase(),cx+r*2+u*.9,y);}
+    cx+=ws[i]+gapC;});
+  ctx.textBaseline='alphabetic';
+}
+function drawFooter(ctx,side,x,y,align,ink,u,f,withSwatches){
+  const c=S.colors[side],label=S.sideLabels?(side==='day'?S.labelDay:S.labelNight).trim():'';
+  const ls=u*2.05;
+  ctx.font=font(ls,f.tw,f);
+  const lw=label?ctx.measureText(label).width:0;
+  const cols=withSwatches?[c.bg,c.ink,c.accent]:[];
+  if(!label&&!cols.length)return;
+  let dotsW=0;
+  if(cols.length){ctx.font=HEXFONT(u*1.45);dotsW=cols.reduce((s,col)=>s+u*2.9+(S.hexes?u*.9+ctx.measureText(col).width:0),0)+u*1.9*(cols.length-1);}
+  const total=lw+(label&&cols.length?u*2.6:0)+dotsW;
+  let cx=align==='right'?x-total:x;
+  ctx.textBaseline='middle';
+  if(label){ctx.font=font(ls,f.tw,f);ctx.textAlign='left';ctx.fillStyle=rgba(ink,.95);ctx.fillText(label,cx,y);cx+=lw+(cols.length?u*2.6:0);}
+  ctx.textBaseline='alphabetic';
+  if(cols.length)drawDots(ctx,cols,cx,y,'left',ink,u);
+}
+function drawShot(ctx,s,r,side,u,preview){
+  const img=preview?s.prev:s.src,c=S.colors[side];
+  const night=relLum(c.bg)<.2;
+  let rad=r.w*S.radius;
+  ctx.save();
+  if(S.frame==='phone'){
+    const pad=r.w*.045;rad=Math.max(rad,r.w*.11);
+    ctx.shadowColor=night?'rgba(0,0,0,.55)':'rgba(20,28,40,.26)';ctx.shadowBlur=u*3.2;ctx.shadowOffsetY=u*1.1;
+    ctx.fillStyle='#17181B';rr(ctx,r.x-pad,r.y-pad,r.w+pad*2,r.h+pad*2,rad+pad);ctx.fill();
+    ctx.shadowColor='transparent';ctx.lineWidth=Math.max(1,pad*.18);ctx.strokeStyle='rgba(255,255,255,.14)';
+    rr(ctx,r.x-pad+ctx.lineWidth/2,r.y-pad+ctx.lineWidth/2,r.w+pad*2-ctx.lineWidth,r.h+pad*2-ctx.lineWidth,rad+pad);ctx.stroke();
+  }else if(S.frame==='shadow'){
+    ctx.shadowColor=night?'rgba(0,0,0,.5)':'rgba(25,35,50,.2)';ctx.shadowBlur=u*3.4;ctx.shadowOffsetY=u*1.2;
+    ctx.fillStyle=c.bg;rr(ctx,r.x,r.y,r.w,r.h,rad);ctx.fill();
+  }
+  ctx.restore();
+  ctx.save();rr(ctx,r.x,r.y,r.w,r.h,rad);ctx.clip();ctx.imageSmoothingQuality='high';ctx.drawImage(img,r.x,r.y,r.w,r.h);ctx.restore();
+  if(S.frame==='line'){ctx.save();ctx.lineWidth=u*.2;ctx.strokeStyle=rgba(c.ink,.42);rr(ctx,r.x,r.y,r.w,r.h,rad);ctx.stroke();ctx.restore();}
+  if(S.frame==='corners'){
+    ctx.save();ctx.lineWidth=u*.16;ctx.strokeStyle=rgba(c.ink,.6);const o=u*.9,L=u*2.4;
+    for(const[x,y,sx,sy]of[[r.x-o,r.y-o,1,1],[r.x+r.w+o,r.y-o,-1,1],[r.x-o,r.y+r.h+o,1,-1],[r.x+r.w+o,r.y+r.h+o,-1,-1]]){
+      ctx.beginPath();ctx.moveTo(x+sx*L,y);ctx.lineTo(x,y);ctx.lineTo(x,y+sy*L);ctx.stroke();}
+    ctx.restore();
+  }
+  if(S.frame==='phone'){ctx.save();ctx.fillStyle='#050506';const iw_=r.w*.29,ih_=r.w*.082;rr(ctx,r.x+(r.w-iw_)/2,r.y+r.w*.03,iw_,ih_,ih_/2);ctx.fill();ctx.restore();}
+  if(preview&&S.scaleMode==='single'&&S.sel===s.id){ctx.save();ctx.setLineDash([u*1.2,u*.8]);ctx.lineWidth=u*.35;ctx.strokeStyle='#2F7DE1';rr(ctx,r.x-u*.8,r.y-u*.8,r.w+u*1.6,r.h+u*1.6,rad+u*.8);ctx.stroke();ctx.restore();}
+}
+
+/* ---------------- preview render ---------------- */
+const cv=$('#cv'),stage=$('#stage');let raf=0,lastHits=[],view={W:3600,H:2700};
+function dims(){return RATIOS[S.ratio];}
+function req(){if(!raf)raf=requestAnimationFrame(render);}
+function render(){
+  raf=0;const[W,H]=dims();stage.style.setProperty('--ar',(W/H).toFixed(4));
+  const sw=stage.clientWidth-24,sh=stage.clientHeight-24;if(sw<=0||sh<=0)return;
+  const k=Math.min(sw/W,sh/H),cw=Math.floor(W*k),ch=Math.floor(H*k),dpr=Math.min(window.devicePixelRatio||1,2);
+  cv.style.width=cw+'px';cv.style.height=ch+'px';
+  const pw=Math.round(cw*dpr),ph=Math.round(ch*dpr);if(cv.width!==pw||cv.height!==ph){cv.width=pw;cv.height=ph;}
+  const ctx=cv.getContext('2d');ctx.setTransform(pw/W,0,0,ph/H,0,0);
+  lastHits=drawPoster(ctx,W,H,{preview:true});view={W,H};
+  $('#stageMeta').textContent=`${W}×${H}`;
+}
+new ResizeObserver(req).observe(stage);
+
+/* ---------------- drag ---------------- */
+let drag=null;
+function toLogical(e){const b=cv.getBoundingClientRect();return{x:(e.clientX-b.left)/b.width*view.W,y:(e.clientY-b.top)/b.height*view.H};}
+cv.addEventListener('pointerdown',e=>{
+  const p=toLogical(e);let hit=null;
+  for(let i=lastHits.length-1;i>=0;i--){const h=lastHits[i];if(p.x>=h.x&&p.x<=h.x+h.w&&p.y>=h.y&&p.y<=h.y+h.h){hit=h;break;}}
+  if(!hit){if(S.sel&&S.scaleMode==='single'){S.sel=null;syncSel();req();}return;}
+  e.preventDefault();S.sel=hit.shot.id;drag={shot:hit.shot,sx:p.x,sy:p.y,dx:hit.shot.dx,dy:hit.shot.dy};
+  cv.setPointerCapture(e.pointerId);cv.classList.add('dragging');syncSel();req();
+});
+cv.addEventListener('pointermove',e=>{if(!drag)return;const p=toLogical(e),mn=Math.min(view.W,view.H);
+  drag.shot.dx=drag.dx+(p.x-drag.sx)/mn;drag.shot.dy=drag.dy+(p.y-drag.sy)/mn;req();});
+const endDrag=()=>{drag=null;cv.classList.remove('dragging');};
+cv.addEventListener('pointerup',endDrag);cv.addEventListener('pointercancel',endDrag);
+
+/* ---------------- UI: tabs ---------------- */
+$$('.tabs [role=tab]').forEach(t=>t.addEventListener('click',()=>{
+  $$('.tabs [role=tab]').forEach(b=>b.setAttribute('aria-selected',String(b===t)));
+  $$('.pane').forEach(p=>p.classList.toggle('is-active',p.id===t.getAttribute('aria-controls')));
+}));
+
+/* ---------------- UI: shots ---------------- */
+function findShot(id){for(const side of['day','night']){const i=S.shots[side].findIndex(s=>s.id===id);if(i>=0)return{side,i,shot:S.shots[side][i]};}return null;}
+let replaceTarget=null;
+function renderLists(){
+  for(const side of['day','night']){
+    const ul=$('#list-'+side);ul.textContent='';
+    S.shots[side].forEach((s,i)=>{
+      const li=document.createElement('li');if(S.scaleMode==='single'&&S.sel===s.id)li.className='sel';
+      const th=document.createElement('canvas');const tw=44,thh=Math.round(tw/s.a);th.width=tw*2;th.height=thh*2;th.style.width=tw+'px';th.style.height=thh+'px';
+      th.getContext('2d').drawImage(s.prev,0,0,th.width,th.height);th.title='選取這張';
+      th.addEventListener('click',()=>{S.sel=s.id;if(S.scaleMode!=='single')setScaleMode('single');syncSel();req();});
+      const mid=document.createElement('div');mid.style.minWidth='0';
+      const inp=document.createElement('input');inp.type='text';inp.value=s.label;inp.placeholder='頁面名稱';inp.setAttribute('list','labelOptions');inp.maxLength=12;
+      inp.setAttribute('aria-label',`${side==='day'?'日間':'夜間'}第 ${i+1} 張的頁面名稱`);
+      inp.addEventListener('input',()=>{s.label=inp.value;req();});
+      mid.append(inp);
+      if(s.sample){const t=document.createElement('span');t.className='tag';t.textContent='示範';mid.append(t);}
+      const tools=document.createElement('div');tools.className='shot-tools';
+      const up=document.createElement('button');up.className='icon-btn';up.textContent='↑';up.setAttribute('aria-label','往前移');up.disabled=i===0;
+      up.addEventListener('click',()=>{const a=S.shots[side];[a[i-1],a[i]]=[a[i],a[i-1]];renderLists();req();});
+      const rep=document.createElement('button');rep.className='icon-btn';rep.textContent='↺';rep.title='換一張圖';rep.setAttribute('aria-label','替換這張圖片');
+      rep.addEventListener('click',()=>{replaceTarget={side,id:s.id};$('#replaceFile').click();});
+      const del=document.createElement('button');del.className='icon-btn';del.textContent='×';del.setAttribute('aria-label','移除這張');
+      del.addEventListener('click',()=>{S.shots[side].splice(i,1);if(S.sel===s.id)S.sel=null;afterShotsChanged(side);syncSel();});
+      tools.append(up,rep,del);
+      li.append(th,mid,tools);ul.append(li);
+    });
+    $('#count-'+side).textContent=`${S.shots[side].length} / ${MAX_PER_SIDE}`;
+    $('#file-'+side).closest('.add').hidden=S.shots[side].length>=MAX_PER_SIDE&&!S.shots[side].some(s=>s.sample);
+  }
+  $('#clearSamples').hidden=![...S.shots.day,...S.shots.night].some(s=>s.sample);
+}
+function afterShotsChanged(side){autoColors(side);refreshDerived();syncColorInputs();renderLists();req();}
+const imageFiles=files=>[...files].filter(f=>f.type.startsWith('image/')||/\.(png|jpe?g|webp|heic|gif|avif)$/i.test(f.name));
+async function addFiles(side,files,{replace=false}={}){
+  files=imageFiles(files);
+  if(!files.length)return;
+  if(replace){
+    if(files.length>MAX_PER_SIDE){status(`一次最多選 ${MAX_PER_SIDE} 張。`);return;}
+    S.shots[side]=[];
+  }else if(S.shots[side].some(s=>s.sample))S.shots[side]=S.shots[side].filter(s=>!s.sample);
+  const room=MAX_PER_SIDE-S.shots[side].length;
+  if(files.length>room)status(`每邊最多 ${MAX_PER_SIDE} 張，多出的 ${files.length-room} 張沒有加入。`);
+  for(const f of files.slice(0,Math.max(0,room))){
+    try{const im=await fileToImage(f);const n=S.shots[side].length;S.shots[side].push(makeShot(im,DEFAULT_LABELS[n]||'',false));}
+    catch(err){status(err.message);}
+  }
+  afterShotsChanged(side);
+}
+for(const side of['day','night']){
+  $('#file-'+side).addEventListener('change',e=>{addFiles(side,e.target.files);e.target.value='';});
+  $('#batch-'+side).addEventListener('change',e=>{addFiles(side,e.target.files,{replace:true});e.target.value='';});
+  const box=document.querySelector(`.side[data-side="${side}"]`);
+  box.addEventListener('dragover',e=>{e.preventDefault();});
+  box.addEventListener('drop',e=>{e.preventDefault();addFiles(side,e.dataTransfer.files);});
+}
+$('#replaceFile').addEventListener('change',async e=>{
+  const file=e.target.files[0];e.target.value='';if(!file||!replaceTarget)return;
+  const{side,id}=replaceTarget;replaceTarget=null;
+  const i=S.shots[side].findIndex(s=>s.id===id);if(i<0)return;
+  try{const im=await fileToImage(file);const old=S.shots[side][i];const nw=makeShot(im,old.labelSrc||old.label,false);nw.label=old.label;nw.labelOut=old.label;S.shots[side][i]=nw;if(S.sel===id)S.sel=nw.id;afterShotsChanged(side);syncSel();status('已替換。');}
+  catch(err){status(err.message);}
+});
+$('#clearSamples').addEventListener('click',()=>{for(const side of['day','night'])S.shots[side]=S.shots[side].filter(s=>!s.sample);S.sel=null;renderLists();syncSel();req();});
+$('#resetPos').addEventListener('click',()=>{for(const s of[...S.shots.day,...S.shots.night]){s.dx=s.dy=0;s.scale=1;}syncSel();req();});
+function setScaleMode(v){S.scaleMode=v;setSeg('scaleMode',v);syncSel();req();}
+function syncSel(){
+  const box=$('#selbox');
+  if(S.scaleMode==='all'){
+    const all=[...S.shots.day,...S.shots.night];box.hidden=!all.length;
+    const v=all.length?Math.round(all[0].scale*100):100;
+    $('#selText').textContent='全部截圖一起縮放';$('#selScale').value=v;$('#selScaleNum').value=v;
+  }else{
+    const f=S.sel&&findShot(S.sel);box.hidden=!f;
+    if(f){$('#selText').textContent=`已選取：${f.side==='day'?'日間':'夜間'}第 ${f.i+1} 張${f.shot.label?'（'+f.shot.label+'）':''}`;
+      const v=Math.round(f.shot.scale*100);$('#selScale').value=v;$('#selScaleNum').value=v;}
+  }
+  $('#selHint').hidden=!box.hidden;
+  renderLists();
+}
+function applyScale(v){
+  v=clamp(Math.round(v),20,300);
+  if(S.scaleMode==='all')for(const s of[...S.shots.day,...S.shots.night])s.scale=v/100;
+  else{const f=findShot(S.sel);if(!f)return;f.shot.scale=v/100;}
+  $('#selScale').value=v;req();
+}
+$('#selScale').addEventListener('input',e=>{$('#selScaleNum').value=e.target.value;applyScale(Number(e.target.value));});
+$('#selScaleNum').addEventListener('change',e=>{const v=clamp(Number(e.target.value)||100,20,300);e.target.value=v;applyScale(v);});
+$('#selReset').addEventListener('click',()=>{
+  if(S.scaleMode==='all'){for(const s of[...S.shots.day,...S.shots.night]){s.dx=s.dy=0;s.scale=1;}}
+  else{const f=findShot(S.sel);if(!f)return;f.shot.dx=f.shot.dy=0;f.shot.scale=1;}
+  syncSel();req();
+});
+$('#selDone').addEventListener('click',()=>{if(S.scaleMode==='all')setScaleMode('single');S.sel=null;syncSel();req();});
+
+/* ---------------- UI: layout / segs ---------------- */
+function syncLayoutUI(){
+  $$('#layouts button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.layout===S.layout)));
+  $('#grpSingle').hidden=!isSingle(S.layout);
+  $('#grpDir').hidden=!(S.layout==='split'||S.layout==='diagonal');
+  $('#grpTilt').hidden=!(S.layout==='single-stagger'||S.layout==='single-overlap');
+  $('#tiltAlt').hidden=S.layout==='single-overlap';
+  if(S.layout==='single-overlap'&&S.tilt==='alt'){S.tilt='left-high';setSeg('tilt','left-high');}
+  const blend=S.layout==='pairs'||S.layout==='alternate';
+  $('#blendNote').hidden=!blend||['solid','custom','tb'].includes(S.bg);
+  $('#tintRow').hidden=S.bg!=='blur'||blend;
+  $('#customRow').hidden=S.bg!=='custom';
+  $('#tbRow').hidden=S.bg!=='tb';
+  $('#imageRow').hidden=S.bg!=='image';
+  $('#glassRow').hidden=S.bg!=='glass';
+  $('#bgDesc').textContent=BG_DESC[S.bg]||'';
+  $('#fiveRow').hidden=S.palette!=='five';
+  $('#ruleColorRow').hidden=!S.rules;$('#ruleOpRow').hidden=!S.rules;
+}
+$$('#layouts button').forEach(b=>b.addEventListener('click',()=>{S.layout=b.dataset.layout;S.sel=null;syncLayoutUI();syncSel();req();}));
+$$('#ratios button').forEach(b=>b.addEventListener('click',()=>{S.ratio=b.dataset.ratio;$$('#ratios button').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));syncQuality();req();}));
+function bindSeg(seg){
+  const key=seg.dataset.seg;
+  seg.querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{
+    if(key==='scaleMode'){setScaleMode(b.dataset.v);return;}
+    S[key]=b.dataset.v;
+    seg.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));
+    syncLayoutUI();req();
+  }));
+}
+$$('[data-seg]').forEach(seg=>{if(seg.dataset.seg!=='quality')bindSeg(seg);});
+function setSeg(key,v){const seg=document.querySelector(`[data-seg="${key}"]`);if(seg)seg.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',String(x.dataset.v===String(v))));}
+function qualityOptions(){
+  const[W,H]=dims(),L=Math.max(W,H);
+  const raw=[['1080P',1440/L],['標準',.5],['2K 高清',2560/L],['高清',.75],['原尺寸',1],['原畫超清',3600/L]];
+  const out=[];
+  for(const[n,k]of raw){const w=Math.round(W*k),h=Math.round(H*k);const ex=out.find(o=>Math.abs(o.w-w)<4);
+    if(ex)ex.names.push(n);else out.push({names:[n],k,w,h});}
+  return out.sort((a,b)=>a.w-b.w);
+}
+function currentQuality(){const o=qualityOptions();return o.find(q=>q.names.includes(S.quality))||o.find(q=>q.names.includes('高清'))||o[o.length-1];}
+function syncQuality(){
+  const seg=$('#qualitySeg');seg.textContent='';const cur=currentQuality();
+  for(const q of qualityOptions()){
+    const b=document.createElement('button');b.type='button';b.setAttribute('aria-pressed',String(q===cur));
+    b.innerHTML=`<b></b><small></small>`;b.querySelector('b').textContent=q.names.join('／');b.querySelector('small').textContent=`${q.w}×${q.h}`;
+    b.addEventListener('click',()=>{S.quality=q.names[0];syncQuality();});
+    seg.append(b);
+  }
+}
+const sliders=[
+  ['size',v=>S.size=v/100,v=>v+'%'],['gap',v=>S.gap=v/100,v=>v+'%'],['radius',v=>S.radius=v/100,v=>v],
+  ['tint',v=>S.tint=v/100,v=>v+'%'],['grain',v=>S.grain=v/100,v=>v],['titleSize',v=>S.titleSize=v/100,v=>v+'%'],
+  ['authorSize',v=>S.authorSize=v/100,v=>v+'%'],['dateSize',v=>S.dateSize=v/100,v=>v+'%'],['messageSize',v=>S.messageSize=v/100,v=>v+'%'],
+  ['bgBlur',v=>S.bgBlur=Number(v),v=>v+' px'],['bgOpacity',v=>S.bgOpacity=v/100,v=>v+'%'],['glass',v=>S.glass=v/100,v=>v+'%'],
+  ['ruleOpacity',v=>S.ruleOpacity=v/100,v=>v+'%'],
+];
+for(const[id,set,fmt]of sliders){const el=$('#'+id);const out=$('#'+id+'Out');const h=()=>{set(Number(el.value));out.textContent=fmt(el.value);req();};el.addEventListener('input',h);h();}
+$('#rules').addEventListener('change',e=>{S.rules=e.target.checked;syncLayoutUI();req();});
+$('#ruleColor').addEventListener('input',e=>{S.ruleColor=e.target.value.toUpperCase();req();});
+
+/* ---------------- UI: colours ---------------- */
+function syncColorInputs(){
+  for(const side of['day','night']){const g=document.querySelector(`[data-colors="${side}"]`);
+    for(const k of['bg','ink','accent']){g.querySelector(`[data-c="${k}"]`).value=S.colors[side][k].toLowerCase();g.querySelector(`[data-hex="${k}"]`).value=S.colors[side][k].toUpperCase();}}
+  $('#customBg').value=S.customBg.toLowerCase();$('#customBgHex').value=S.customBg;
+  $('#tbTop').value=S.tbTop.toLowerCase();$('#tbBottom').value=S.tbBottom.toLowerCase();$('#tbTopHex').textContent=S.tbTop;$('#tbBottomHex').textContent=S.tbBottom;
+  renderFive();
+}
+for(const side of['day','night']){const g=document.querySelector(`[data-colors="${side}"]`);
+  for(const k of['bg','ink','accent']){
+    g.querySelector(`[data-c="${k}"]`).addEventListener('input',e=>{S.colors[side][k]=e.target.value.toUpperCase();S.autoColor[side]=false;g.querySelector(`[data-hex="${k}"]`).value=S.colors[side][k];toneCache.clear();req();});
+    g.querySelector(`[data-hex="${k}"]`).addEventListener('change',e=>{const v=e.target.value.trim();if(isHex(v)){S.colors[side][k]=normHex(v);S.autoColor[side]=false;syncColorInputs();req();}else{e.target.value=S.colors[side][k];status('色碼格式是 # 加 6 位數，例如 #E3E8EB。');}});
+  }
+}
+$$('[data-reextract]').forEach(b=>b.addEventListener('click',()=>{const side=b.dataset.reextract;S.autoColor[side]=true;autoColors(side);syncColorInputs();req();status(`已從${side==='day'?'日間':'夜間'}截圖重新取色。`);}));
+$('#customBg').addEventListener('input',e=>{S.customBg=e.target.value.toUpperCase();$('#customBgHex').value=S.customBg;req();});
+$('#customBgHex').addEventListener('change',e=>{const v=e.target.value.trim();if(isHex(v)){S.customBg=normHex(v);syncColorInputs();req();}else e.target.value=S.customBg;});
+$('#tbTop').addEventListener('input',e=>{S.tbTop=e.target.value.toUpperCase();S.tbCustom=true;$('#tbTopHex').textContent=S.tbTop;req();});
+$('#tbBottom').addEventListener('input',e=>{S.tbBottom=e.target.value.toUpperCase();S.tbCustom=true;$('#tbBottomHex').textContent=S.tbBottom;req();});
+$('#tbAuto').addEventListener('click',()=>{S.tbCustom=false;autoTB();syncColorInputs();req();status('已從截圖重新取色。');});
+function renderFive(){
+  const box=$('#five');box.textContent='';
+  S.five.forEach((c,i)=>{const l=document.createElement('label');l.className='five-cell';
+    const inp=document.createElement('input');inp.type='color';inp.value=c.toLowerCase();inp.setAttribute('aria-label',`第 ${i+1} 個顏色`);
+    inp.addEventListener('input',()=>{S.five[i]=inp.value.toUpperCase();S.fiveCustom=true;req();});
+    const n=document.createElement('span');n.textContent=String(i+1).padStart(2,'0');l.append(inp,n);box.append(l);});
+}
+$('#fiveAuto').addEventListener('click',()=>{S.fiveCustom=false;autoFive();renderFive();req();status('已重新取色。');});
+async function pickImage(input,nameEl,set){
+  const file=input.files[0];input.value='';if(!file)return;
+  try{const im=await fileToImage(file);set(im);nameEl.textContent=file.name;req();}catch(err){status(err.message);}
+}
+$('#bgFile').addEventListener('change',e=>pickImage(e.target,$('#bgFileName'),im=>S.bgImage=im));
+$('#coverFile').addEventListener('change',e=>pickImage(e.target,$('#coverFileName'),im=>S.cover=im));
+
+/* ---------------- UI: text ---------------- */
+const textIds=['title','tagline','author','date','message','labelDay','labelNight'];
+function setText(id,v){const el=$('#'+id);if(!el||typeof v!=='string')return;el.value=v;el.dispatchEvent(new Event('input',{bubbles:true}));}
+for(const id of textIds){const el=$('#'+id);if(id!=='tagline'&&id!=='labelDay'&&id!=='labelNight')el.value=S[id];el.addEventListener('input',()=>{S[id]=el.value;if(id==='author'){try{localStorage.setItem('showcase.author',el.value);}catch(e){}}req();});S[id]=el.value;}
+$('#today').addEventListener('click',()=>{setText('date',fmtToday());$('#showDate').checked=true;S.showDate=true;req();});
+for(const id of['showDate','sideLabels','captions','swatches','hexes']){const el=$('#'+id);el.checked=S[id];el.addEventListener('change',()=>{S[id]=el.checked;req();});}
+function renderFonts(){
+  const box=$('#fonts');box.textContent='';
+  const all={...FONTS};if(localFont)all.local=localFont;
+  for(const[k,f]of Object.entries(all)){
+    const b=document.createElement('button');b.setAttribute('aria-pressed',String(S.font===k));
+    const big=document.createElement('b');big.textContent='Aa 字';big.style.fontFamily=f.stack;
+    const sm=document.createElement('span');sm.textContent=f.name;b.append(big,sm);
+    b.addEventListener('click',async()=>{S.font=k;try{localStorage.setItem('showcase.font',k);}catch(e){}renderFonts();await ensureFont();req();});
+    box.append(b);
+  }
+}
+async function ensureFont(){
+  const f=curFont();const txt=[S.title,S.tagline,S.author,S.date,S.message,S.labelDay,S.labelNight,'首頁書架閱讀頁目錄筆記#0123456789ABCDEF'].join('');
+  try{await Promise.race([Promise.all([document.fonts.load(`${f.tw} 40px "${f.fam}"`,txt),document.fonts.load(`${f.bw} 40px "${f.fam}"`,txt)]),new Promise(r=>setTimeout(r,4000))]);}catch(e){}
+}
+$('#fontFile').addEventListener('change',async e=>{
+  const file=e.target.files[0];e.target.value='';if(!file)return;
+  try{
+    if(!('FontFace'in window))throw new Error('這個瀏覽器不支援匯入字體。');
+    const face=new FontFace('ShowcaseLocal',await file.arrayBuffer());await face.load();document.fonts.add(face);
+    localFont={name:file.name.replace(/\.[^.]+$/,'').slice(0,10),stack:'"ShowcaseLocal",serif',fam:'ShowcaseLocal',tw:400,bw:400};
+    S.font='local';renderFonts();req();status(`已套用字體「${localFont.name}」。`);
+  }catch(err){status(err.message&&err.message.includes('瀏覽器')?err.message:'這個字體檔無法讀取，請確認是 TTF、OTF、WOFF 或 WOFF2。');}
+});
+document.fonts&&document.fonts.addEventListener&&document.fonts.addEventListener('loadingdone',req);
+
+/* ---------------- Android colour picker (as on the Lovia page) ---------------- */
+if(/Android/i.test(navigator.userAgent)){
+  const dlg=$('#hsv'),sq=$('#hsvSquare'),hue=$('#hsvHue'),hexOut=$('#hsvHex');let target=null,hsv={h:0,s:0,v:1};
+  const toHex=({h,s,v})=>{const f=n=>{const k=(n+h/60)%6;return v-v*s*Math.max(0,Math.min(k,4-k,1));};return rgbToHex(f(5)*255,f(3)*255,f(1)*255);};
+  const fromHex=hx=>{const[r,g,b]=hexToRgb(hx).map(x=>x/255),mx=Math.max(r,g,b),mn=Math.min(r,g,b),d=mx-mn;let h=0;if(d){h=mx===r?((g-b)/d)%6:mx===g?(b-r)/d+2:(r-g)/d+4;h=(h*60+360)%360;}return{h,s:mx?d/mx:0,v:mx};};
+  const drawSq=()=>{const x=sq.getContext('2d'),w=sq.width,h=sq.height;x.fillStyle=`hsl(${hsv.h},100%,50%)`;x.fillRect(0,0,w,h);
+    let g=x.createLinearGradient(0,0,w,0);g.addColorStop(0,'#fff');g.addColorStop(1,'rgba(255,255,255,0)');x.fillStyle=g;x.fillRect(0,0,w,h);
+    g=x.createLinearGradient(0,0,0,h);g.addColorStop(0,'rgba(0,0,0,0)');g.addColorStop(1,'#000');x.fillStyle=g;x.fillRect(0,0,w,h);
+    x.strokeStyle='#fff';x.lineWidth=2;x.beginPath();x.arc(hsv.s*w,(1-hsv.v)*h,7,0,Math.PI*2);x.stroke();
+    const hx=toHex(hsv);hexOut.textContent=hx;if(target){target.value=hx.toLowerCase();target.dispatchEvent(new Event('input',{bubbles:true}));}};
+  const move=e=>{const b=sq.getBoundingClientRect();hsv.s=clamp((e.clientX-b.left)/b.width,0,1);hsv.v=1-clamp((e.clientY-b.top)/b.height,0,1);drawSq();};
+  let down=false;sq.addEventListener('pointerdown',e=>{down=true;sq.setPointerCapture(e.pointerId);move(e);});sq.addEventListener('pointermove',e=>{if(down)move(e);});sq.addEventListener('pointerup',()=>down=false);
+  hue.addEventListener('input',()=>{hsv.h=Number(hue.value);drawSq();});
+  $('#hsvDone').addEventListener('click',()=>{dlg.hidden=true;target=null;});
+  document.addEventListener('click',e=>{const t=e.target;if(t instanceof HTMLInputElement&&t.type==='color'){e.preventDefault();target=t;hsv=fromHex(t.value);hue.value=Math.round(hsv.h);dlg.hidden=false;drawSq();}},true);
+}
+
+/* ---------------- large preview ---------------- */
+let zoom=1,largeURL=null;
+async function openLarge(){
+  await ensureFont();
+  const[W,H]=dims(),k=Math.min(1,2400/Math.max(W,H)),c=document.createElement('canvas');c.width=Math.round(W*k);c.height=Math.round(H*k);
+  const x=c.getContext('2d',{alpha:false});x.setTransform(k,0,0,k,0,0);drawPoster(x,W,H,{preview:false});
+  const blob=await new Promise(r=>c.toBlob(r,'image/jpeg',.9));if(largeURL)URL.revokeObjectURL(largeURL);largeURL=URL.createObjectURL(blob);
+  $('#largeImg').src=largeURL;zoom=1;applyZoom();$('#large').hidden=false;$('#largeClose').focus();
+}
+function applyZoom(){$('#largeImg').style.width=(zoom*100)+'%';$('#zoomOutVal').textContent=Math.round(zoom*100)+'%';}
+$('#openLarge').addEventListener('click',openLarge);$('#openLarge2').addEventListener('click',openLarge);
+$('#zoomIn').addEventListener('click',()=>{zoom=Math.min(4,zoom+.25);applyZoom();});
+$('#zoomOut').addEventListener('click',()=>{zoom=Math.max(.5,zoom-.25);applyZoom();});
+$('#zoomFit').addEventListener('click',()=>{zoom=1;applyZoom();});
+$('#largeClose').addEventListener('click',()=>{$('#large').hidden=true;});
+$('#large').addEventListener('click',e=>{if(e.target.id==='large')$('#large').hidden=true;});
+
+/* ---------------- export ---------------- */
+let statusTimer=0;
+function status(t){const el=$('#status');el.textContent=t;clearTimeout(statusTimer);statusTimer=setTimeout(()=>{el.textContent='';},7000);}
+function safeName(s){return(s||'reeden').replace(/[\\/:*?"<>|\s]+/g,'-').slice(0,40);}
+async function renderBlob(opts={}){
+  await ensureFont();
+  const[W,H]=dims(),q=currentQuality(),k=q.k,c=document.createElement('canvas');c.width=q.w;c.height=q.h;
+  const x=c.getContext('2d',{alpha:false});x.setTransform(c.width/W,0,0,c.height/H,0,0);drawPoster(x,W,H,{...opts,preview:false});
+  const blob=await new Promise((res,rej)=>c.toBlob(b=>b?res(b):rej(new Error('圖片產生失敗，請改用較小的尺寸再試一次。')),'image/png'));
+  c.width=c.height=1;return{blob,w:q.w,h:q.h};
+}
+let dlNS=null;
+try{if(window.claude&&typeof window.claude.use==='function')window.claude.use('downloads').then(n=>{dlNS=n;}).catch(()=>{});}catch(e){}
+async function saveFile(blob,name){
+  if(dlNS){
+    try{await dlNS.save({filename:name,data:blob});return'saved';}
+    catch(err){if(err&&err.code==='declined')return'declined';if(err&&err.code==='rate_limited'){await new Promise(r=>setTimeout(r,1500));try{await dlNS.save({filename:name,data:blob});return'saved';}catch(e2){if(e2&&e2.code==='declined')return'declined';}}}
+  }
+  tryDownload(blob,name);return'fallback';
+}
+function tryDownload(blob,name){
+  try{const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);}catch(e){}
+}
+function showResult(items){
+  const box=$('#resultImgs');box.textContent='';
+  for(const it of items){const im=document.createElement('img');im.src=URL.createObjectURL(it.blob);im.alt=it.name;box.append(im);}
+  $('#result').hidden=false;$('#resultClose').focus();
+}
+$('#resultClose').addEventListener('click',()=>{$('#result').hidden=true;$$('#resultImgs img').forEach(i=>URL.revokeObjectURL(i.src));});
+$('#result').addEventListener('click',e=>{if(e.target.id==='result')$('#resultClose').click();});
+function hasShots(){return S.shots.day.length+S.shots.night.length>0;}
+async function busy(fn){if(!hasShots()){status('先在「截圖」加入至少一張截圖。');return;}
+  const all=$$('#pane-export .btn');all.forEach(b=>b.disabled=true);status('正在產生高清圖片…');
+  try{await fn();}catch(err){console.error(err);status(err.message||'匯出失敗，請再試一次。');}
+  finally{all.forEach(b=>b.disabled=false);}}
+$('#exportOne').addEventListener('click',()=>busy(async()=>{
+  const r=await renderBlob();const name=`${safeName(S.title)}-${r.w}x${r.h}.png`;
+  const how=await saveFile(r.blob,name);
+  if(how==='saved'){status(`已儲存 ${r.w}×${r.h} PNG。`);return;}
+  if(how==='declined'){status('已取消儲存。');return;}
+  showResult([{blob:r.blob,name}]);status(`已產生 ${r.w}×${r.h} PNG。`);
+}));
+$('#exportPair').addEventListener('click',()=>busy(async()=>{
+  const lay=isSingle(S.layout)?S.layout:'single-even';const out=[];
+  for(const side of['day','night']){if(!S.shots[side].length)continue;
+    const r=await renderBlob({layout:lay,side});const name=`${safeName(S.title)}-${side==='day'?'日間':'夜間'}-${r.w}x${r.h}.png`;
+    out.push({blob:r.blob,name});}
+  let fell=false,saved=0;
+  for(const it of out){const how=await saveFile(it.blob,it.name);if(how==='fallback')fell=true;else if(how==='saved')saved++;}
+  if(fell)showResult(out);
+  status(fell?`已產生 ${out.length} 張。`:`已儲存 ${saved} 張。`);
+}));
+if(navigator.share&&navigator.canShare){
+  $('#shareOne').hidden=false;
+  $('#shareOne').addEventListener('click',()=>busy(async()=>{
+    const r=await renderBlob();const name=`${safeName(S.title)}-${r.w}x${r.h}.png`;const file=new File([r.blob],name,{type:'image/png'});
+    if(navigator.canShare({files:[file]})){try{await navigator.share({files:[file],title:S.title||'Day Night'});status('在分享選單選「儲存影像」就會存進相簿。');return;}
+      catch(err){if(err&&err.name==='AbortError'){status('');return;}}}
+    showResult([{blob:r.blob,name}]);status('請長按圖片儲存。');
+  }));
+}
+let resetArmed=0;
+$('#resetAll').addEventListener('click',e=>{
+  const b=e.currentTarget;
+  if(Date.now()-resetArmed<4000){try{localStorage.removeItem('showcase.author');localStorage.removeItem('showcase.font');}catch(err){}location.reload();return;}
+  resetArmed=Date.now();b.textContent='再按一次，確認重置';setTimeout(()=>{if(Date.now()-resetArmed>=4000)b.textContent='↺ 全部重置';},4100);
+});
+
+/* ---------------- samples, language, hand-off ---------------- */
+async function loadSamples(){
+  for(const side of['day','night']){
+    const list=[];
+    for(const[label,src]of SAMPLE_IMGS[side]){try{list.push(makeShot(await imgFrom(src),label,true));}catch(e){}}
+    S.shots[side]=list;autoColors(side);
+  }
+  refreshDerived();syncColorInputs();
+}
+if(window.LoviaStudio){
+  LoviaStudio.onLang(()=>{
+    for(const s of[...S.shots.day,...S.shots.night]){if(s.labelSrc&&s.label===s.labelOut){s.label=T(s.labelSrc);s.labelOut=s.label;}}
+    renderLists();syncSel();syncQuality();renderFonts();syncLayoutUI();req();
+  });
+}
+let readyResolve;const ready=new Promise(r=>readyResolve=r);
+if(window.LoviaStudio){
+  LoviaStudio.registerPage({
+    ready,
+    async collect(){
+      const pick=async side=>{const out=[];for(const s of S.shots[side]){if(s.sample)continue;const src=s.src.currentSrc||s.src.src||'';
+        if(src.startsWith('blob:')){try{out.push({blob:await(await fetch(src)).blob(),label:s.label});}catch(e){}}}return out;};
+      return{text:{title:S.title,author:S.author,date:S.date,message:S.message},images:{day:await pick('day'),night:await pick('night')}};
+    },
+    async apply(d){
+      if(d.text){for(const k of['title','author','date','message'])if(typeof d.text[k]==='string')setText(k,d.text[k]);}
+      const imgs=d.images||{};let any=false;
+      for(const side of['day','night']){
+        const list=(imgs[side]||[]).slice(0,MAX_PER_SIDE);if(!list.length)continue;any=true;
+        S.shots[side]=[];
+        for(const[i,it]of list.entries()){try{const im=await fileToImage(it.blob);S.shots[side].push(makeShot(im,it.label||DEFAULT_LABELS[i]||'',false));}catch(e){}}
+        autoColors(side);
+      }
+      if(any)for(const side of['day','night'])if(S.shots[side].every(s=>s.sample))S.shots[side]=[];
+      refreshDerived();syncColorInputs();renderLists();syncSel();req();
+    },
+  });
+}
+
+/* ---------------- init ---------------- */
+async function init(){
+  syncQuality();syncColorInputs();setSeg('frame',S.frame);setSeg('bg',S.bg);setSeg('align',S.align);setSeg('tilt',S.tilt);setSeg('palette',S.palette);setSeg('scaleMode',S.scaleMode);
+  renderFonts();syncLayoutUI();
+  await Promise.race([document.fonts.ready,new Promise(r=>setTimeout(r,1500))]);
+  await loadSamples();renderLists();syncSel();req();
+  readyResolve();
+  ensureFont().then(req);
+}
+init();
+})();
+</script>
+</body>
+</html>
