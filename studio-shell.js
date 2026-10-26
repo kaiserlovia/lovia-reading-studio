@@ -16,7 +16,7 @@
     '衬襯装裝览覽计計认認设設试試话話说說请請读讀调調败敗贴貼轻輕载載辑輯输輸边邊过過进進适適选選错錯' +
     '键鍵闭閉阅閱阴陰随隨预預题題颜顏风風饰飾饱飽鲜鮮顶頂击擊并並机機横橫画畫盘盤确確约約胧朧师師' +
     '两兩汇匯昼晝标標档檔没沒准準产產码碼积積笔筆签籤红紅纸紙给給缀綴脑腦盖蓋里裡记記详詳这這录錄' +
-    '长長间間电電页頁顺順颗顆么麼齐齊鹜鶩较較寻尋经經级級志誌萤螢着著';
+    '长長间間电電页頁顺順颗顆么麼齐齊鹜鶩较較寻尋经經级級志誌萤螢着著组組';
   // whole words that differ beyond single characters
   const WORDS_S2T = [['屏幕', '螢幕']];
   const s2t = new Map(), t2s = new Map();
@@ -142,22 +142,36 @@
       const t0 = Date.now();
       (function poll() {
         const img = document.querySelector('#uploadGrid img[src]');
-        if ((img && img.complete) || Date.now() - t0 > 6000) setTimeout(res, 150); else setTimeout(poll, 120);
+        const tile = document.querySelector('#uploadGrid .upload-tile');
+        if ((img && img.complete) || (tile && window.LoviaClassicAPI && !img) || Date.now() - t0 > 6000) setTimeout(res, 150); else setTimeout(poll, 120);
       })();
     });
     return {
       ready,
       async collect() {
-        const srcs = [...document.querySelectorAll('#uploadGrid .upload-tile img')].map(i => i.getAttribute('src') || '').filter(s => s.startsWith('blob:'));
-        const images = [];
-        for (const s of srcs) { try { images.push({ blob: await (await fetch(s)).blob(), label: '' }); } catch (e) {} }
-        return { text: { title: val('themeName'), author: val('authorName'), date: val('dateText'), message: val('footerText') }, images: { day: images, night: [] } };
+        const api = window.LoviaClassicAPI;
+        const sources = name => api ? api.imageSources(name)
+          : (name === 'day' ? [...document.querySelectorAll('#uploadGrid .upload-tile img')].map(i => i.getAttribute('src') || '') : []);
+        const grab = async name => {
+          const out = [];
+          for (const s of sources(name).filter(s => s.startsWith('blob:'))) { try { out.push({ blob: await (await fetch(s)).blob(), label: '' }); } catch (e) {} }
+          return out;
+        };
+        return { text: { title: val('themeName'), author: val('authorName'), date: val('dateText'), message: val('footerText') }, images: { day: await grab('day'), night: await grab('night') } };
       },
       async apply(d) {
         await ready;
         if (d.text) { setVal('themeName', d.text.title); setVal('authorName', d.text.author); setVal('dateText', d.text.date); setVal('footerText', d.text.message); }
-        const pick = (d.images && (d.images.day && d.images.day.length ? d.images.day : d.images.night)) || [];
-        const files = pick.slice(0, 5).map((it, i) => new File([it.blob], `screenshot-${i + 1}.${(it.blob.type.split('/')[1] || 'png').replace('jpeg', 'jpg')}`, { type: it.blob.type || 'image/png' }));
+        const toFiles = list => (list || []).slice(0, 5).map((it, i) => new File([it.blob], `screenshot-${i + 1}.${(it.blob.type.split('/')[1] || 'png').replace('jpeg', 'jpg')}`, { type: it.blob.type || 'image/png' }));
+        const day = toFiles(d.images && d.images.day), night = toFiles(d.images && d.images.night);
+        const api = window.LoviaClassicAPI;
+        if (api) {
+          if (day.length) await api.loadFiles('day', day);
+          if (night.length) await api.loadFiles('night', night);
+          if (day.length && night.length) api.setLayout('pairs');
+          return;
+        }
+        const files = day.length ? day : night;
         const input = document.getElementById('batchFileInput');
         if (files.length && input && typeof DataTransfer !== 'undefined') {
           try { const dt = new DataTransfer(); files.forEach(f => dt.items.add(f)); input.files = dt.files; input.dispatchEvent(new Event('change', { bubbles: true })); } catch (e) { console.warn(e); }

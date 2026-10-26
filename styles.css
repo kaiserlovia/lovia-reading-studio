@@ -461,3 +461,17 @@ h2{font:400 23px Georgia,"Noto Serif SC",serif;margin-top:8px}
 .canvas-ratio-control{margin:7px 0 19px}
 .canvas-ratio-control .ratio-options{margin-bottom:0}
 .canvas-ratio-control + .section-note{margin:0 0 14px}
+
+/* ---------- day/night groups and layouts (added with the Day Night merge) ---------- */
+.group-switch{margin:0 0 14px}
+.layout-pairs i,.layout-split i,.layout-diagonal i,.layout-alternate i{width:13px;height:23px;top:12px}
+.layout-pairs i:nth-child(odd),.layout-split i:nth-child(n+3),.layout-diagonal i:nth-child(n+3),.layout-alternate i:nth-child(even){background:#3f4a43;border-color:#2c352f}
+.layout-pairs i:nth-child(1){left:14px;top:6px}.layout-pairs i:nth-child(2){left:10px;top:13px}
+.layout-pairs i:nth-child(3){left:44px;top:6px}.layout-pairs i:nth-child(4){left:40px;top:13px}
+.layout-pairs i:nth-child(5){left:74px;top:6px}.layout-pairs i:nth-child(6){left:70px;top:13px}
+.layout-split::before{content:"";position:absolute;top:0;bottom:0;left:50%;right:0;background:#55625a;border-radius:0 3px 3px 0}
+.layout-split i:nth-child(1){left:12px}.layout-split i:nth-child(2){left:29px}.layout-split i:nth-child(3){left:54px}.layout-split i:nth-child(4){left:71px}
+.layout-diagonal::before{content:"";position:absolute;inset:0;background:#55625a;clip-path:polygon(58% 0,100% 0,100% 100%,42% 100%);border-radius:3px}
+.layout-diagonal i:nth-child(1){left:8px}.layout-diagonal i:nth-child(2){left:25px}.layout-diagonal i:nth-child(3){left:58px}.layout-diagonal i:nth-child(4){left:75px}
+.layout-alternate i:nth-child(1){left:4px}.layout-alternate i:nth-child(2){left:19px}.layout-alternate i:nth-child(3){left:34px}
+.layout-alternate i:nth-child(4){left:49px}.layout-alternate i:nth-child(5){left:64px}.layout-alternate i:nth-child(6){left:79px}
