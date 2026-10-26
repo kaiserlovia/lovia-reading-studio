@@ -15,12 +15,23 @@
   };
 
   const canvas = document.getElementById('posterCanvas');
-  const ctx = canvas.getContext('2d', { alpha: false });
+  let ctx = canvas.getContext('2d', { alpha: false });
+  const previewCtx=ctx;
+  const miniCanvas=document.getElementById('mobileMiniCanvas');
+  const miniCtx=miniCanvas.getContext('2d', {alpha:false});
+  const compactMode=window.matchMedia('(max-width:580px)').matches;
+  let previewScale=canvas.width/CANVAS_W;
+  let previewZoom=1;
   const refs = {
     name: document.getElementById('themeName'),
     author: document.getElementById('authorName'),
     date: document.getElementById('dateText'),
     footerText: document.getElementById('footerText'),
+    titleSize: document.getElementById('titleFontSize'),
+    authorSize: document.getElementById('authorFontSize'),
+    dateSize: document.getElementById('dateFontSize'),
+    messageSize: document.getElementById('messageFontSize'),
+    imageScale: document.getElementById('imageScale'),
     colors: [...document.querySelectorAll('[data-color]')],
     styles: [...document.querySelectorAll('.style-option')],
     borderStyles: [...document.querySelectorAll('[data-border]')],
@@ -63,6 +74,8 @@
   let layoutMode = 'even';
   let layoutDirection = 'left-high';
   let imageOffsets = [{x:0,y:0},{x:0,y:0},{x:0,y:0}];
+  let imageScales = [100,100,100];
+  let selectedImageIndex = 0;
   let lastPlacements = [];
   let dragState = null;
   let gradientCustomized = false;
@@ -89,8 +102,22 @@
     pendingDraw = true;
     requestAnimationFrame(() => {
       pendingDraw = false;
-      drawPoster();
+      renderPreview();
     });
+  }
+
+  function renderPreview() {
+    refreshAndroidSwatches();
+    ctx=previewCtx;
+    ctx.setTransform(previewScale,0,0,previewScale,0,0);
+    drawPoster();
+    miniCtx.setTransform(1,0,0,1,0,0);
+    miniCtx.clearRect(0,0,miniCanvas.width,miniCanvas.height);
+    miniCtx.imageSmoothingEnabled=true;
+    miniCtx.imageSmoothingQuality='high';
+    miniCtx.drawImage(canvas,0,0,miniCanvas.width,miniCanvas.height);
+    const dock=document.getElementById('mobilePreviewDock');
+    dock.classList.toggle('is-empty',compactMode&&!images.some(Boolean));
   }
 
   function setStroke(color, width = 3) {
@@ -358,6 +385,9 @@
       x=areaX+index*(cellW+gap)+(cellW-w)/2;
       y=areaY+(areaH-h)/2+incline;
     }
+    const zoom=(imageScales[index] ?? 100)/100;
+    const centerX=x+w/2,centerY=y+h/2;
+    w*=zoom;h*=zoom;x=centerX-w/2;y=centerY-h/2;
     const offset = imageOffsets[index] || {x:0,y:0};
     x=Math.max(114,Math.min(CANVAS_W-114-w,x+offset.x));
     y=Math.max(315,Math.min(CANVAS_H-265-h,y+offset.y));
@@ -373,7 +403,7 @@
       return;
     }
     const pixelExact = p.w === image.naturalWidth && p.h === image.naturalHeight;
-    ctx.imageSmoothingEnabled = !pixelExact;
+    ctx.imageSmoothingEnabled = ctx===previewCtx || !pixelExact;
     ctx.imageSmoothingQuality = 'high';
     ctx.drawImage(image, p.x, p.y, p.w, p.h);
     ctx.imageSmoothingEnabled = true;
@@ -448,51 +478,55 @@
     if (notify) announce('所有图片已恢复到默认位置');
     scheduleDraw();
   }
-  function posterPoint(event) {
-    const bounds=canvas.getBoundingClientRect();
+  function posterPoint(event, surface) {
+    const bounds=surface.getBoundingClientRect();
+    if(!bounds.width||!bounds.height)return {x:-1,y:-1};
     return {x:(event.clientX-bounds.left)*CANVAS_W/bounds.width,y:(event.clientY-bounds.top)*CANVAS_H/bounds.height};
   }
   function bindCanvasDrag() {
-    canvas.addEventListener('pointerdown',event=>{
-      if (event.button!==0 && event.pointerType==='mouse') return;
-      const p=posterPoint(event);
-      for (let i=lastPlacements.length-1;i>=0;i--) {
-        const q=lastPlacements[i];
-        if (!q || !images[i]) continue;
-        if (p.x>=q.x && p.x<=q.x+q.w && p.y>=q.y && p.y<=q.y+q.h) {
-          dragState={pointerId:event.pointerId,index:i,startX:p.x,startY:p.y,offset:{...(imageOffsets[i]||{x:0,y:0})}};
-          canvas.classList.add('is-dragging');
-          canvas.setPointerCapture(event.pointerId);
-          event.preventDefault();
-          break;
+    for(const surface of [canvas,miniCanvas]){
+      surface.addEventListener('pointerdown',event=>{
+        if(event.button!==0&&event.pointerType==='mouse')return;
+        const p=posterPoint(event,surface);
+        for(let i=lastPlacements.length-1;i>=0;i--){
+          const q=lastPlacements[i];
+          if(!q||!images[i])continue;
+          if(p.x>=q.x&&p.x<=q.x+q.w&&p.y>=q.y&&p.y<=q.y+q.h){
+            selectImage(i);
+            dragState={pointerId:event.pointerId,target:surface,index:i,startX:p.x,startY:p.y,offset:{...(imageOffsets[i]||{x:0,y:0})}};
+            surface.classList.add('is-dragging');
+            surface.setPointerCapture(event.pointerId);
+            event.preventDefault();
+            break;
+          }
         }
-      }
-    });
-    canvas.addEventListener('pointermove',event=>{
-      if (!dragState || event.pointerId!==dragState.pointerId) return;
-      const p=posterPoint(event);
-      imageOffsets[dragState.index]={x:dragState.offset.x+(p.x-dragState.startX),y:dragState.offset.y+(p.y-dragState.startY)};
-      scheduleDraw();
-      event.preventDefault();
-    });
-    function finishDrag(event) {
-      if (!dragState || event.pointerId!==dragState.pointerId) return;
-      dragState=null;
-      canvas.classList.remove('is-dragging');
-      scheduleDraw();
+      });
+      surface.addEventListener('pointermove',event=>{
+        if(!dragState||event.pointerId!==dragState.pointerId||dragState.target!==surface)return;
+        const p=posterPoint(event,surface);
+        imageOffsets[dragState.index]={x:dragState.offset.x+(p.x-dragState.startX),y:dragState.offset.y+(p.y-dragState.startY)};
+        scheduleDraw();event.preventDefault();
+      });
+      const finish=event=>{
+        if(!dragState||event.pointerId!==dragState.pointerId||dragState.target!==surface)return;
+        dragState=null;surface.classList.remove('is-dragging');scheduleDraw();
+      };
+      surface.addEventListener('pointerup',finish);
+      surface.addEventListener('pointercancel',finish);
+      surface.addEventListener('lostpointercapture',()=>{
+        if(dragState?.target===surface)dragState=null;
+        surface.classList.remove('is-dragging');
+      });
+      surface.addEventListener('dblclick',event=>{
+        const p=posterPoint(event,surface);
+        for(let i=lastPlacements.length-1;i>=0;i--){
+          const q=lastPlacements[i];
+          if(q&&p.x>=q.x&&p.x<=q.x+q.w&&p.y>=q.y&&p.y<=q.y+q.h){
+            imageOffsets[i]={x:0,y:0};scheduleDraw();break;
+          }
+        }
+      });
     }
-    canvas.addEventListener('pointerup',finishDrag);
-    canvas.addEventListener('pointercancel',finishDrag);
-    canvas.addEventListener('lostpointercapture',()=>{dragState=null;canvas.classList.remove('is-dragging')});
-    canvas.addEventListener('dblclick',event=>{
-      const p=posterPoint(event);
-      for(let i=lastPlacements.length-1;i>=0;i--){
-        const q=lastPlacements[i];
-        if(q && p.x>=q.x && p.x<=q.x+q.w && p.y>=q.y && p.y<=q.y+q.h){
-          imageOffsets[i]={x:0,y:0};scheduleDraw();break;
-        }
-      }
-    });
   }
 
   function drawPoster() {
@@ -541,9 +575,9 @@
       if (image) { drawAdaptiveFrame(p,line,theme); drawFittedImage(image,p); }
     });
     drawTrackedText(refs.name.value || DEFAULT_TEXT.name,179,175,
-      {color:theme.ink,size:61,minSize:29,tracking:5,maxWidth:1670,bold:true,kinghwa:true});
+      {color:theme.ink,size:Number(refs.titleSize.value),minSize:18,tracking:5,maxWidth:1670,bold:true,kinghwa:true});
     drawTrackedText('AUTHOR / '+(refs.author.value || DEFAULT_TEXT.author),3421,175,
-      {color:theme.ink,size:48,minSize:28,tracking:8,maxWidth:1430,align:'right'});
+      {color:theme.ink,size:Number(refs.authorSize.value),minSize:18,tracking:8,maxWidth:1430,align:'right'});
     sortedColors(currentColors).forEach((color,i) => {
       const x=200+67*i,y=CANVAS_H-160;
       ctx.beginPath();ctx.arc(x,y,21,0,Math.PI*2);
@@ -553,10 +587,10 @@
     const message=refs.footerText.value.trim();
     if (message) {
       drawTrackedText(message,3421,CANVAS_H-190,
-        {color:theme.ink,size:33,minSize:22,tracking:4,maxWidth:1450,align:'right'});
+        {color:theme.ink,size:Number(refs.messageSize.value),minSize:15,tracking:4,maxWidth:1450,align:'right'});
     }
     drawTrackedText(refs.date.value || DEFAULT_TEXT.date,3421,CANVAS_H-121,
-      {color:theme.ink,size:41,minSize:27,tracking:7,maxWidth:900,align:'right'});
+      {color:theme.ink,size:Number(refs.dateSize.value),minSize:16,tracking:7,maxWidth:900,align:'right'});
   }
 
   function syncPaletteInputs() {
@@ -592,21 +626,26 @@
   }
 
   function setCanvasRatio(ratio) {
-    const square = ratio === '1:1';
-    CANVAS_H = square ? 3600 : 2700;
-    canvas.width = CANVAS_W;
-    canvas.height = CANVAS_H;
-    canvas.style.aspectRatio = square ? '1 / 1' : '4 / 3';
-    refs.ratioButtons.forEach(button => {
-      const selected = button.dataset.ratio === ratio;
+    const square=ratio==='1:1';
+    CANVAS_H=square?3600:2700;
+    const physicalWidth=compactMode?900:window.matchMedia('(max-width:900px)').matches?1200:1800;
+    previewScale=physicalWidth/CANVAS_W;
+    canvas.width=physicalWidth;
+    canvas.height=Math.round(CANVAS_H*previewScale);
+    canvas.style.aspectRatio=square?'1 / 1':'4 / 3';
+    miniCanvas.width=440;
+    miniCanvas.height=square?440:330;
+    miniCanvas.style.aspectRatio=square?'1 / 1':'4 / 3';
+    refs.ratioButtons.forEach(button=>{
+      const selected=button.dataset.ratio===ratio;
       button.classList.toggle('selected',selected);
       button.setAttribute('aria-pressed',String(selected));
     });
-    const dims = CANVAS_W+' × '+CANVAS_H;
-    document.getElementById('ratioPreviewLabel').textContent = square?'1:1 正方形':'4:3 横版';
-    document.getElementById('resolutionPreviewLabel').textContent = dims+' px';
-    document.getElementById('downloadResolution').textContent = dims;
-    document.getElementById('dialogResolution').textContent = ' / '+dims;
+    const dims=CANVAS_W+' × '+CANVAS_H;
+    document.getElementById('ratioPreviewLabel').textContent=square?'1:1 正方形':'4:3 横版';
+    document.getElementById('resolutionPreviewLabel').textContent=dims+' px';
+    document.getElementById('downloadResolution').textContent=dims;
+    document.getElementById('dialogResolution').textContent=' / '+dims;
     scheduleDraw();
   }
 
@@ -616,6 +655,7 @@
     images.forEach((image,index)=>{
       const tile=document.createElement('div');
       tile.className='upload-tile';
+      tile.classList.toggle('selected-image', index===selectedImageIndex);
       tile.dataset.slot=String(index);
       const replace=document.createElement('button');
       replace.type='button';replace.className='tile-replace';
@@ -623,11 +663,21 @@
       replace.setAttribute('aria-label','替换第'+(index+1)+'张图片');
       const thumb=document.createElement('img');
       if(image) thumb.src=image.src;
+      else thumb.style.display='none';
       thumb.alt='第'+(index+1)+'张缩略图';
       const overlay=document.createElement('span');overlay.className='tile-shade';
-      const count=document.createElement('strong');count.textContent=String(index+1).padStart(2,'0');
+      if(!image){
+        const empty=document.createElement('span');empty.className='empty-tile-label';
+        empty.textContent='＋ 添加图片';replace.append(empty);
+      }
       const caption=document.createElement('small');caption.textContent='点击替换 ↗';
-      overlay.append(count,caption);replace.append(thumb,overlay);tile.append(replace);
+      overlay.append(caption);replace.append(thumb,overlay);tile.append(replace);
+      const select=document.createElement('button');
+      select.type='button';select.className='tile-select';
+      select.dataset.action='select';select.dataset.slot=String(index);
+      select.textContent=String(index+1).padStart(2,'0');
+      select.setAttribute('aria-label','选中第'+(index+1)+'张图片以调整大小');
+      tile.append(select);
       if(images.length>1){
         const remove=document.createElement('button');
         remove.type='button';remove.className='tile-remove';
@@ -652,6 +702,9 @@
     images.splice(index,1);
     userObjectURLs.splice(index,1);
     imageOffsets.splice(index,1);
+    imageScales.splice(index,1);
+    selectedImageIndex=Math.max(0,Math.min(selectedImageIndex,images.length-1));
+    updateSelectedScaleUI();
     updateSizeMessage();refreshAutoColors();
     currentColors=paletteFromImages(images);syncPaletteInputs();
     scheduleDraw();announce('已移除第 '+(index+1)+' 张图片');
@@ -660,8 +713,8 @@
   function updateSizeMessage() {
     const dims=images.map(img=>img ? img.naturalWidth+' × '+img.naturalHeight : '—');
     const same=images.length===3&&images.every(img=>img && img.naturalWidth===942&&img.naturalHeight===2048);
-    refs.info.textContent=images.length+' 张图片'+(same?'，均为 942 × 2048 px':'：'+dims.join(' / '))+
-      ' · 图片完整保留，可在海报中拖动位置';
+    refs.info.textContent=images.some(Boolean)?images.length+' 张图片'+(same?'，均为 942 × 2048 px':'：'+dims.join(' / '))+
+      ' · 图片完整保留，可在海报中拖动位置':'尚未添加图片，请选择上方“逐张添加”或“一键添加”';
     renderTiles();
   }
 
@@ -686,6 +739,8 @@
       images=loaded.map(item=>item.image);
       userObjectURLs=loaded.map(item=>item.url);
       imageOffsets=images.map(()=>({x:0,y:0}));
+      imageScales=images.map(()=>100);selectedImageIndex=0;
+      updateSelectedScaleUI();
       updateSizeMessage();
       refreshAutoColors();
       currentColors=paletteFromImages(images);
@@ -707,7 +762,9 @@
         if(images.length>=5){URL.revokeObjectURL(loaded.url);return announce('最多只能展示 5 张图片');}
         images.push(loaded.image);
         imageOffsets.push({x:0,y:0});
+        imageScales.push(100);
       } else images[index]=loaded.image;
+      selectedImageIndex=index;updateSelectedScaleUI();
       userObjectURLs[index]=loaded.url;
       if (old) URL.revokeObjectURL(old);
       updateSizeMessage();
@@ -719,11 +776,28 @@
     } catch(error) { announce(error.message || '图片读取失败，请换一张'); }
   }
 
+  function selectImage(index) {
+    if(index<0||index>=images.length)return;
+    selectedImageIndex=index;
+    updateSelectedScaleUI();
+    renderTiles();
+  }
+  function updateSelectedScaleUI() {
+    selectedImageIndex=Math.max(0,Math.min(selectedImageIndex,images.length-1));
+    refs.imageScale.value=String(imageScales[selectedImageIndex]??100);
+    document.getElementById('imageScaleValue').textContent=refs.imageScale.value+'%';
+    document.getElementById('selectedImageLabel').textContent='第 '+(selectedImageIndex+1)+' 张';
+  }
+
   async function resetAll() {
     refs.name.value=DEFAULT_TEXT.name;
     refs.author.value=DEFAULT_TEXT.author;
     refs.date.value=DEFAULT_TEXT.date;
     refs.footerText.value='';
+    for(const [ref,id] of [[refs.titleSize,'titleFontSizeValue'],[refs.authorSize,'authorFontSizeValue'],[refs.dateSize,'dateFontSizeValue'],[refs.messageSize,'messageFontSizeValue']]){
+      const defaultSize={titleFontSizeValue:61,authorFontSizeValue:48,dateFontSizeValue:41,messageFontSizeValue:33}[id];
+      ref.value=String(defaultSize);document.getElementById(id).textContent=String(defaultSize);
+    }
     refs.customColor.value='#E9E6DB';
     document.getElementById('customColorValue').textContent='#E9E6DB';
     refs.blur.value='40';document.getElementById('backgroundBlurValue').textContent='40 px';
@@ -738,9 +812,13 @@
     document.getElementById('coverFileName').textContent='未选择，默认取第一张截图颜色';
     userObjectURLs.forEach(url=>url&&URL.revokeObjectURL(url));
     userObjectURLs=[null,null,null];
-    try { images=await Promise.all(DEFAULT_IMAGES.map(loadImage)); }
-    catch(error) { images=[null,null,null]; }
+    if(compactMode) images=[null];
+    else { try { images=await Promise.all(DEFAULT_IMAGES.map(loadImage)); }
+    catch(error) { images=[null]; } }
+    userObjectURLs=images.map(()=>null);imageOffsets=images.map(()=>({x:0,y:0}));
     gradientCustomized=false;
+    imageScales=images.map(()=>100);selectedImageIndex=0;
+    updateSelectedScaleUI();
     updateSizeMessage();refreshAutoColors();setAutoGradient(false);currentColors=paletteFromImages(images);
     syncPaletteInputs();setLayoutDirection('left-high');setLayout('even');
     selectTheme('light');selectBorder('line');setCanvasRatio('4:3');
@@ -797,49 +875,99 @@
     return `${(str || 'Lovia-Reading-Gallery').slice(0, 45)}-${CANVAS_W}x${CANVAS_H}.png`;
   }
 
-  function canvasBlob() {
-    return new Promise((resolve, reject) => canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error('PNG 创建失败')), 'image/png'));
+  function canvasBlob(source) {
+    return new Promise((resolve,reject)=>source.toBlob(blob=>blob?resolve(blob):reject(new Error('PNG 创建失败')),'image/png'));
+  }
+
+  async function highResolutionBlob() {
+    if(!images.some(Boolean))throw new Error('请先添加图片');
+    await document.fonts.ready;
+    // Full-resolution processing is deferred until the user exports, keeping phone previews light.
+    announce('正在生成高清图片，请稍候…');
+    await new Promise(resolve=>requestAnimationFrame(resolve));
+    const output=document.createElement('canvas');
+    output.width=CANVAS_W;output.height=CANVAS_H;
+    const prior=ctx;
+    try {
+      ctx=output.getContext('2d',{alpha:false});
+      ctx.setTransform(1,0,0,1,0,0);
+      drawPoster();
+    } finally { ctx=prior; }
+    try {return await canvasBlob(output);}
+    finally {output.width=1;output.height=1;}
   }
 
   async function exportPNG() {
     try {
-      await document.fonts.ready;
-      drawPoster();
-      const blob = await canvasBlob();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = safeFilename();
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      setTimeout(() => URL.revokeObjectURL(url), 30000);
-      announce(`高清 PNG 已开始下载 · ${CANVAS_W} × ${CANVAS_H} px`);
-    } catch (error) {
-      console.error(error);
-      announce('导出遇到问题，请稍后重试');
-    }
+      const blob=await highResolutionBlob();
+      const url=URL.createObjectURL(blob);
+      const a=document.createElement('a');
+      a.href=url;a.download=safeFilename();
+      document.body.appendChild(a);a.click();a.remove();
+      setTimeout(()=>URL.revokeObjectURL(url),30000);
+      announce('高清 PNG 已开始下载 · '+CANVAS_W+' × '+CANVAS_H+' px');
+    } catch(error){console.error(error);announce(error.message||'导出失败，请稍后重试');}
+  }
+
+  async function saveToAlbum() {
+    try {
+      const blob=await highResolutionBlob();
+      const file=new File([blob],safeFilename(),{type:'image/png'});
+      if(navigator.share && (!navigator.canShare || navigator.canShare({files:[file]}))) {
+        try {
+          await navigator.share({files:[file],title:'Lovia 阅读主题'});
+          announce('已打开系统分享；可在菜单中选择“存储图像”');
+          return;
+        } catch(error) {
+          if(error?.name==='AbortError')return;
+          console.warn('Native share unavailable; using download',error);
+        }
+      }
+      const url=URL.createObjectURL(blob);
+      const anchor=document.createElement('a');
+      anchor.href=url;anchor.download=safeFilename();
+      document.body.appendChild(anchor);anchor.click();anchor.remove();
+      setTimeout(()=>URL.revokeObjectURL(url),30000);
+      announce('已开始下载；如未自动入相册，请在图片菜单中选择“存储图像”');
+    } catch(error){console.error(error);announce(error.message||'保存失败，请重试');}
+  }
+
+  function setPreviewZoom(next) {
+    previewZoom=Math.min(3,Math.max(.5,next));
+    const content=document.getElementById('dialogContent');
+    const fitWidth=Math.max(220,content.clientWidth-20);
+    refs.dialogImage.style.width=Math.round(fitWidth*previewZoom)+'px';
+    document.getElementById('previewZoomValue').textContent=Math.round(previewZoom*100)+'%';
   }
 
   async function openPreview() {
+    if(!images.some(Boolean))return announce('请先添加图片再放大预览');
     await document.fonts.ready;
-    drawPoster();
-    const blob = await canvasBlob();
-    if (previewURL) URL.revokeObjectURL(previewURL);
-    previewURL = URL.createObjectURL(blob);
-    refs.dialogImage.src = previewURL;
+    renderPreview();
+    refs.dialogImage.src=canvas.toDataURL('image/jpeg',.90);
     refs.dialog.showModal();
+    setPreviewZoom(1);
+    document.getElementById('dialogContent').scrollTo(0,0);
   }
 
   function closePreview() {
-    refs.dialog.close();
+    if(refs.dialog.open)refs.dialog.close();
     refs.dialogImage.removeAttribute('src');
-    if (previewURL) URL.revokeObjectURL(previewURL);
-    previewURL = null;
+    refs.dialogImage.style.removeProperty('width');
+    if(previewURL)URL.revokeObjectURL(previewURL);
+    previewURL=null;
   }
 
   function bindControls() {
     for (const input of [refs.name, refs.author, refs.date, refs.footerText]) input.addEventListener('input', scheduleDraw);
+    for(const [ref,valueId] of [[refs.titleSize,'titleFontSizeValue'],[refs.authorSize,'authorFontSizeValue'],[refs.dateSize,'dateFontSizeValue'],[refs.messageSize,'messageFontSizeValue']]){
+      ref.addEventListener('input',()=>{document.getElementById(valueId).textContent=ref.value;scheduleDraw();});
+    }
+    refs.imageScale.addEventListener('input',()=>{
+      imageScales[selectedImageIndex]=Number(refs.imageScale.value);
+      document.getElementById('imageScaleValue').textContent=refs.imageScale.value+'%';
+      scheduleDraw();
+    });
     refs.colors.forEach(input => input.addEventListener('input', () => {
       currentColors[Number(input.dataset.color)] = input.value.toUpperCase();
       syncPaletteInputs();
@@ -862,8 +990,9 @@
     });
     document.getElementById('batchUploadButton').addEventListener('click',() => refs.batchInput.click());
     document.getElementById('singleUploadButton').addEventListener('click',()=>{
-      if(images.length>=5){announce('已有 5 张图片，点击缩略图可替换');return;}
-      activeSlot=images.length;refs.imageInput.click();
+      const empty=images.findIndex(image=>!image);
+      if(images.length>=5&&empty<0){announce('已有 5 张图片，点击缩略图可替换');return;}
+      activeSlot=empty>=0?empty:images.length;refs.imageInput.click();
     });
     refs.batchInput.addEventListener('change', async () => {
       const files=Array.from(refs.batchInput.files);refs.batchInput.value='';
@@ -904,10 +1033,20 @@
     document.getElementById('resetAll').addEventListener('click', resetAll);
     document.getElementById('extractPalette').addEventListener('click', extractPalette);
     document.getElementById('downloadButton').addEventListener('click', exportPNG);
-    document.getElementById('topExport').addEventListener('click', exportPNG);
-    document.getElementById('mobileExport').addEventListener('click', exportPNG);
+    document.getElementById('topExport').addEventListener('click',compactMode?saveToAlbum:exportPNG);
+    document.getElementById('mobileExport').addEventListener('click', saveToAlbum);
     document.getElementById('largePreview').addEventListener('click', openPreview);
     document.getElementById('closePreview').addEventListener('click', closePreview);
+    document.getElementById('previewZoomIn').addEventListener('click',()=>setPreviewZoom(previewZoom+.25));
+    document.getElementById('previewZoomOut').addEventListener('click',()=>setPreviewZoom(previewZoom-.25));
+    document.getElementById('previewZoomFit').addEventListener('click',()=>setPreviewZoom(1));
+    document.getElementById('mobilePreviewExpand').addEventListener('click',openPreview);
+    document.getElementById('mobilePreviewToggle').addEventListener('click',()=>{
+      const dock=document.getElementById('mobilePreviewDock');
+      const collapsed=dock.classList.toggle('is-collapsed');
+      document.getElementById('mobilePreviewToggle').setAttribute('aria-expanded',String(!collapsed));
+      dock.querySelector('.dock-toggle-label').textContent=collapsed?'展开 ＋':'收起 −';
+    });
     refs.dialog.addEventListener('click', event => { if (event.target === refs.dialog) closePreview(); });
     refs.dialog.addEventListener('close', () => {
       if (previewURL) URL.revokeObjectURL(previewURL);
@@ -919,6 +1058,7 @@
       if(!control)return;
       const index=Number(control.dataset.slot);
       if(control.dataset.action==='remove'){removeImage(index);return;}
+      if(control.dataset.action==='select'){selectImage(index);return;}
       activeSlot=index;refs.imageInput.click();
     });
     refs.uploadGrid.addEventListener('dragover',event=>{
@@ -947,27 +1087,111 @@
     });
   }
 
+  const onAndroid=/Android/i.test(navigator.userAgent);
+  let hsvTarget=null,hsvSaved='#FFFFFF',hsvAccepted=false;
+  let hsv={h:0,s:0,v:100};
+  function hsvFromHex(hex) {
+    const [r,g,b]=rgb(hex).map(x=>x/255);
+    const max=Math.max(r,g,b),min=Math.min(r,g,b),delta=max-min;
+    let h=0;
+    if(delta){if(max===r)h=((g-b)/delta)%6;else if(max===g)h=(b-r)/delta+2;else h=(r-g)/delta+4;h=(h*60+360)%360;}
+    return {h:Math.round(h),s:max?Math.round(delta/max*100):0,v:Math.round(max*100)};
+  }
+  function hexFromHsv({h,s,v}) {
+    const sat=s/100,val=v/100;
+    const chroma=val*sat,x=chroma*(1-Math.abs(((h/60)%2)-1)),m=val-chroma;
+    let c=[0,0,0];
+    if(h<60)c=[chroma,x,0];else if(h<120)c=[x,chroma,0];
+    else if(h<180)c=[0,chroma,x];else if(h<240)c=[0,x,chroma];
+    else if(h<300)c=[x,0,chroma];else c=[chroma,0,x];
+    return rgbToHex(...c.map(n=>(n+m)*255));
+  }
+  function refreshAndroidSwatches() {
+    if(!onAndroid)return;
+    document.querySelectorAll('input[data-android-hsv]').forEach(input=>{
+      input.style.backgroundColor=input.value;
+      input.setAttribute('aria-label','打开 HSV 调色盘，当前颜色 '+input.value);
+    });
+  }
+  function updateHsvVisuals(updateTarget=true) {
+    const hueColor=hexFromHsv({h:hsv.h,s:100,v:100});
+    const square=document.getElementById('hsvSquare');
+    square.style.background='linear-gradient(to top,#000,transparent),linear-gradient(to right,#fff,transparent),'+hueColor;
+    document.getElementById('hsvHandle').style.left=hsv.s+'%';
+    document.getElementById('hsvHandle').style.top=(100-hsv.v)+'%';
+    document.getElementById('hsvHue').value=String(hsv.h);
+    const hex=hexFromHsv(hsv);
+    document.getElementById('hsvColorCode').textContent=hex;
+    document.getElementById('hsvColorPreview').style.backgroundColor=hex;
+    if(updateTarget && hsvTarget) {
+      hsvTarget.value=hex;
+      hsvTarget.style.backgroundColor=hex;
+      hsvTarget.dispatchEvent(new Event('input',{bubbles:true}));
+    }
+  }
+  function initializePlatformColorPicker() {
+    if(!onAndroid)return; // iOS retains its system-native <input type="color">.
+    document.documentElement.classList.add('android-hsv');
+    const dlg=document.getElementById('hsvPicker');
+    for(const input of document.querySelectorAll('input[type="color"]')){
+      input.dataset.androidHsv='true';
+      input.type='button';
+      input.classList.add('android-color-control');
+      input.style.backgroundColor=input.value;
+      input.addEventListener('click',()=>{
+        hsvTarget=input;hsvSaved=input.value;hsvAccepted=false;
+        hsv=hsvFromHex(input.value);
+        updateHsvVisuals(false);
+        dlg.showModal();
+      });
+    }
+    const square=document.getElementById('hsvSquare');
+    const moveSquare=event=>{
+      const r=square.getBoundingClientRect();
+      hsv.s=Math.max(0,Math.min(100,Math.round((event.clientX-r.left)*100/r.width)));
+      hsv.v=Math.max(0,Math.min(100,Math.round((1-(event.clientY-r.top)/r.height)*100)));
+      updateHsvVisuals();
+    };
+    square.addEventListener('pointerdown',event=>{square.setPointerCapture(event.pointerId);moveSquare(event);event.preventDefault();});
+    square.addEventListener('pointermove',event=>{if(event.buttons||event.pointerType==='touch'&&square.hasPointerCapture(event.pointerId))moveSquare(event);});
+    document.getElementById('hsvHue').addEventListener('input',event=>{hsv.h=Number(event.target.value);updateHsvVisuals();});
+    document.getElementById('hsvDone').addEventListener('click',()=>{hsvAccepted=true;dlg.close();});
+    document.getElementById('hsvClose').addEventListener('click',()=>dlg.close());
+    dlg.addEventListener('close',()=>{
+      if(!hsvAccepted && hsvTarget){
+        hsvTarget.value=hsvSaved;hsvTarget.dispatchEvent(new Event('input',{bubbles:true}));
+      }
+      hsvTarget=null;refreshAndroidSwatches();
+    });
+    refreshAndroidSwatches();
+  }
+
   async function initialize() {
     bindControls();
     bindCanvasDrag();
+    initializePlatformColorPicker();
     syncPaletteInputs();
-    try {
-      images = await Promise.all(DEFAULT_IMAGES.map(loadImage));
-      updateSizeMessage();
-      refreshAutoColors();
-      setAutoGradient(false);
-      currentColors = paletteFromImages(images);
-      syncPaletteInputs();
-      setCanvasRatio('4:3');
-      drawPoster();
-      // Ensure the actual embedded old-Song font is used in the preview and export.
-      document.fonts.load('bold 61px "KingHwaOldSong"').then(scheduleDraw).catch(() => {});
-    } catch (error) {
-      console.error('Default image loading failed', error);
-      renderTiles();
-      drawPoster();
-      announce('默认图片未能载入，可点击重新选择图片');
+    if(compactMode){
+      // Phone starts with no example screenshots: avoids background downloads and blank/frozen preview.
+      images=[null];userObjectURLs=[null];imageOffsets=[{x:0,y:0}];imageScales=[100];selectedImageIndex=0;
+      updateSelectedScaleUI();updateSizeMessage();
+      refreshAutoColors();setCanvasRatio('4:3');
+      scheduleDraw();
+    } else {
+      try {
+        images=await Promise.all(DEFAULT_IMAGES.map(loadImage));
+        imageScales=images.map(()=>100);
+        updateSelectedScaleUI();updateSizeMessage();
+        refreshAutoColors();currentColors=paletteFromImages(images);
+        syncPaletteInputs();setAutoGradient(false);setCanvasRatio('4:3');
+        renderPreview();
+      } catch(error) {
+        console.error('Default image loading failed',error);
+        images=[null];userObjectURLs=[null];imageOffsets=[{x:0,y:0}];imageScales=[100];
+        updateSelectedScaleUI();updateSizeMessage();setCanvasRatio('4:3');renderPreview();
+      }
     }
+    document.fonts.load('bold 61px "KingHwaOldSong"').then(scheduleDraw).catch(()=>{});
   }
 
   initialize();

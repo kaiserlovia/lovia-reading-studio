@@ -302,3 +302,77 @@ h2{font:400 23px Georgia,"Noto Serif SC",serif;margin-top:8px}
   .drag-guide button{padding:8px 5px}
   .layout-option{min-height:83px}
 }
+
+
+/* Edition 05 — fast mobile rendering and editorial controls */
+@font-face{font-family:"LoviaOldSong";src:local("KingHwaOldSong"),local("京华老宋体");font-display:swap}
+#pageTitle{font-family:"KingHwaOldSong","LoviaOldSong","京华老宋体","Songti SC",serif;font-weight:700}
+.font-controls{padding:12px 13px 2px;margin-top:20px;background:#f4f7f2;border:1px solid #e2e9e0;border-radius:7px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:18px;row-gap:7px}
+.font-control .range-label{margin:7px 0 9px}
+.font-control .range-input{margin:0 0 15px}
+.font-control output{color:#546f59;font-variant-numeric:tabular-nums}
+.image-scale-panel{margin-top:13px;padding:13px 13px 9px;border:1px solid #dbe5da;background:#f9fbf8;border-radius:7px}
+.image-scale-panel .range-label{margin:0 0 12px}
+#selectedImageLabel{margin-left:5px;color:#8da08e;font-size:10px}
+.image-scale-tip{margin-top:9px;color:#9aa99b;font-size:9px;line-height:1.7}
+.upload-tile.selected-image{border-color:#51745a;box-shadow:0 0 0 2px rgba(94,133,101,.24)}
+.upload-tile .tile-shade strong{font-weight:600}
+.mobile-preview-dock{display:none}
+.hsv-picker-dialog{width:min(94vw,390px);max-height:88vh;padding:17px;border:1px solid #dce6da;border-radius:14px;background:#fcfdfa;box-shadow:0 28px 90px #14251b70}
+.hsv-picker-dialog::backdrop{background:#1d302774;backdrop-filter:blur(5px)}
+.hsv-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;color:#425c49;font-size:16px}
+.hsv-head button{border:0;background:transparent;color:#687e6b;font-size:24px;line-height:1;padding:3px}
+.hsv-square{position:relative;width:100%;aspect-ratio:1/0.7;background:linear-gradient(to top,#000,transparent),linear-gradient(to right,#fff,transparent),red;border-radius:7px;touch-action:none;cursor:crosshair}
+.hsv-square span{position:absolute;left:100%;top:0;width:16px;height:16px;border:3px solid #fff;border-radius:50%;box-shadow:0 0 0 1px #273a2d78,0 0 5px #0007;transform:translate(-50%,-50%);pointer-events:none}
+.hsv-hue-label{display:block;margin:16px 0 5px;color:#7e8e7e;font-size:10px;letter-spacing:1px}
+#hsvHue{width:100%;height:22px;margin:0;appearance:none;border-radius:20px;cursor:pointer;background:linear-gradient(to right,red,#ff0,#0f0,#0ff,#00f,#f0f,red)}
+#hsvHue::-webkit-slider-thumb{appearance:none;width:20px;height:20px;background:#fff;border:2px solid #455f4a;border-radius:50%;box-shadow:0 1px 5px #0002}
+.hsv-foot{display:flex;align-items:center;gap:12px;margin-top:18px}
+.hsv-color-preview{height:35px;width:35px;border:1px solid #d6e0d4;border-radius:6px}
+.hsv-color-code{font:12px Georgia,serif;color:#4c6050;letter-spacing:1px;margin-right:auto}
+.hsv-foot button{padding:10px 20px;color:#fff;background:#314235;border:0;border-radius:6px;font-size:12px}
+.dialog-zoom{height:45px;display:flex;align-items:center;justify-content:center;gap:8px;background:#f4f6f0;border-bottom:1px solid #e1e7de}
+.dialog-zoom button{border:1px solid #cedace;background:#fff;color:#536d58;padding:5px 12px;min-height:30px;border-radius:4px;font-size:11px}
+.dialog-zoom button:first-child,.dialog-zoom button:nth-child(3){font-size:20px;line-height:1}
+.dialog-zoom output{font:11px Georgia,serif;color:#829385;width:44px;text-align:center}
+.dialog-content{overflow:auto;display:block;text-align:center;scrollbar-width:thin}
+.dialog-content img{max-width:none;display:block;margin:auto;height:auto;min-width:0}
+@media(max-width:900px){
+  .preview-dialog{position:fixed;inset:0;width:100vw;max-width:100vw;height:100dvh;max-height:100dvh;border-radius:0}
+  .dialog-header{height:49px;padding:0 15px;font-size:11px}
+  .dialog-content{height:calc(100dvh - 94px);max-height:none;overflow:auto;padding:10px;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;touch-action:pan-x pan-y pinch-zoom}
+}
+@media(max-width:580px){
+  .brand-monogram{position:relative;display:flex;align-items:center;justify-content:center;padding:0!important;letter-spacing:0!important;font-style:normal;font-size:24px}
+  .brand-monogram .brand-dot{position:absolute;right:7px;bottom:6px;font-size:13px;line-height:1;letter-spacing:0}
+  #pageTitle{font-size:clamp(19px,5vw,23px);line-height:1.28;letter-spacing:0;margin-top:7px;font-weight:700}
+  .intro{margin-bottom:8px}
+  .preview-column .preview-card{display:none!important}
+  .preview-column .welcome-note{margin:9px 0 12px;padding:10px 12px;font-size:12px;line-height:1.45}
+  .workspace{padding-top:12px;gap:10px}
+  .mobile-preview-dock{position:fixed;display:block;right:10px;bottom:calc(83px + env(safe-area-inset-bottom,0px));width:min(205px,56vw);z-index:24;border:1px solid #cbd6ca;background:rgba(251,252,249,.96);backdrop-filter:blur(14px);border-radius:9px;box-shadow:0 8px 32px #0f241b27;overflow:hidden}
+  .mobile-preview-title{display:flex;align-items:center;gap:6px;width:100%;min-height:35px;border:0;padding:0 10px;background:#f1f6ef;color:#506955;font-size:10px;letter-spacing:.2px;font-weight:600}
+  .dock-live-dot{width:6px;height:6px;flex:none;border-radius:50%;background:#75a57a}
+  .dock-toggle-label{margin-left:auto;color:#849b86;font-size:9px}
+  .mobile-preview-body{position:relative;display:block;padding:6px;min-height:24px}
+  .mobile-preview-body canvas{display:block;width:100%;height:auto;box-shadow:0 0 0 1px #c7d1c6;touch-action:none;cursor:grab}
+  .mobile-preview-body canvas.is-dragging{cursor:grabbing}
+  .dock-hint{display:block;text-align:center;color:#a1aca1;font-size:8px;padding:5px 0 0;pointer-events:none}
+  .mobile-preview-dock.is-collapsed{width:auto;max-width:56vw;border-radius:23px}
+  .mobile-preview-dock.is-collapsed .mobile-preview-body{display:none}
+  .mobile-preview-dock.is-collapsed .mobile-preview-title{border-radius:22px}
+  .font-controls{padding:10px;gap:7px}
+  .font-control .range-label{gap:6px;font-size:10px}
+}
+.mobile-preview-body .dock-hint{display:block;width:100%;border:0;background:transparent;text-align:center;color:#7b9480;font-size:9px;padding:8px 0 3px;cursor:pointer}
+.mobile-preview-dock.is-empty{display:none!important}
+.tile-select{position:absolute;left:4px;top:4px;z-index:2;min-width:30px;height:27px;border:1px solid #ffffffad;border-radius:4px;background:#344a39d9;color:#fff;font:600 12px Georgia,serif;letter-spacing:1px}
+.tile-select:hover{background:#55735c}
+.upload-tile.selected-image .tile-select{background:#eef7ea;color:#315337;border-color:#668b6a}
+
+.empty-tile-label{position:absolute;inset:0;display:flex;justify-content:center;align-items:center;font-size:11px;color:#7f9985;pointer-events:none}
+.android-hsv input.android-color-control{color:transparent!important;font-size:0!important;text-shadow:none!important;cursor:pointer;appearance:none;border:1px solid #b6c8b6;border-radius:5px}
+.android-hsv .color-item input.android-color-control{border-radius:50%;overflow:hidden}
+.android-hsv .custom-color-row input.android-color-control{min-height:42px;min-width:65px}
+.android-hsv .gradient-colors input.android-color-control{width:45px;height:29px}
+.android-hsv #ruleColor.android-color-control{width:56px;height:32px;padding:3px}

@@ -4,10 +4,10 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="theme-color" content="#eeeee9">
-  <meta name="description" content="Lovia 阅读主题展示工坊：将一至五张原始截图制成清晰、高级的画册式展示海报。">
+  <meta name="description" content="Lovia 阅读主题展示工坊：轻量预览、自由排版、高清导出。">
   <title>Lovia — Reading Gallery Studio</title>
-  <link rel="stylesheet" href="./styles.css?v=20261026-v4">
-  <script src="./app.js?v=20261026-v4" defer></script>
+  <link rel="stylesheet" href="./styles.css?v=20261026-v5">
+  <script src="./app.js?v=20261026-v5" defer></script>
 </head>
 <body>
   <div class="app-shell">
@@ -38,7 +38,7 @@
             <button class="icon-text-button" id="largePreview" type="button" title="查看大图"><span class="expand-icon">⤢</span> 放大预览</button>
           </div>
           <div class="canvas-stage">
-            <canvas id="posterCanvas" width="3600" height="2700" role="img" aria-label="阅读主题一至五图海报实时预览"></canvas>
+            <canvas id="posterCanvas" width="1200" height="900" role="img" aria-label="阅读主题一至五图海报实时预览"></canvas>
           </div>
           <div class="preview-caption">
             <span><span class="tiny-sparkle">✳</span> 每张截图完整呈现 · 原始比例 · 无文字重绘</span>
@@ -46,6 +46,10 @@
           </div>
         </div>
 
+        <div class="mobile-preview-dock" id="mobilePreviewDock">
+          <button class="mobile-preview-title" id="mobilePreviewToggle" type="button" aria-expanded="true"><span class="dock-live-dot"></span> 实时小预览 <span class="dock-toggle-label">收起 −</span></button>
+          <div class="mobile-preview-body" id="mobilePreviewBody"><canvas id="mobileMiniCanvas" width="440" height="330" role="img" aria-label="跟随编辑实时更新的轻量海报预览"></canvas><button class="dock-hint" id="mobilePreviewExpand" type="button">放大预览 ↗</button></div>
+        </div>
         <div class="welcome-note">欢迎使用Lovia的模版～</div>
       </section>
 
@@ -66,6 +70,12 @@
             <div class="date-field"><input class="text-input" id="dateText" type="text" maxlength="24" autocomplete="off" value="OCT. 2026" placeholder="例如 OCT. 2026"><button id="todayButton" type="button">今天</button></div>
             <label class="field-label" for="footerText">右下 · 想说的话 <span class="field-hint">可留空，与日期同时显示</span></label>
             <input class="text-input" id="footerText" type="text" maxlength="60" autocomplete="off" placeholder="例如 MADE WITH LOVE">
+            <div class="font-controls">
+              <div class="font-control"><div class="range-label"><label for="titleFontSize">主题名称字号</label><output id="titleFontSizeValue">61</output></div><input id="titleFontSize" class="range-input" type="range" min="24" max="110" step="1" value="61"></div>
+              <div class="font-control"><div class="range-label"><label for="authorFontSize">作者字号</label><output id="authorFontSizeValue">48</output></div><input id="authorFontSize" class="range-input" type="range" min="20" max="95" step="1" value="48"></div>
+              <div class="font-control"><div class="range-label"><label for="dateFontSize">日期字号</label><output id="dateFontSizeValue">41</output></div><input id="dateFontSize" class="range-input" type="range" min="18" max="85" step="1" value="41"></div>
+              <div class="font-control"><div class="range-label"><label for="messageFontSize">自定义文案字号</label><output id="messageFontSizeValue">33</output></div><input id="messageFontSize" class="range-input" type="range" min="18" max="85" step="1" value="33"></div>
+            </div>
           </section>
 
           <section class="editor-section" aria-labelledby="imageSectionTitle">
@@ -77,7 +87,8 @@
             </div>
             <input id="batchFileInput" type="file" accept="image/png,image/jpeg,image/webp,image/avif,image/gif" multiple hidden>
             <div class="upload-grid" id="uploadGrid"></div>
-            <div class="drag-guide"><span class="drag-guide-icon">✣</span><div><strong>直接拖动预览图中的图片</strong><small>手机手指拖动 / 电脑鼠标拖动，可自由微调位置</small></div><button id="resetImagePositions" type="button">复位位置</button></div>
+            <div class="drag-guide"><span class="drag-guide-icon">✣</span><div><strong>拖动图片，调整大小</strong><small>在画布中点选图片后，可调整缩放比例</small></div><button id="resetImagePositions" type="button">复位位置</button></div>
+            <div class="image-scale-panel"><div class="range-label"><label for="imageScale">所选图片大小 <span id="selectedImageLabel">第 1 张</span></label><output id="imageScaleValue">100%</output></div><input id="imageScale" class="range-input" type="range" min="40" max="155" step="5" value="100"><p class="image-scale-tip">点击缩略图左上数字选中图片；也可以直接点海报里的图片。缩放不会修改原始文件。</p></div>
             <div class="image-size-message" id="imageSizeMessage">当前示例：3 张 942 × 2048 px 原尺寸截图</div>
             <input id="imageFileInput" type="file" accept="image/png,image/jpeg,image/webp,image/avif,image/gif" hidden>
           </section>
@@ -176,12 +187,21 @@
     </main>
     <nav class="mobile-actions" aria-label="手机快捷操作">
       <a class="mobile-edit-link" href="#editorTitle">✎ 编辑设置</a>
-      <button class="mobile-export-button" id="mobileExport" type="button">↓ 保存高清 PNG</button>
+      <button class="mobile-export-button" id="mobileExport" type="button">↗ 保存到相册</button>
     </nav>
     <footer class="site-footer"><span>© LOVIA — A PERSONAL DESIGN TOOL</span><span>READ · COLLECT · REFLECT</span></footer>
   </div>
 
-  <dialog class="preview-dialog" id="previewDialog" aria-label="高清画报预览"><div class="dialog-header"><span>FULL-SIZE PREVIEW <i id="dialogResolution"> / 3600 × 2700</i></span><button type="button" id="closePreview" aria-label="关闭">×</button></div><div class="dialog-content"><img id="largeImage" alt="高清海报大图"></div></dialog>
+  <dialog class="preview-dialog" id="previewDialog" aria-label="高清画报预览"><div class="dialog-header"><span>POSTER PREVIEW <i id="dialogResolution"> / 3600 × 2700</i></span><button type="button" id="closePreview" aria-label="关闭">×</button></div>
+    <div class="dialog-zoom"><button type="button" id="previewZoomOut" aria-label="缩小预览">−</button><button type="button" id="previewZoomFit">适应屏幕</button><button type="button" id="previewZoomIn" aria-label="放大预览">＋</button><output id="previewZoomValue">100%</output></div>
+    <div class="dialog-content" id="dialogContent"><img id="largeImage" alt="海报放大预览"></div></dialog>
   <div role="status" aria-live="polite" class="toast" id="toast"></div>
+  <dialog class="hsv-picker-dialog" id="hsvPicker" aria-label="HSV 调色盘">
+    <div class="hsv-head"><strong>HSV 调色盘</strong><button type="button" id="hsvClose" aria-label="关闭调色盘">×</button></div>
+    <div class="hsv-square" id="hsvSquare" aria-label="选择颜色的饱和度和亮度"><span id="hsvHandle"></span></div>
+    <label class="hsv-hue-label" for="hsvHue">色相 HUE</label>
+    <input id="hsvHue" type="range" min="0" max="360" step="1" value="0">
+    <div class="hsv-foot"><span class="hsv-color-preview" id="hsvColorPreview"></span><span class="hsv-color-code" id="hsvColorCode">#FFFFFF</span><button type="button" id="hsvDone">完成</button></div>
+  </dialog>
 </body>
 </html>
