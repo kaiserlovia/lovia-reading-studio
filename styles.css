@@ -457,3 +457,7 @@ h2{font:400 23px Georgia,"Noto Serif SC",serif;margin-top:8px}
 .font-upload-format{font-size:9px;color:#9baa9a;letter-spacing:.15px}
 .font-import-status{font-size:9px;color:#8a9c8c;margin:9px 0 0;line-height:1.6;overflow-wrap:anywhere}
 @media(max-width:580px){.global-font-panel{margin:15px 0 18px;padding:12px}.font-preset{min-height:70px;padding:10px}.font-preset .font-sample{font-size:24px}.font-upload-button{min-height:42px;touch-action:manipulation}}
+
+.canvas-ratio-control{margin:7px 0 19px}
+.canvas-ratio-control .ratio-options{margin-bottom:0}
+.canvas-ratio-control + .section-note{margin:0 0 14px}

@@ -6,8 +6,8 @@
   <meta name="theme-color" content="#eeeee9">
   <meta name="description" content="Lovia 阅读主题展示工坊：轻量预览、自由排版、高清导出。">
   <title>Lovia — Reading Gallery Studio</title>
-  <link rel="stylesheet" href="./styles.css?v=20261027-v12">
-  <script src="./app.js?v=20261027-v12" defer></script>
+  <link rel="stylesheet" href="./styles.css?v=20261027-v13">
+  <script src="./app.js?v=20261027-v13" defer></script>
 </head>
 <body>
   <div class="app-shell">
@@ -109,6 +109,13 @@
 
           <section class="editor-section" aria-labelledby="imageSectionTitle">
             <div class="section-title"><span>02</span><h3 id="imageSectionTitle">展示图片</h3><span class="section-description">YOUR IMAGES</span></div>
+            <div class="canvas-ratio-control">
+            <div class="finish-label">最终画布比例 <span>海报元素保持一致</span></div>
+            <div class="ratio-options" role="group" aria-label="选择画布比例">
+              <button type="button" class="ratio-option selected" data-ratio="4:3" aria-pressed="true"><strong>4:3</strong><small>横版画报</small></button>
+              <button type="button" class="ratio-option" data-ratio="1:1" aria-pressed="false"><strong>1:1</strong><small>方形画报</small></button>
+            </div>
+            </div>
             <p class="section-note">可选 1–5 张，支持多选或逐张添加。点击缩略图可替换，点击 × 可移除。</p>
             <div class="upload-actions">
               <button class="batch-upload-button" id="batchUploadButton" type="button"><span class="upload-action-icon">▦</span><span class="upload-action-copy"><strong>一键添加</strong><small>同时选择 1–5 张</small></span></button>
@@ -185,11 +192,6 @@
 
           <section class="editor-section last-section" aria-labelledby="detailsTitle">
             <div class="section-title"><span>04</span><h3 id="detailsTitle">细节设置</h3><span class="section-description">FINISHING TOUCH</span></div>
-            <div class="finish-label">最终画布比例 <span>海报元素保持一致</span></div>
-            <div class="ratio-options" role="group" aria-label="选择画布比例">
-              <button type="button" class="ratio-option selected" data-ratio="4:3" aria-pressed="true"><strong>4:3</strong><small>横版画报</small></button>
-              <button type="button" class="ratio-option" data-ratio="1:1" aria-pressed="false"><strong>1:1</strong><small>方形画报</small></button>
-            </div>
             <div class="line-controls">
               <label class="toggle-row line-toggle"><span><strong>显示装饰线条</strong><small>顶部、底部及画报边缘细线</small></span><span class="switch"><input type="checkbox" id="showRules" checked><span class="switch-track"></span></span></label>
               <div id="ruleStyleControls">
