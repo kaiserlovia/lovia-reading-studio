@@ -137,8 +137,10 @@
   function setupResponsivePreview() {
     if (!compactMode) return;
     const card=document.querySelector('.preview-card');
-    const heading=document.querySelector('.editor-top');
-    heading.after(card);
+    // On phones the full-size preview belongs after every editing control.
+    // The separate floating mini preview remains visible while that card is offscreen.
+    const editor=document.querySelector('.editor');
+    editor.after(card);
     card.classList.add('mobile-restored-preview');
 
     const refreshVisibility=()=>{
