@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="theme-color" content="#eeeee9">
-  <meta name="description" content="Lovia 阅读主题展示工坊：将三张原始截图制成清晰、高级的画册式展示海报。">
+  <meta name="description" content="Lovia 阅读主题展示工坊：将一至五张原始截图制成清晰、高级的画册式展示海报。">
   <title>Lovia — Reading Gallery Studio</title>
   <link rel="stylesheet" href="./styles.css">
   <script src="./app.js" defer></script>
@@ -18,7 +18,7 @@
       </div>
       <div class="topbar-actions">
         <span class="topbar-note">A LITTLE SPACE FOR BEAUTIFUL PAGES</span>
-        <button class="button button-dark top-export" id="topExport" type="button"><span class="download-icon">↧</span> 导出高清海报</button>
+        <button class="button button-dark top-export" id="topExport" type="button" aria-label="下载高清海报" title="下载高清海报"><svg class="download-svg" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3v12m-4.5-4.5L12 15l4.5-4.5M4 18v3h16v-3" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="top-export-label">导出高清海报</span></button>
       </div>
     </header>
 
@@ -38,7 +38,7 @@
             <button class="icon-text-button" id="largePreview" type="button" title="查看大图"><span class="expand-icon">⤢</span> 放大预览</button>
           </div>
           <div class="canvas-stage">
-            <canvas id="posterCanvas" width="3600" height="2700" role="img" aria-label="阅读主题三图海报实时预览"></canvas>
+            <canvas id="posterCanvas" width="3600" height="2700" role="img" aria-label="阅读主题一至五图海报实时预览"></canvas>
           </div>
           <div class="preview-caption">
             <span><span class="tiny-sparkle">✳</span> 每张截图完整呈现 · 原始比例 · 无文字重绘</span>
@@ -64,14 +64,20 @@
             <div class="prefixed-field"><span>AUTHOR /</span><input id="authorName" type="text" maxlength="48" autocomplete="off" value="LOVIA" placeholder="你的名字"></div>
             <label class="field-label" for="dateText">右下 · 日期</label>
             <div class="date-field"><input class="text-input" id="dateText" type="text" maxlength="24" autocomplete="off" value="OCT. 2026" placeholder="例如 OCT. 2026"><button id="todayButton" type="button">今天</button></div>
+            <label class="field-label" for="footerText">右下 · 想说的话 <span class="field-hint">可留空，与日期同时显示</span></label>
+            <input class="text-input" id="footerText" type="text" maxlength="60" autocomplete="off" placeholder="例如 MADE WITH LOVE">
           </section>
 
           <section class="editor-section" aria-labelledby="imageSectionTitle">
             <div class="section-title"><span>02</span><h3 id="imageSectionTitle">展示图片</h3><span class="section-description">YOUR IMAGES</span></div>
-            <p class="section-note">支持一次选择 2–4 张图片，顺序排列、等距展示。每张图片均完整保留原始比例。</p>
-            <button class="batch-upload-button" id="batchUploadButton" type="button">＋ 一键选择 2–4 张图片 <span>支持多选</span></button>
+            <p class="section-note">可选 1–5 张，支持多选或逐张添加。点击缩略图可替换，点击 × 可移除。</p>
+            <div class="upload-actions">
+              <button class="batch-upload-button" id="batchUploadButton" type="button"><span class="upload-action-icon">▦</span><span class="upload-action-copy"><strong>一键添加</strong><small>同时选择 1–5 张</small></span></button>
+              <button class="single-upload-button" id="singleUploadButton" type="button"><span class="upload-action-icon">＋</span><span class="upload-action-copy"><strong>逐张添加</strong><small>增加或替换图片</small></span></button>
+            </div>
             <input id="batchFileInput" type="file" accept="image/png,image/jpeg,image/webp,image/avif,image/gif" multiple hidden>
             <div class="upload-grid" id="uploadGrid"></div>
+            <div class="drag-guide"><span class="drag-guide-icon">✣</span><div><strong>直接拖动预览图中的图片</strong><small>手机手指拖动 / 电脑鼠标拖动，可自由微调位置</small></div><button id="resetImagePositions" type="button">复位位置</button></div>
             <div class="image-size-message" id="imageSizeMessage">当前示例：3 张 942 × 2048 px 原尺寸截图</div>
             <input id="imageFileInput" type="file" accept="image/png,image/jpeg,image/webp,image/avif,image/gif" hidden>
           </section>
@@ -84,17 +90,27 @@
               <button type="button" class="style-option" data-theme="custom" aria-pressed="false"><span class="style-sample sample-custom"><i></i><i></i><i></i></span><span>自选颜色</span></button>
               <button type="button" class="style-option" data-theme="image" aria-pressed="false"><span class="style-sample sample-image"><i></i><i></i><i></i></span><span>图片底图</span></button>
               <button type="button" class="style-option" data-theme="glass" aria-pressed="false"><span class="style-sample sample-glass"><i></i><i></i><i></i></span><span>封面玻璃</span></button>
+              <button type="button" class="style-option" data-theme="gradient" aria-pressed="false"><span class="style-sample sample-gradient"><i></i><i></i><i></i></span><span>上下渐变</span></button>
             </div>
             <p class="section-note mode-intro" id="modeDescription">自动提取截图中的柔和浅色作为底图。</p>
             <div class="mode-panel" id="customColorPanel" hidden>
               <label class="field-label" for="customBackdropColor">选择背景颜色</label>
               <div class="custom-color-row"><input type="color" id="customBackdropColor" value="#E9E6DB"><span id="customColorValue">#E9E6DB</span></div>
             </div>
+            <div class="mode-panel" id="gradientBackdropPanel" hidden>
+              <div class="gradient-control-head"><span>上下颜色</span><button type="button" id="autoGradient">从图片重新取色 ↗</button></div>
+              <div class="gradient-colors">
+                <label>顶部颜色<input id="gradientStart" type="color" value="#EDE9DE"></label>
+                <label>底部颜色<input id="gradientEnd" type="color" value="#A5B09E"></label>
+              </div>
+            </div>
             <div class="mode-panel" id="imageBackdropPanel" hidden>
               <button class="asset-picker" id="chooseBackground" type="button"><span class="asset-icon">＋</span><span><strong>选择底图图片</strong><small id="backgroundFileName">未选择，暂用第一张截图预览</small></span></button>
               <input id="backgroundFileInput" type="file" accept="image/png,image/jpeg,image/webp,image/avif" hidden>
               <div class="range-label"><label for="backgroundBlur">模糊程度</label><output id="backgroundBlurValue">40 px</output></div>
-              <input id="backgroundBlur" class="range-input" type="range" min="0" max="120" step="5" value="40">
+              <input id="backgroundBlur" class="range-input" type="range" min="0" max="120" step="2" value="40">
+              <div class="range-label"><label for="backgroundOpacity">底图透明度</label><output id="backgroundOpacityValue">100%</output></div>
+              <input id="backgroundOpacity" class="range-input" type="range" min="0" max="100" step="5" value="100">
             </div>
             <div class="mode-panel" id="glassBackdropPanel" hidden>
               <button class="asset-picker" id="chooseCover" type="button"><span class="asset-icon">＋</span><span><strong>上传书籍封面</strong><small id="coverFileName">未选择，默认取第一张截图颜色</small></span></button>
@@ -120,20 +136,37 @@
               <button type="button" class="ratio-option" data-ratio="1:1" aria-pressed="false"><strong>1:1</strong><small>方形画报</small></button>
             </div>
             <div class="line-controls">
+              <label class="toggle-row line-toggle"><span><strong>显示装饰线条</strong><small>顶部、底部及画报边缘细线</small></span><span class="switch"><input type="checkbox" id="showRules" checked><span class="switch-track"></span></span></label>
+              <div id="ruleStyleControls">
               <label class="finish-label" for="ruleColor">装饰线条颜色 <input id="ruleColor" type="color" value="#000000" aria-label="装饰线条颜色"></label>
               <label class="finish-label" for="ruleOpacity">装饰线条透明度 <output id="ruleOpacityValue">100%</output></label>
               <input id="ruleOpacity" class="range-input" type="range" min="0" max="100" step="5" value="100">
+              </div>
+            </div>
+            <div class="finish-label layout-heading">图片排列风格 <span>支持拖拽进一步调整</span></div>
+            <div class="layout-options" role="group" aria-label="图片排列风格">
+              <button type="button" class="layout-option selected" data-layout="even" aria-pressed="true"><span class="layout-sample layout-even"><i></i><i></i><i></i></span><strong>等距排列</strong></button>
+              <button type="button" class="layout-option" data-layout="stagger" aria-pressed="false"><span class="layout-sample layout-stagger"><i></i><i></i><i></i></span><strong>高低错落</strong></button>
+              <button type="button" class="layout-option" data-layout="overlap" aria-pressed="false"><span class="layout-sample layout-overlap"><i></i><i></i><i></i></span><strong>交叠层叠</strong></button>
+              <button type="button" class="layout-option" data-layout="focus" aria-pressed="false"><span class="layout-sample layout-focus"><i></i><i></i><i></i></span><strong>中央突出</strong></button>
+            </div>
+            <div class="direction-panel" id="directionPanel" hidden>
+              <span>倾斜方向</span>
+              <div class="direction-options">
+                <button type="button" class="direction-option selected" data-direction="left-high" aria-pressed="true">左高右低 ↘</button>
+                <button type="button" class="direction-option" data-direction="left-low" aria-pressed="false">左低右高 ↗</button>
+              </div>
             </div>
             <p class="section-note border-note">图片尺寸不同，边框会随各张图片自动贴合；所有效果都不裁切原图。</p>
             <div class="border-options" role="group" aria-label="截图边框设计">
               <button type="button" class="border-option selected" data-border="line" aria-pressed="true"><span class="border-sample border-line"></span>精细单线</button>
-              <button type="button" class="border-option" data-border="double" aria-pressed="false"><span class="border-sample border-double"></span>双层细线</button>
+              
               <button type="button" class="border-option" data-border="shadow" aria-pressed="false"><span class="border-sample border-shadow"></span>柔和阴影</button>
               <button type="button" class="border-option" data-border="none" aria-pressed="false"><span class="border-sample border-none"></span>无边框</button>
               <button type="button" class="border-option" data-border="corners" aria-pressed="false"><span class="border-sample border-corners"></span>四角定位</button>
-              <button type="button" class="border-option" data-border="matte" aria-pressed="false"><span class="border-sample border-matte"></span>纸页留白</button>
-              <button type="button" class="border-option" data-border="dashed" aria-pressed="false"><span class="border-sample border-dashed"></span>虚线框</button>
-              <button type="button" class="border-option" data-border="inset" aria-pressed="false"><span class="border-sample border-inset"></span>内外细线</button>
+              
+              
+              
             </div>
           </section>
         </div>
