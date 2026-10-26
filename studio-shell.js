@@ -206,6 +206,9 @@
   .ss-short{display:none}
   .ss-lang{width:32px;height:32px;border-radius:50%;border:1px solid var(--ss-line,rgba(46,57,49,.28));background:var(--ss-bg,rgba(255,255,255,.55));color:inherit;font:600 13px/1 inherit;cursor:pointer;padding:0}
   .studio-switch-row{display:flex;justify-content:center;padding:12px 16px 0}
+  html{touch-action:manipulation}
+  html,body{overflow-x:clip}
+  @media(max-width:959px){input:not([type=range]):not([type=checkbox]):not([type=radio]):not([type=color]):not([type=button]):not([type=file]),select,textarea{font-size:16px!important}}
   @media(max-width:580px){.ss-full{display:none}.ss-short{display:inline}.ss-seg a{padding:7px 9px}.ss{gap:6px}}`;
   function mountSwitch() {
     const mount = document.getElementById('studioShell');
