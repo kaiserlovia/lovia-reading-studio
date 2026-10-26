@@ -235,6 +235,10 @@ button{cursor:pointer}
     <section class="pane is-active" id="pane-shots" role="tabpanel" aria-labelledby="tab-shots">
       <h2 class="pane-title">截圖</h2>
       <p class="hint">日間、夜間各放 1 到 5 張，順序就是畫報上的順序。點預覽裡的截圖可以拖動位置。</p>
+      <div class="row">
+        <button class="btn ghost small" id="clearSamples">移除示範截圖</button>
+        <button class="btn ghost small" id="resetPos">全部復位</button>
+      </div>
       <div class="sides">
         <div class="side" data-side="day">
           <div class="side-head"><h3>日間</h3><span class="count" id="count-day"></span></div>
@@ -267,10 +271,6 @@ button{cursor:pointer}
         </div>
       </div>
       <p class="hint" id="selHint">點選預覽裡的截圖後，可以拖動位置、調整大小（20–300%）。</p>
-      <div class="row">
-        <button class="btn ghost small" id="clearSamples">移除示範截圖</button>
-        <button class="btn ghost small" id="resetPos">全部復位</button>
-      </div>
       <datalist id="labelOptions"><option value="首頁"><option value="書架"><option value="閱讀頁"><option value="目錄"><option value="筆記"><option value="書籍詳情"><option value="搜尋"></datalist>
     </section>
 
