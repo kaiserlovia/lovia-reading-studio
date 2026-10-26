@@ -107,6 +107,7 @@
   // Day/night: the live image variables above hold the group being edited; the other group waits here.
   const DN_LAYOUTS=['pairs','split','diagonal','alternate'];
   let activeGroup='day';
+  let dnOrder='dn'; // 'dn': day first (left / in front); 'nd': night first
   const groupStore={night:{images:[null],userObjectURLs:[null],imageOffsets:[{x:0,y:0}],imageScales:[100],selectedImageIndex:0}};
   let nightToneCache={key:'',colors:null};
 
@@ -556,9 +557,9 @@
 
   function dayNightGeometry() {
     const W=CANVAS_W,H=CANVAS_H,k=layoutMode==='diagonal'?.07:0;
-    const day=k?[[0,0],[W*(.5+k),0],[W*(.5-k),H],[0,H]]:[[0,0],[W/2,0],[W/2,H],[0,H]];
-    const night=k?[[W*(.5+k),0],[W,0],[W,H],[W*(.5-k),H]]:[[W/2,0],[W,0],[W,H],[W/2,H]];
-    return {k,day,night};
+    const left=k?[[0,0],[W*(.5+k),0],[W*(.5-k),H],[0,H]]:[[0,0],[W/2,0],[W/2,H],[0,H]];
+    const right=k?[[W*(.5+k),0],[W,0],[W,H],[W*(.5-k),H]]:[[W/2,0],[W,0],[W,H],[W/2,H]];
+    return dnOrder==='nd'?{k,day:right,night:left}:{k,day:left,night:right};
   }
   function tracePolygon(points) { ctx.beginPath(); points.forEach(([x,y],i)=>i?ctx.lineTo(x,y):ctx.moveTo(x,y)); ctx.closePath(); }
   function finishPlacement(group,index,p) {
@@ -587,21 +588,21 @@
     const areaX=170,areaW=CANVAS_W-340,areaY=330,areaH=CANVAS_H-655;
     const entry=(group,image,index)=>({group,image,index,a:image.naturalWidth/image.naturalHeight,maxH:image.naturalHeight});
     const list=group=>groupOf(group).images.map((img,i)=>img?entry(group,img,i):null).filter(Boolean);
-    const day=list('day'),night=list('night');
+    const first=list(dnOrder==='nd'?'night':'day'),second=list(dnOrder==='nd'?'day':'night');
     const out=[];
     if(layoutMode==='split'||layoutMode==='diagonal'){
       const {k}=dayNightGeometry();
       const inner=70+k*CANVAS_W*.75;
-      for(const [items,x0,x1] of [[day,areaX,CANVAS_W/2-inner],[night,CANVAS_W/2+inner,areaX+areaW]]){
+      for(const [items,x0,x1] of [[first,areaX,CANVAS_W/2-inner],[second,CANVAS_W/2+inner,areaX+areaW]]){
         for(const r of placeRow(items,{x:x0,y:areaY,w:x1-x0,h:areaH},items.length>3?36:60))out.push({...r.it,p:r});
       }
     } else if(layoutMode==='alternate'){
-      const seq=[];for(let i=0;i<Math.max(day.length,night.length);i++){if(day[i])seq.push(day[i]);if(night[i])seq.push(night[i]);}
+      const seq=[];for(let i=0;i<Math.max(first.length,second.length);i++){if(first[i])seq.push(first[i]);if(second[i])seq.push(second[i]);}
       for(const r of placeRow(seq,{x:areaX,y:areaY,w:areaW,h:areaH},seq.length>6?30:44))out.push({...r.it,p:r});
-    } else { // pairs: the night version peeks out behind the day version
+    } else { // pairs: the second group peeks out behind the first
       const OX=.2,OY=.075,units=[];
-      for(let i=0;i<Math.max(day.length,night.length);i++){
-        const d=day[i],n=night[i],front=d||n;
+      for(let i=0;i<Math.max(first.length,second.length);i++){
+        const d=first[i],n=second[i],front=d||n;
         units.push({d,n,a:d&&n?front.a*(1+OX)/(1+OY):front.a,maxH:(d&&n?Math.min(d.maxH,n.maxH):front.maxH)*(d&&n?1+OY:1)});
       }
       for(const r of placeRow(units,{x:areaX,y:areaY,w:areaW,h:areaH},units.length>3?50:80)){
@@ -680,8 +681,21 @@
       button.setAttribute('aria-pressed',String(selected));
     });
     document.getElementById('directionPanel').hidden = !['stagger','overlap'].includes(key);
+    const orderPanel=document.getElementById('dnOrderPanel');
+    if(orderPanel)orderPanel.hidden=!DN_LAYOUTS.includes(key);
     resetPositions(false);
     refreshAutoColors();
+    scheduleDraw();
+  }
+  function setDayNightOrder(key) {
+    if(!['dn','nd'].includes(key))return;
+    dnOrder=key;
+    document.querySelectorAll('[data-dn-order]').forEach(button=>{
+      const selected=button.dataset.dnOrder===key;
+      button.classList.toggle('selected',selected);
+      button.setAttribute('aria-pressed',String(selected));
+    });
+    resetPositions(false);
     scheduleDraw();
   }
   function setLayoutDirection(key) {
@@ -1151,7 +1165,7 @@
     imageScales=images.map(()=>100);selectedImageIndex=0;scaleMode='single';
     updateSelectedScaleUI();
     updateSizeMessage();refreshAutoColors();setAutoGradient(false);currentColors=paletteFromImages(images);
-    syncPaletteInputs();setLayoutDirection('left-high');setLayout('even');
+    syncPaletteInputs();setLayoutDirection('left-high');setDayNightOrder('dn');setLayout('even');
     selectedExportQuality='original';
     selectTheme('light');selectBorder('line');setCanvasRatio('4:3');
     announce('已恢复默认展示');
@@ -1339,6 +1353,7 @@
     }));
     refs.layoutButtons.forEach(button=>button.addEventListener('click',()=>setLayout(button.dataset.layout)));
     refs.directionButtons.forEach(button=>button.addEventListener('click',()=>setLayoutDirection(button.dataset.direction)));
+    document.querySelectorAll('[data-dn-order]').forEach(button=>button.addEventListener('click',()=>setDayNightOrder(button.dataset.dnOrder)));
     document.getElementById('resetImagePositions').addEventListener('click',()=>resetPositions());
     refs.showRules.addEventListener('change',()=>{
       document.getElementById('ruleStyleControls').hidden=!refs.showRules.checked;
