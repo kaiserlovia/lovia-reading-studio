@@ -1071,10 +1071,19 @@
       const number=Number(raw);
       if(Number.isFinite(number)&&number>=20&&number<=300)applyImageScale(number);
     });
-    refs.imageScaleNumber.addEventListener('change',()=>{
+    const confirmImageScaleNumber=()=>{
       const raw=refs.imageScaleNumber.value.trim();
       const number=raw?Number(raw):Number(refs.imageScale.value);
       applyImageScale(number);
+    };
+    refs.imageScaleNumber.addEventListener('change',confirmImageScaleNumber);
+    refs.imageScaleNumber.addEventListener('blur',confirmImageScaleNumber);
+    refs.imageScaleNumber.addEventListener('keydown',event=>{
+      if(event.key==='Enter'){
+        event.preventDefault();
+        confirmImageScaleNumber();
+        refs.imageScaleNumber.blur();
+      }
     });
     refs.colors.forEach(input => input.addEventListener('input', () => {
       currentColors[Number(input.dataset.color)] = input.value.toUpperCase();
