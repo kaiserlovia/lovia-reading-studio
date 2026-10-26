@@ -6,8 +6,8 @@
   <meta name="theme-color" content="#eeeee9">
   <meta name="description" content="Lovia 阅读主题展示工坊：轻量预览、自由排版、高清导出。">
   <title>Lovia — Reading Gallery Studio</title>
-  <link rel="stylesheet" href="./styles.css?v=20261026-v5">
-  <script src="./app.js?v=20261026-v5" defer></script>
+  <link rel="stylesheet" href="./styles.css?v=20261026-v6">
+  <script src="./app.js?v=20261026-v6" defer></script>
 </head>
 <body>
   <div class="app-shell">
@@ -43,6 +43,14 @@
           <div class="preview-caption">
             <span><span class="tiny-sparkle">✳</span> 每张截图完整呈现 · 原始比例 · 无文字重绘</span>
             <span>MADE WITH <span class="heart">♡</span> LOVIA</span>
+          </div>
+          <div class="export-quality-panel">
+            <div class="export-quality-head"><strong>保存图片清晰度</strong><span>无损 PNG · 可按用途选择尺寸</span></div>
+            <div class="export-quality-options" role="group" aria-label="保存图片清晰度">
+              <button type="button" data-export-quality="standard" aria-pressed="false"><strong>1080P</strong><small id="qualityStandardSize">1440 × 1080</small></button>
+              <button type="button" data-export-quality="high" aria-pressed="false"><strong>2K 高清</strong><small id="qualityHighSize">2560 × 1920</small></button>
+              <button type="button" data-export-quality="original" class="selected" aria-pressed="true"><strong>原画超清</strong><small id="qualityOriginalSize">3600 × 2700</small></button>
+            </div>
           </div>
         </div>
 

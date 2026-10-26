@@ -376,3 +376,30 @@ h2{font:400 23px Georgia,"Noto Serif SC",serif;margin-top:8px}
 .android-hsv .custom-color-row input.android-color-control{min-height:42px;min-width:65px}
 .android-hsv .gradient-colors input.android-color-control{width:45px;height:29px}
 .android-hsv #ruleColor.android-color-control{width:56px;height:32px;padding:3px}
+
+/* Edition 06 — restored full mobile preview and adaptive mini preview */
+.export-quality-panel{padding:17px 19px 18px;border-top:1px solid #edf0eb;background:#fafbf8}
+.export-quality-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:12px}
+.export-quality-head strong{font-size:11px;font-weight:600;letter-spacing:.4px;color:#4b6552}
+.export-quality-head span{font-size:9px;color:#9ba99b}
+.export-quality-options{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.export-quality-options button{border:1px solid #d9e4d7;border-radius:6px;background:#fff;padding:10px 4px;min-width:0;min-height:53px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:6px;color:#758879;cursor:pointer}
+.export-quality-options button strong{font-size:11px;font-weight:600}
+.export-quality-options button small{font:9px Georgia,serif;white-space:nowrap;color:#a1afa3}
+.export-quality-options button.selected{background:#eef5eb;border-color:#69896f;color:#365e3d;box-shadow:inset 0 0 0 1px #7f9e8325}
+.export-quality-options button.selected small{color:#65876b}
+.export-quality-options button:focus-visible{outline:2px solid #678c70;outline-offset:2px}
+@media(max-width:580px){
+  .editor>.preview-card.mobile-restored-preview{display:block!important;margin:0 12px 16px;border-radius:8px;overflow:hidden}
+  .mobile-restored-preview .preview-status{white-space:normal}
+  .mobile-restored-preview .canvas-stage{min-height:180px;background:#ced5cb;padding:9px}
+  .mobile-restored-preview .preview-toolbar{height:46px}
+  .mobile-restored-preview .preview-caption{padding:11px 9px}
+  .mobile-restored-preview .export-quality-panel{padding:13px 10px}
+  .mobile-restored-preview .export-quality-head{align-items:start}
+  .mobile-restored-preview .export-quality-head span{font-size:8px;text-align:right}
+  .mobile-restored-preview .export-quality-options{gap:6px}
+  .mobile-restored-preview .export-quality-options button{padding:9px 3px;min-height:54px}
+  .mobile-restored-preview .export-quality-options button strong{font-size:10px}
+  .mobile-restored-preview .export-quality-options button small{font-size:8px}
+}

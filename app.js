@@ -22,6 +22,8 @@
   const compactMode=window.matchMedia('(max-width:580px)').matches;
   let previewScale=canvas.width/CANVAS_W;
   let previewZoom=1;
+  let selectedExportQuality='original';
+  let largePreviewInView=true;
   const refs = {
     name: document.getElementById('themeName'),
     author: document.getElementById('authorName'),
@@ -106,6 +108,42 @@
     });
   }
 
+  function updateDockVisibility() {
+    const dock=document.getElementById('mobilePreviewDock');
+    dock.classList.toggle('is-empty', !compactMode || !images.some(Boolean) || largePreviewInView || refs.dialog.open);
+  }
+
+  function setupResponsivePreview() {
+    if (!compactMode) return;
+    const card=document.querySelector('.preview-card');
+    const heading=document.querySelector('.editor-top');
+    heading.after(card);
+    card.classList.add('mobile-restored-preview');
+
+    const refreshVisibility=()=>{
+      const bounds=card.getBoundingClientRect();
+      const viewportHeight=window.visualViewport?.height || window.innerHeight;
+      largePreviewInView=bounds.bottom>77 && bounds.top<viewportHeight-80;
+      updateDockVisibility();
+    };
+    if ('IntersectionObserver' in window) {
+      const observer=new IntersectionObserver(entries=>{
+        largePreviewInView=Boolean(entries[0]?.isIntersecting);
+        updateDockVisibility();
+      },{rootMargin:'-76px 0px -80px 0px',threshold:0});
+      observer.observe(card);
+    } else {
+      let pending=false;
+      window.addEventListener('scroll',()=>{
+        if(pending)return;
+        pending=true;
+        requestAnimationFrame(()=>{pending=false;refreshVisibility();});
+      },{passive:true});
+    }
+    window.addEventListener('resize',refreshVisibility,{passive:true});
+    refreshVisibility();
+  }
+
   function renderPreview() {
     refreshAndroidSwatches();
     ctx=previewCtx;
@@ -116,8 +154,7 @@
     miniCtx.imageSmoothingEnabled=true;
     miniCtx.imageSmoothingQuality='high';
     miniCtx.drawImage(canvas,0,0,miniCanvas.width,miniCanvas.height);
-    const dock=document.getElementById('mobilePreviewDock');
-    dock.classList.toggle('is-empty',compactMode&&!images.some(Boolean));
+    updateDockVisibility();
   }
 
   function setStroke(color, width = 3) {
@@ -625,6 +662,27 @@
     scheduleDraw();
   }
 
+  function qualityDimensions(quality=selectedExportQuality) {
+    const width=quality==='standard'?(CANVAS_H===3600?1080:1440):quality==='high'?(CANVAS_H===3600?2048:2560):3600;
+    return {width,height:Math.round(width*CANVAS_H/CANVAS_W)};
+  }
+  function syncExportQuality() {
+    const labels={standard:'qualityStandardSize',high:'qualityHighSize',original:'qualityOriginalSize'};
+    for(const [quality,id] of Object.entries(labels)){
+      const {width,height}=qualityDimensions(quality);
+      document.getElementById(id).textContent=width+' × '+height;
+    }
+    document.querySelectorAll('[data-export-quality]').forEach(button=>{
+      const selected=button.dataset.exportQuality===selectedExportQuality;
+      button.classList.toggle('selected',selected);
+      button.setAttribute('aria-pressed',String(selected));
+    });
+    const {width,height}=qualityDimensions();
+    const dims=width+' × '+height;
+    document.getElementById('resolutionPreviewLabel').textContent='导出 '+dims+' px';
+    document.getElementById('downloadResolution').textContent=dims;
+  }
+
   function setCanvasRatio(ratio) {
     const square=ratio==='1:1';
     CANVAS_H=square?3600:2700;
@@ -643,9 +701,8 @@
     });
     const dims=CANVAS_W+' × '+CANVAS_H;
     document.getElementById('ratioPreviewLabel').textContent=square?'1:1 正方形':'4:3 横版';
-    document.getElementById('resolutionPreviewLabel').textContent=dims+' px';
-    document.getElementById('downloadResolution').textContent=dims;
     document.getElementById('dialogResolution').textContent=' / '+dims;
+    syncExportQuality();
     scheduleDraw();
   }
 
@@ -821,6 +878,7 @@
     updateSelectedScaleUI();
     updateSizeMessage();refreshAutoColors();setAutoGradient(false);currentColors=paletteFromImages(images);
     syncPaletteInputs();setLayoutDirection('left-high');setLayout('even');
+    selectedExportQuality='original';
     selectTheme('light');selectBorder('line');setCanvasRatio('4:3');
     announce('已恢复默认展示');
   }
@@ -872,7 +930,8 @@
 
   function safeFilename() {
     const str = (refs.name.value || 'Lovia-Reading-Gallery').trim().replace(/[\\/:*?"<>|\x00-\x1f]/g, '-').replace(/\s+/g, '-');
-    return `${(str || 'Lovia-Reading-Gallery').slice(0, 45)}-${CANVAS_W}x${CANVAS_H}.png`;
+    const {width,height}=qualityDimensions();
+    return `${(str || 'Lovia-Reading-Gallery').slice(0, 45)}-${width}x${height}.png`;
   }
 
   function canvasBlob(source) {
@@ -886,11 +945,13 @@
     announce('正在生成高清图片，请稍候…');
     await new Promise(resolve=>requestAnimationFrame(resolve));
     const output=document.createElement('canvas');
-    output.width=CANVAS_W;output.height=CANVAS_H;
+    const {width,height}=qualityDimensions();
+    output.width=width;output.height=height;
     const prior=ctx;
     try {
       ctx=output.getContext('2d',{alpha:false});
-      ctx.setTransform(1,0,0,1,0,0);
+      const scale=width/CANVAS_W;
+      ctx.setTransform(scale,0,0,scale,0,0);
       drawPoster();
     } finally { ctx=prior; }
     try {return await canvasBlob(output);}
@@ -905,7 +966,8 @@
       a.href=url;a.download=safeFilename();
       document.body.appendChild(a);a.click();a.remove();
       setTimeout(()=>URL.revokeObjectURL(url),30000);
-      announce('高清 PNG 已开始下载 · '+CANVAS_W+' × '+CANVAS_H+' px');
+      const {width,height}=qualityDimensions();
+      announce('高清 PNG 已开始下载 · '+width+' × '+height+' px');
     } catch(error){console.error(error);announce(error.message||'导出失败，请稍后重试');}
   }
 
@@ -976,6 +1038,10 @@
     refs.styles.forEach(button => button.addEventListener('click', () => selectTheme(button.dataset.theme)));
     refs.borderStyles.forEach(button => button.addEventListener('click', () => selectBorder(button.dataset.border)));
     refs.ratioButtons.forEach(button => button.addEventListener('click', () => setCanvasRatio(button.dataset.ratio)));
+    document.querySelectorAll('[data-export-quality]').forEach(button=>button.addEventListener('click',()=>{
+      selectedExportQuality=button.dataset.exportQuality;
+      syncExportQuality();
+    }));
     refs.layoutButtons.forEach(button=>button.addEventListener('click',()=>setLayout(button.dataset.layout)));
     refs.directionButtons.forEach(button=>button.addEventListener('click',()=>setLayoutDirection(button.dataset.direction)));
     document.getElementById('resetImagePositions').addEventListener('click',()=>resetPositions());
@@ -1167,6 +1233,7 @@
   }
 
   async function initialize() {
+    setupResponsivePreview();
     bindControls();
     bindCanvasDrag();
     initializePlatformColorPicker();
