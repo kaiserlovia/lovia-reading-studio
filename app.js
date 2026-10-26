@@ -34,6 +34,7 @@
     dateSize: document.getElementById('dateFontSize'),
     messageSize: document.getElementById('messageFontSize'),
     imageScale: document.getElementById('imageScale'),
+    imageScaleNumber: document.getElementById('imageScaleNumber'),
     colors: [...document.querySelectorAll('[data-color]')],
     styles: [...document.querySelectorAll('.style-option')],
     borderStyles: [...document.querySelectorAll('[data-border]')],
@@ -852,20 +853,35 @@
     const validScales=imageScales.filter((_,index)=>Boolean(images[index]));
     const all=scaleMode==='all';
     const average=validScales.length?validScales.reduce((sum,n)=>sum+n,0)/validScales.length:100;
-    const value=all?Math.min(155,Math.max(40,Math.round(average/5)*5)):(imageScales[selectedImageIndex]??100);
+    const value=all?Math.min(300,Math.max(20,Math.round(average))):(imageScales[selectedImageIndex]??100);
     refs.imageScale.value=String(value);
+    refs.imageScaleNumber.value=String(value);
     const varied=all&&validScales.length>1&&new Set(validScales).size>1;
-    document.getElementById('imageScaleValue').textContent=(varied?'约':'')+value+'%';
+    document.getElementById('scaleApproxIndicator').hidden=!varied;
     document.getElementById('selectedImageLabel').textContent=all?'共 '+validScales.length+' 张':'第 '+(selectedImageIndex+1)+' 张';
     document.getElementById('scaleModeLabel').textContent=all?'全部图片大小':'所选图片大小';
     document.getElementById('imageScaleTip').textContent=all
-      ?'拖动滑块将所有已添加图片统一缩放；各张图片的位置保持不变。'
-      :'点选缩略图左上数字，或直接点击海报中的图片，再拖动滑块调整。';
+      ?(varied?'各张图片目前大小不同；输入数字即可统一为指定百分比。':'滑动或输入百分比（20–300），同时调整所有图片大小，位置不变。')
+      :'先点选缩略图或画布中的图片，再滑动或输入百分比（20–300）。';
     document.querySelectorAll('[data-scale-mode]').forEach(button=>{
       const active=button.dataset.scaleMode===scaleMode;
       button.classList.toggle('active',active);
       button.setAttribute('aria-pressed',String(active));
     });
+  }
+
+  function applyImageScale(number) {
+    if(!Number.isFinite(number))return;
+    const value=Math.min(300,Math.max(20,Math.round(number)));
+    if(scaleMode==='all'){
+      imageScales=imageScales.map((previous,index)=>images[index]?value:previous);
+    } else {
+      imageScales[selectedImageIndex]=value;
+    }
+    refs.imageScale.value=String(value);
+    refs.imageScaleNumber.value=String(value);
+    document.getElementById('scaleApproxIndicator').hidden=true;
+    scheduleDraw();
   }
 
   async function resetAll() {
@@ -1048,15 +1064,17 @@
       ref.addEventListener('input',()=>{document.getElementById(valueId).textContent=ref.value;scheduleDraw();});
     }
     document.querySelectorAll('[data-scale-mode]').forEach(button=>button.addEventListener('click',()=>setScaleMode(button.dataset.scaleMode)));
-    refs.imageScale.addEventListener('input',()=>{
-      const value=Number(refs.imageScale.value);
-      if(scaleMode==='all') {
-        imageScales=imageScales.map((previous,index)=>images[index]?value:previous);
-      } else {
-        imageScales[selectedImageIndex]=value;
-      }
-      document.getElementById('imageScaleValue').textContent=value+'%';
-      scheduleDraw();
+    refs.imageScale.addEventListener('input',()=>applyImageScale(Number(refs.imageScale.value)));
+    refs.imageScaleNumber.addEventListener('input',()=>{
+      const raw=refs.imageScaleNumber.value.trim();
+      if(!raw)return;
+      const number=Number(raw);
+      if(Number.isFinite(number)&&number>=20&&number<=300)applyImageScale(number);
+    });
+    refs.imageScaleNumber.addEventListener('change',()=>{
+      const raw=refs.imageScaleNumber.value.trim();
+      const number=raw?Number(raw):Number(refs.imageScale.value);
+      applyImageScale(number);
     });
     refs.colors.forEach(input => input.addEventListener('input', () => {
       currentColors[Number(input.dataset.color)] = input.value.toUpperCase();
