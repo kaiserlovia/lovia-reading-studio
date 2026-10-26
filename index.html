@@ -6,8 +6,8 @@
   <meta name="theme-color" content="#eeeee9">
   <meta name="description" content="Lovia 阅读主题展示工坊：轻量预览、自由排版、高清导出。">
   <title>Lovia — Reading Gallery Studio</title>
-  <link rel="stylesheet" href="./styles.css?v=20261026-v6">
-  <script src="./app.js?v=20261026-v6" defer></script>
+  <link rel="stylesheet" href="./styles.css?v=20261026-v7">
+  <script src="./app.js?v=20261026-v7" defer></script>
 </head>
 <body>
   <div class="app-shell">
@@ -96,7 +96,15 @@
             <input id="batchFileInput" type="file" accept="image/png,image/jpeg,image/webp,image/avif,image/gif" multiple hidden>
             <div class="upload-grid" id="uploadGrid"></div>
             <div class="drag-guide"><span class="drag-guide-icon">✣</span><div><strong>拖动图片，调整大小</strong><small>在画布中点选图片后，可调整缩放比例</small></div><button id="resetImagePositions" type="button">复位位置</button></div>
-            <div class="image-scale-panel"><div class="range-label"><label for="imageScale">所选图片大小 <span id="selectedImageLabel">第 1 张</span></label><output id="imageScaleValue">100%</output></div><input id="imageScale" class="range-input" type="range" min="40" max="155" step="5" value="100"><p class="image-scale-tip">点击缩略图左上数字选中图片；也可以直接点海报里的图片。缩放不会修改原始文件。</p></div>
+            <div class="image-scale-panel">
+              <div class="scale-mode-switch" role="group" aria-label="图片大小调整方式">
+                <button type="button" data-scale-mode="single" class="active" aria-pressed="true"><strong>单张调整</strong><small>点选图片后缩放</small></button>
+                <button type="button" data-scale-mode="all" aria-pressed="false"><strong>全部调整</strong><small>所有图片同步缩放</small></button>
+              </div>
+              <div class="range-label"><label for="imageScale"><span id="scaleModeLabel">所选图片大小</span> <span id="selectedImageLabel">第 1 张</span></label><output id="imageScaleValue">100%</output></div>
+              <input id="imageScale" class="range-input" type="range" min="40" max="155" step="5" value="100">
+              <p class="image-scale-tip" id="imageScaleTip">点选缩略图左上数字，或直接点击海报中的图片，再拖动滑块调整。</p>
+            </div>
             <div class="image-size-message" id="imageSizeMessage">当前示例：3 张 942 × 2048 px 原尺寸截图</div>
             <input id="imageFileInput" type="file" accept="image/png,image/jpeg,image/webp,image/avif,image/gif" hidden>
           </section>

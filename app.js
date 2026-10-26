@@ -77,6 +77,7 @@
   let layoutDirection = 'left-high';
   let imageOffsets = [{x:0,y:0},{x:0,y:0},{x:0,y:0}];
   let imageScales = [100,100,100];
+  let scaleMode = 'single';
   let selectedImageIndex = 0;
   let lastPlacements = [];
   let dragState = null;
@@ -712,7 +713,7 @@
     images.forEach((image,index)=>{
       const tile=document.createElement('div');
       tile.className='upload-tile';
-      tile.classList.toggle('selected-image', index===selectedImageIndex);
+      tile.classList.toggle('selected-image', scaleMode==='single'&&index===selectedImageIndex);
       tile.dataset.slot=String(index);
       const replace=document.createElement('button');
       replace.type='button';replace.className='tile-replace';
@@ -836,14 +837,35 @@
   function selectImage(index) {
     if(index<0||index>=images.length)return;
     selectedImageIndex=index;
+    scaleMode='single';
+    updateSelectedScaleUI();
+    renderTiles();
+  }
+  function setScaleMode(mode) {
+    if(!['single','all'].includes(mode))return;
+    scaleMode=mode;
     updateSelectedScaleUI();
     renderTiles();
   }
   function updateSelectedScaleUI() {
     selectedImageIndex=Math.max(0,Math.min(selectedImageIndex,images.length-1));
-    refs.imageScale.value=String(imageScales[selectedImageIndex]??100);
-    document.getElementById('imageScaleValue').textContent=refs.imageScale.value+'%';
-    document.getElementById('selectedImageLabel').textContent='第 '+(selectedImageIndex+1)+' 张';
+    const validScales=imageScales.filter((_,index)=>Boolean(images[index]));
+    const all=scaleMode==='all';
+    const average=validScales.length?validScales.reduce((sum,n)=>sum+n,0)/validScales.length:100;
+    const value=all?Math.min(155,Math.max(40,Math.round(average/5)*5)):(imageScales[selectedImageIndex]??100);
+    refs.imageScale.value=String(value);
+    const varied=all&&validScales.length>1&&new Set(validScales).size>1;
+    document.getElementById('imageScaleValue').textContent=(varied?'约':'')+value+'%';
+    document.getElementById('selectedImageLabel').textContent=all?'共 '+validScales.length+' 张':'第 '+(selectedImageIndex+1)+' 张';
+    document.getElementById('scaleModeLabel').textContent=all?'全部图片大小':'所选图片大小';
+    document.getElementById('imageScaleTip').textContent=all
+      ?'拖动滑块将所有已添加图片统一缩放；各张图片的位置保持不变。'
+      :'点选缩略图左上数字，或直接点击海报中的图片，再拖动滑块调整。';
+    document.querySelectorAll('[data-scale-mode]').forEach(button=>{
+      const active=button.dataset.scaleMode===scaleMode;
+      button.classList.toggle('active',active);
+      button.setAttribute('aria-pressed',String(active));
+    });
   }
 
   async function resetAll() {
@@ -874,7 +896,7 @@
     catch(error) { images=[null]; } }
     userObjectURLs=images.map(()=>null);imageOffsets=images.map(()=>({x:0,y:0}));
     gradientCustomized=false;
-    imageScales=images.map(()=>100);selectedImageIndex=0;
+    imageScales=images.map(()=>100);selectedImageIndex=0;scaleMode='single';
     updateSelectedScaleUI();
     updateSizeMessage();refreshAutoColors();setAutoGradient(false);currentColors=paletteFromImages(images);
     syncPaletteInputs();setLayoutDirection('left-high');setLayout('even');
@@ -1025,9 +1047,15 @@
     for(const [ref,valueId] of [[refs.titleSize,'titleFontSizeValue'],[refs.authorSize,'authorFontSizeValue'],[refs.dateSize,'dateFontSizeValue'],[refs.messageSize,'messageFontSizeValue']]){
       ref.addEventListener('input',()=>{document.getElementById(valueId).textContent=ref.value;scheduleDraw();});
     }
+    document.querySelectorAll('[data-scale-mode]').forEach(button=>button.addEventListener('click',()=>setScaleMode(button.dataset.scaleMode)));
     refs.imageScale.addEventListener('input',()=>{
-      imageScales[selectedImageIndex]=Number(refs.imageScale.value);
-      document.getElementById('imageScaleValue').textContent=refs.imageScale.value+'%';
+      const value=Number(refs.imageScale.value);
+      if(scaleMode==='all') {
+        imageScales=imageScales.map((previous,index)=>images[index]?value:previous);
+      } else {
+        imageScales[selectedImageIndex]=value;
+      }
+      document.getElementById('imageScaleValue').textContent=value+'%';
       scheduleDraw();
     });
     refs.colors.forEach(input => input.addEventListener('input', () => {

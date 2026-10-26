@@ -403,3 +403,13 @@ h2{font:400 23px Georgia,"Noto Serif SC",serif;margin-top:8px}
   .mobile-restored-preview .export-quality-options button strong{font-size:10px}
   .mobile-restored-preview .export-quality-options button small{font-size:8px}
 }
+
+/* Edition 07 — clear single-image and all-image sizing modes */
+.scale-mode-switch{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin-bottom:17px}
+.scale-mode-switch button{display:flex;flex-direction:column;gap:4px;align-items:center;justify-content:center;min-height:61px;padding:9px 5px;border:1px solid #dce6d9;border-radius:7px;background:white;color:#6d826f;cursor:pointer}
+.scale-mode-switch button strong{font-size:12px;font-weight:600;letter-spacing:.3px}
+.scale-mode-switch button small{font-size:9px;color:#9bac9e;line-height:1.5}
+.scale-mode-switch button.active{background:#eaf3e8;border-color:#78997e;box-shadow:inset 0 0 0 1px #8aa68c38;color:#355f3d}
+.scale-mode-switch button.active small{color:#608466}
+.scale-mode-switch button:focus-visible{outline:2px solid #678c70;outline-offset:2px}
+@media(max-width:580px){.scale-mode-switch{gap:8px}.scale-mode-switch button{min-height:63px;touch-action:manipulation}}
