@@ -1212,7 +1212,7 @@ function currentQuality(){const o=qualityOptions();return o.find(q=>q.names.incl
 function syncQuality(){
   const seg=$('#qualitySeg');seg.textContent='';const cur=currentQuality();
   for(const q of qualityOptions()){
-    const b=document.createElement('button');b.type='button';b.setAttribute('aria-pressed',String(q===cur));
+    const b=document.createElement('button');b.type='button';b.setAttribute('aria-pressed',String(q.w===cur.w&&q.h===cur.h));
     b.innerHTML=`<b></b><small></small>`;b.querySelector('b').textContent=q.names.join('／');b.querySelector('small').textContent=`${q.w}×${q.h}`;
     b.addEventListener('click',()=>{S.quality=q.names[0];syncQuality();});
     seg.append(b);
