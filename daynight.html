@@ -39,7 +39,7 @@
   --btn-bg:#EAE4D3; --btn-fg:#151B27; color-scheme:dark;
 }
 *{box-sizing:border-box}
-html,body{background:var(--paper)}
+html,body{background:var(--paper);overflow-x:clip}
 body{color:var(--ink);font-family:var(--f-ui);font-size:15px;line-height:1.55;-webkit-font-smoothing:antialiased}
 body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--paper)}
 button,input,select{font:inherit;color:inherit}
@@ -171,6 +171,8 @@ button{cursor:pointer}
   .sides{grid-template-columns:1fr}
   .foot{padding-left:max(24px,env(safe-area-inset-left,0px))}
 }
+/* iPhone Safari zooms in on inputs under 16px, which lets the page slide sideways */
+@media (max-width:959px){input,select,textarea{font-size:16px!important}}
 @media (prefers-reduced-motion:no-preference){
   .seg button,.chip,.layouts button,.ratios button,.fonts button,.tabs button{transition:background-color .15s,border-color .15s,color .15s}
 }
