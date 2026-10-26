@@ -6,8 +6,8 @@
   <meta name="theme-color" content="#eeeee9">
   <meta name="description" content="Lovia 阅读主题展示工坊：轻量预览、自由排版、高清导出。">
   <title>Lovia — Reading Gallery Studio</title>
-  <link rel="stylesheet" href="./styles.css?v=20261027-v9">
-  <script src="./app.js?v=20261027-v9" defer></script>
+  <link rel="stylesheet" href="./styles.css?v=20261027-v10">
+  <script src="./app.js?v=20261027-v10" defer></script>
 </head>
 <body>
   <div class="app-shell">
@@ -78,6 +78,27 @@
             <div class="date-field"><input class="text-input" id="dateText" type="text" maxlength="24" autocomplete="off" value="OCT. 2026" placeholder="例如 OCT. 2026"><button id="todayButton" type="button">今天</button></div>
             <label class="field-label" for="footerText">右下 · 想说的话 <span class="field-hint">可留空，与日期同时显示</span></label>
             <input class="text-input" id="footerText" type="text" maxlength="60" autocomplete="off" placeholder="例如 MADE WITH LOVE">
+
+            <div class="global-font-panel" aria-labelledby="globalFontTitle">
+              <div class="global-font-heading"><div><span class="field-label" id="globalFontTitle">全局字体预设</span><p>整张画报的主题名、作者、日期和留言同步切换</p></div><span class="font-global-mark">Aa / 字</span></div>
+              <div class="font-preset-grid" role="group" aria-label="全局字体预设">
+                <button type="button" class="font-preset selected" data-font="kinghwa" aria-pressed="true"><span class="font-sample">Aa 字</span><span class="font-preset-name">京华老宋</span></button>
+                <button type="button" class="font-preset" data-font="song" aria-pressed="false"><span class="font-sample">Aa 字</span><span class="font-preset-name">典雅宋体</span></button>
+                <button type="button" class="font-preset" data-font="sans" aria-pressed="false"><span class="font-sample">Aa 字</span><span class="font-preset-name">现代黑体</span></button>
+                <button type="button" class="font-preset" data-font="light" aria-pressed="false"><span class="font-sample">Aa 字</span><span class="font-preset-name">轻盈无衬线</span></button>
+                <button type="button" class="font-preset" data-font="editorial" aria-pressed="false"><span class="font-sample">Aa 字</span><span class="font-preset-name">杂志衬线</span></button>
+                <button type="button" class="font-preset" data-font="kai" aria-pressed="false"><span class="font-sample">Aa 字</span><span class="font-preset-name">书卷楷体</span></button>
+                <button type="button" class="font-preset" data-font="mono" aria-pressed="false"><span class="font-sample">Aa 字</span><span class="font-preset-name">复古打字机</span></button>
+                <button type="button" class="font-preset" data-font="round" aria-pressed="false"><span class="font-sample">Aa 字</span><span class="font-preset-name">温柔圆体</span></button>
+                <button type="button" class="font-preset uploaded-font-preset" data-font="uploaded" aria-pressed="false" id="uploadedFontPreset" hidden><span class="font-sample" id="uploadedFontSample">Aa 字</span><span class="font-preset-name" id="uploadedFontLabel">已导入字体</span></button>
+              </div>
+              <div class="font-upload-row">
+                <button type="button" class="font-upload-button" id="fontImportButton"><span aria-hidden="true">＋</span> 导入本地字体</button>
+                <span class="font-upload-format">TTF / OTF / WOFF / WOFF2</span>
+              </div>
+              <input id="fontFileInput" type="file" accept=".ttf,.otf,.woff,.woff2,font/ttf,font/otf,font/woff,font/woff2" hidden>
+              <p class="font-import-status" id="fontImportStatus" role="status" aria-live="polite">导入后可直接选择；仅本机加载，刷新需重新导入。</p>
+            </div>
             <div class="font-controls">
               <div class="font-control"><div class="range-label"><label for="titleFontSize">主题名称字号</label><output id="titleFontSizeValue">61</output></div><input id="titleFontSize" class="range-input" type="range" min="24" max="110" step="1" value="61"></div>
               <div class="font-control"><div class="range-label"><label for="authorFontSize">作者字号</label><output id="authorFontSizeValue">48</output></div><input id="authorFontSize" class="range-input" type="range" min="20" max="95" step="1" value="48"></div>

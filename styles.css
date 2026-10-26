@@ -425,3 +425,35 @@ h2{font:400 23px Georgia,"Noto Serif SC",serif;margin-top:8px}
 .scale-approx-indicator{color:#90a392;font-size:10px;margin-right:3px}
 .scale-approx-indicator[hidden]{display:none}
 @media(max-width:580px){.scale-number-field{height:40px;min-width:96px}.scale-number-field input{font-size:16px}}
+
+/* Edition 10 — global poster font presets and local font importing */
+.global-font-panel{margin:19px 0 22px;padding:15px;border:1px solid #dde5dc;border-radius:9px;background:#f9fbf8}
+.global-font-heading{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:13px}
+.global-font-heading .field-label{display:block;margin:0 0 5px;font-size:11px;font-weight:700;color:#435a49;letter-spacing:.4px}
+.global-font-heading p{margin:0;color:#8c9a8e;font-size:9px;line-height:1.7}
+.font-global-mark{font:italic 13px Georgia,serif;white-space:nowrap;color:#91a393}
+.font-preset-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.font-preset{display:flex;flex-direction:column;justify-content:center;align-items:flex-start;gap:3px;min-width:0;min-height:65px;padding:10px 12px;border:1px solid #e2e8df;border-radius:7px;background:#fff;text-align:left;color:#536a57;transition:border-color .15s,background .15s,transform .15s}
+.font-preset .font-sample{display:block;max-width:100%;overflow:hidden;font-size:23px;line-height:1.25;color:#36473b;white-space:nowrap;text-overflow:ellipsis}
+.font-preset .font-preset-name{font-size:9px;color:#8c9e8c;line-height:1.4;overflow:hidden;max-width:100%;text-overflow:ellipsis;white-space:nowrap}
+.font-preset:hover{border-color:#a5b9a3}
+.font-preset.selected{background:#ecf3eb;border-color:#74977c;box-shadow:inset 0 0 0 1px #91af9530}
+.font-preset.selected .font-preset-name{color:#4f7859}
+.font-preset:focus-visible,.font-upload-button:focus-visible{outline:2px solid #628a69;outline-offset:2px}
+.font-preset[hidden]{display:none}
+.font-preset[data-font="kinghwa"] .font-sample{font-family:"KingHwaOldSong","Songti SC",serif;font-weight:700}
+.font-preset[data-font="song"] .font-sample{font-family:"Songti SC","STSong",serif}
+.font-preset[data-font="sans"] .font-sample{font-family:"PingFang SC","Microsoft YaHei",sans-serif;font-weight:600}
+.font-preset[data-font="light"] .font-sample{font-family:"Helvetica Neue","Avenir Next","PingFang SC",sans-serif;font-weight:300}
+.font-preset[data-font="editorial"] .font-sample{font-family:"Didot","Bodoni MT","Times New Roman",serif}
+.font-preset[data-font="kai"] .font-sample{font-family:"Kaiti SC","STKaiti","KaiTi",serif}
+.font-preset[data-font="mono"] .font-sample{font-family:"Courier New","Menlo",monospace;font-size:21px}
+.font-preset[data-font="round"] .font-sample{font-family:"Hiragino Maru Gothic ProN","Arial Rounded MT Bold",sans-serif}
+.font-upload-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:12px}
+.font-upload-button{display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:37px;padding:8px 13px;border:1px solid #9daf9e;border-radius:6px;background:#fff;color:#4e6d55;font-size:11px;font-weight:600}
+.font-upload-button:hover{background:#f0f5ef}
+.font-upload-button:disabled{opacity:.55;cursor:wait}
+.font-upload-button>span{font-size:18px;line-height:1}
+.font-upload-format{font-size:9px;color:#9baa9a;letter-spacing:.15px}
+.font-import-status{font-size:9px;color:#8a9c8c;margin:9px 0 0;line-height:1.6;overflow-wrap:anywhere}
+@media(max-width:580px){.global-font-panel{margin:15px 0 18px;padding:12px}.font-preset{min-height:70px;padding:10px}.font-preset .font-sample{font-size:24px}.font-upload-button{min-height:42px;touch-action:manipulation}}

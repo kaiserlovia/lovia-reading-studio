@@ -5,6 +5,17 @@
   let CANVAS_H = 2700;
   const DEFAULT_IMAGES = ['assets/IMG_5735.JPG', 'assets/IMG_5733.JPG', 'assets/IMG_5721.PNG'];
   const DEFAULT_TEXT = { name: 'THE SURREAL LIBRARY', author: 'LOVIA', date: 'OCT. 2026' };
+  // Font presets use native stacks, so switching does not download heavy fonts to mobile devices.
+  const FONT_PRESETS = {
+    kinghwa: '"KingHwaOldSong", "KingHwa_OldSong", "京華老宋体", "京华老宋体", "Songti SC", serif',
+    song: '"Songti SC", "STSong", "Noto Serif CJK SC", "SimSun", serif',
+    sans: '"PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif',
+    light: '"Helvetica Neue", "Avenir Next", "PingFang SC", "Microsoft YaHei", sans-serif',
+    editorial: '"Didot", "Bodoni MT", "Times New Roman", "Songti SC", serif',
+    kai: '"Kaiti SC", "STKaiti", "KaiTi", "Noto Serif CJK SC", serif',
+    mono: '"Courier New", "SFMono-Regular", "Menlo", "Noto Serif CJK SC", monospace',
+    round: '"Hiragino Maru Gothic ProN", "Arial Rounded MT Bold", "PingFang SC", "Microsoft YaHei", sans-serif',
+  };
   const MODE_DESCRIPTIONS = {
     light: '自动提取截图中的柔和浅色作为底图。',
     dark: '从截图提取深色，形成鲜明的画廊对比。',
@@ -33,6 +44,10 @@
     authorSize: document.getElementById('authorFontSize'),
     dateSize: document.getElementById('dateFontSize'),
     messageSize: document.getElementById('messageFontSize'),
+    fontPresets: [...document.querySelectorAll('[data-font]')],
+    fontImportButton: document.getElementById('fontImportButton'),
+    fontFileInput: document.getElementById('fontFileInput'),
+    fontImportStatus: document.getElementById('fontImportStatus'),
     imageScale: document.getElementById('imageScale'),
     imageScaleNumber: document.getElementById('imageScaleNumber'),
     colors: [...document.querySelectorAll('[data-color]')],
@@ -83,6 +98,10 @@
   let lastPlacements = [];
   let dragState = null;
   let gradientCustomized = false;
+  let selectedFont='kinghwa';
+  let importedFontFamily='';
+  let importedFontFace=null;
+  let fontImportVersion=0;
   const backdropBuffer = document.createElement('canvas');
 
   function loadImage(src) {
@@ -182,15 +201,78 @@
     rule(x, y - size, x, y + size, color, 3);
   }
 
+  function activeFontFamily() {
+    return selectedFont==='uploaded'&&importedFontFamily
+      ? '"' + importedFontFamily + '", "Songti SC", serif'
+      : FONT_PRESETS[selectedFont] || FONT_PRESETS.kinghwa;
+  }
+
+  function selectGlobalFont(key) {
+    if(!(key in FONT_PRESETS) && !(key==='uploaded'&&importedFontFamily))return;
+    selectedFont=key;
+    refs.fontPresets.forEach(button=>{
+      const active=button.dataset.font===key;
+      button.classList.toggle('selected',active);
+      button.setAttribute('aria-pressed',String(active));
+    });
+    scheduleDraw();
+    if(key==='kinghwa'){
+      document.fonts.load('bold 61px "KingHwaOldSong"').then(scheduleDraw).catch(()=>{});
+    }
+  }
+
+  async function importLocalFont(file) {
+    if(!file)return;
+    if(!/\.(ttf|otf|woff2?)$/i.test(file.name)){
+      refs.fontImportStatus.textContent='字体格式不支持，请选择 TTF、OTF、WOFF 或 WOFF2。';
+      announce('请选择受支持的字体文件');
+      return;
+    }
+    if(file.size>40*1024*1024){
+      refs.fontImportStatus.textContent='字体文件过大，请选择 40MB 以内的文件。';
+      announce('字体文件请控制在 40MB 以内');
+      return;
+    }
+    const request=++fontImportVersion;
+    refs.fontImportButton.disabled=true;
+    refs.fontImportStatus.textContent='正在导入：'+file.name+'…';
+    try {
+      if(!('FontFace' in window))throw new Error('当前浏览器不支持本地字体导入');
+      const data=await file.arrayBuffer();
+      const family='LoviaImportedFont'+request;
+      const face=new FontFace(family,data,{style:'normal',weight:'normal'});
+      await face.load();
+      if(request!==fontImportVersion)return;
+      document.fonts.add(face);
+      if(importedFontFace)document.fonts.delete(importedFontFace);
+      importedFontFace=face;
+      importedFontFamily=family;
+      const customButton=document.getElementById('uploadedFontPreset');
+      customButton.hidden=false;
+      document.getElementById('uploadedFontSample').style.fontFamily='"'+family+'", serif';
+      document.getElementById('uploadedFontLabel').textContent='已导入 · '+file.name.replace(/\.[^.]+$/,'').slice(0,12);
+      refs.fontImportStatus.textContent='已导入 '+file.name+' · 本机使用，刷新后需重新导入';
+      selectGlobalFont('uploaded');
+      await document.fonts.ready;
+      scheduleDraw();
+      announce('字体已应用到整张画报');
+    } catch(error) {
+      console.error('Local font import failed',error);
+      refs.fontImportStatus.textContent='字体读取失败，请确认文件完整且格式正确。';
+      announce(error.message||'无法读取字体文件');
+    } finally {
+      refs.fontImportButton.disabled=false;
+      refs.fontFileInput.value='';
+    }
+  }
+
   function drawTrackedText(raw, x, centerY, opts = {}) {
     const text = String(raw || '').trim();
     if (!text) return;
     const { color = '#333B31', maxWidth = 1450, size = 51, minSize = 25, tracking = 9, align = 'left', italic = false, bold = false, kinghwa = false } = opts;
     let selectedSize = size;
     let effectiveTracking = tracking;
-    const family = kinghwa
-      ? '"KingHwaOldSong", "KingHwa_OldSong", "京華老宋体", "京华老宋体", "Songti SC", serif'
-      : /[\u3400-\u9fff]/.test(text) ? 'Georgia, "Songti SC", "Noto Serif CJK SC", serif' : 'Georgia, "Times New Roman", serif';
+    const family=activeFontFamily();
     const fontForSize = v => `${italic ? 'italic ' : ''}${bold ? 'bold ' : ''}${v}px ${family}`;
     const lengthAt = (v, spacing) => {
       ctx.font = fontForSize(v);
@@ -885,6 +967,7 @@
   }
 
   async function resetAll() {
+    selectGlobalFont('kinghwa');
     refs.name.value=DEFAULT_TEXT.name;
     refs.author.value=DEFAULT_TEXT.author;
     refs.date.value=DEFAULT_TEXT.date;
@@ -1059,6 +1142,9 @@
   }
 
   function bindControls() {
+    refs.fontPresets.forEach(button=>button.addEventListener('click',()=>selectGlobalFont(button.dataset.font)));
+    refs.fontImportButton.addEventListener('click',()=>refs.fontFileInput.click());
+    refs.fontFileInput.addEventListener('change',event=>importLocalFont(event.target.files?.[0]));
     for (const input of [refs.name, refs.author, refs.date, refs.footerText]) input.addEventListener('input', scheduleDraw);
     for(const [ref,valueId] of [[refs.titleSize,'titleFontSizeValue'],[refs.authorSize,'authorFontSizeValue'],[refs.dateSize,'dateFontSizeValue'],[refs.messageSize,'messageFontSizeValue']]){
       ref.addEventListener('input',()=>{document.getElementById(valueId).textContent=ref.value;scheduleDraw();});
