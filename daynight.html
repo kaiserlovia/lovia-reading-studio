@@ -121,10 +121,9 @@ button{cursor:pointer}
 .shot-tools{display:flex;gap:4px}
 .icon-btn{width:32px;height:32px;display:grid;place-items:center;border:1px solid var(--line);background:var(--paper);border-radius:7px;font-size:15px;line-height:1;padding:0}
 .tag{font-size:11px;padding:1px 6px;border-radius:4px;background:var(--brass-soft);color:var(--brass);margin-left:6px;vertical-align:1px}
-.add{display:flex;justify-content:center;align-items:center;gap:6px;border:1.5px dashed var(--line);border-radius:9px;padding:10px;font-size:14px;cursor:pointer;color:var(--ink)}
+.add{display:flex;justify-content:center;align-items:center;gap:6px;width:100%;background:transparent;border:1.5px dashed var(--line);border-radius:9px;padding:10px;font-size:14px;cursor:pointer;color:var(--ink);min-width:0}
 .add:hover{border-color:var(--brass)}
-.add input{position:absolute;width:1px;height:1px;opacity:0}
-.add:focus-within{outline:2px solid var(--focus);outline-offset:2px}
+.add:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
 .selbox{border:1px solid var(--brass);background:var(--brass-soft);border-radius:12px;padding:12px;display:grid;gap:10px}
 .selbox p{margin:0;font-size:14px}
 
@@ -246,20 +245,20 @@ button{cursor:pointer}
           <div class="side-head"><h3>日間</h3><span class="count" id="count-day"></span></div>
           <ul class="shots" id="list-day"></ul>
           <div class="add-row">
-            <label class="add"><input type="file" id="file-day" accept="image/*" multiple>＋ 加入日間截圖</label>
-            <label class="add add-alt" title="一次選 1–5 張，取代目前的日間截圖"><input type="file" id="batch-day" accept="image/*" multiple>▦ 一鍵替換</label>
+            <button type="button" class="add" data-file="file-day">＋ 加入日間截圖</button><input type="file" id="file-day" accept="image/*" multiple hidden>
+            <button type="button" class="add add-alt" title="一次選 1–5 張，取代目前的日間截圖" data-file="batch-day">▦ 一鍵替換</button><input type="file" id="batch-day" accept="image/*" multiple hidden>
           </div>
         </div>
         <div class="side" data-side="night">
           <div class="side-head"><h3>夜間</h3><span class="count" id="count-night"></span></div>
           <ul class="shots" id="list-night"></ul>
           <div class="add-row">
-            <label class="add"><input type="file" id="file-night" accept="image/*" multiple>＋ 加入夜間截圖</label>
-            <label class="add add-alt" title="一次選 1–5 張，取代目前的夜間截圖"><input type="file" id="batch-night" accept="image/*" multiple>▦ 一鍵替換</label>
+            <button type="button" class="add" data-file="file-night">＋ 加入夜間截圖</button><input type="file" id="file-night" accept="image/*" multiple hidden>
+            <button type="button" class="add add-alt" title="一次選 1–5 張，取代目前的夜間截圖" data-file="batch-night">▦ 一鍵替換</button><input type="file" id="batch-night" accept="image/*" multiple hidden>
           </div>
         </div>
       </div>
-      <input type="file" id="replaceFile" accept="image/*" class="vh" tabindex="-1" aria-hidden="true">
+      <input type="file" id="replaceFile" accept="image/*" hidden>
       <div class="group">
         <h3>調整大小</h3>
         <div class="seg" data-seg="scaleMode"><button data-v="single" aria-pressed="true">單張調整</button><button data-v="all" aria-pressed="false">全部調整</button></div>
@@ -374,12 +373,12 @@ button{cursor:pointer}
         </div>
         <div class="slider" id="tintRow" hidden><label for="tint">底色覆蓋</label><input type="range" id="tint" min="20" max="92" value="70"><output for="tint" id="tintOut">70%</output></div>
         <div id="imageRow" class="stack" hidden>
-          <label class="add"><input type="file" id="bgFile" accept="image/*">＋ 選擇底圖圖片<span class="muted-note" id="bgFileName">未選擇</span></label>
+          <button type="button" class="add" data-file="bgFile">＋ 選擇底圖圖片<span class="muted-note" id="bgFileName">未選擇</span></button><input type="file" id="bgFile" accept="image/*" hidden>
           <div class="slider"><label for="bgBlur">模糊程度</label><input type="range" id="bgBlur" min="0" max="120" value="40"><output for="bgBlur" id="bgBlurOut">40 px</output></div>
           <div class="slider"><label for="bgOpacity">底圖透明度</label><input type="range" id="bgOpacity" min="0" max="100" value="100"><output for="bgOpacity" id="bgOpacityOut">100%</output></div>
         </div>
         <div id="glassRow" class="stack" hidden>
-          <label class="add"><input type="file" id="coverFile" accept="image/*">＋ 上傳書籍封面<span class="muted-note" id="coverFileName">未選擇，暫用各自第一張截圖</span></label>
+          <button type="button" class="add" data-file="coverFile">＋ 上傳書籍封面<span class="muted-note" id="coverFileName">未選擇，暫用各自第一張截圖</span></button><input type="file" id="coverFile" accept="image/*" hidden>
           <div class="slider"><label for="glass">朦朧程度</label><input type="range" id="glass" min="20" max="100" value="70"><output for="glass" id="glassOut">70%</output></div>
         </div>
         <p class="hint" id="blendNote" hidden>成對疊放和日夜交錯會以日到夜的漸層為底。</p>
@@ -427,7 +426,7 @@ button{cursor:pointer}
         <h3>字體</h3>
         <p class="hint">整張畫報的主題名稱、作者、日期和留言一起切換。</p>
         <div class="fonts" id="fonts"></div>
-        <label class="add"><input type="file" id="fontFile" accept=".ttf,.otf,.woff,.woff2,font/*">＋ 匯入我的字體（TTF、OTF、WOFF、WOFF2）</label>
+        <button type="button" class="add" data-file="fontFile">＋ 匯入我的字體（TTF、OTF、WOFF、WOFF2）</button><input type="file" id="fontFile" accept=".ttf,.otf,.woff,.woff2,font/*" hidden>
         <p class="hint">匯入的字體只在這台裝置使用，重新整理後需要再匯入。</p>
       </div>
       <div class="group">
@@ -1085,6 +1084,11 @@ $$('.tabs [role=tab]').forEach(t=>t.addEventListener('click',()=>{
   $$('.pane').forEach(p=>p.classList.toggle('is-active',p.id===t.getAttribute('aria-controls')));
 }));
 
+/* ---------------- file pickers: a button opens the hidden input once ---------------- */
+let pickerOpenedAt=0;
+function openPicker(input){const now=Date.now();if(now-pickerOpenedAt<900)return;pickerOpenedAt=now;input.click();}
+$$('[data-file]').forEach(btn=>btn.addEventListener('click',()=>openPicker(document.getElementById(btn.dataset.file))));
+
 /* ---------------- UI: shots ---------------- */
 function findShot(id){for(const side of['day','night']){const i=S.shots[side].findIndex(s=>s.id===id);if(i>=0)return{side,i,shot:S.shots[side][i]};}return null;}
 let replaceTarget=null;
@@ -1106,14 +1110,14 @@ function renderLists(){
       const up=document.createElement('button');up.className='icon-btn';up.textContent='↑';up.setAttribute('aria-label','往前移');up.disabled=i===0;
       up.addEventListener('click',()=>{const a=S.shots[side];[a[i-1],a[i]]=[a[i],a[i-1]];renderLists();req();});
       const rep=document.createElement('button');rep.className='icon-btn';rep.textContent='↺';rep.title='換一張圖';rep.setAttribute('aria-label','替換這張圖片');
-      rep.addEventListener('click',()=>{replaceTarget={side,id:s.id};$('#replaceFile').click();});
+      rep.addEventListener('click',()=>{replaceTarget={side,id:s.id};openPicker($('#replaceFile'));});
       const del=document.createElement('button');del.className='icon-btn';del.textContent='×';del.setAttribute('aria-label','移除這張');
       del.addEventListener('click',()=>{S.shots[side].splice(i,1);if(S.sel===s.id)S.sel=null;afterShotsChanged(side);syncSel();});
       tools.append(up,rep,del);
       li.append(th,mid,tools);ul.append(li);
     });
     $('#count-'+side).textContent=`${S.shots[side].length} / ${MAX_PER_SIDE}`;
-    $('#file-'+side).closest('.add').hidden=S.shots[side].length>=MAX_PER_SIDE&&!S.shots[side].some(s=>s.sample);
+    document.querySelector(`[data-file="file-${side}"]`).hidden=S.shots[side].length>=MAX_PER_SIDE&&!S.shots[side].some(s=>s.sample);
   }
   $('#clearSamples').hidden=![...S.shots.day,...S.shots.night].some(s=>s.sample);
 }
