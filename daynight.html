@@ -443,9 +443,9 @@ button{cursor:pointer}
         <div class="seg seg-col" data-seg="quality" id="qualitySeg"></div>
       </div>
       <div class="stack">
+        <button class="btn" id="shareOne" hidden>存到相簿</button>
         <button class="btn" id="exportOne">下載 PNG</button>
         <button class="btn ghost" id="exportPair">日間、夜間各存一張</button>
-        <button class="btn ghost" id="shareOne" hidden>存到相簿</button>
         <button class="btn ghost" id="openLarge2">放大預覽</button>
         <p class="status" id="status" aria-live="polite"></p>
       </div>
@@ -462,7 +462,8 @@ button{cursor:pointer}
     <h2 id="resultTitle">畫報完成</h2>
     <p id="resultText">如果沒有自動下載，手機請長按圖片選「儲存到照片」，電腦請按右鍵另存。</p>
     <div class="result-imgs" id="resultImgs"></div>
-    <button class="btn" id="resultClose">關閉</button>
+    <button class="btn" id="resultShare" hidden>全部存到相簿</button>
+    <button class="btn ghost" id="resultClose">關閉</button>
   </div>
 </div>
 
@@ -1353,11 +1354,21 @@ async function saveFile(blob,name){
 function tryDownload(blob,name){
   try{const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);}catch(e){}
 }
-function showResult(items){
+let resultFiles=[];
+function showResult(items,text){
+  $('#resultText').textContent=text||'如果沒有自動下載，手機請長按圖片選「儲存到照片」，電腦請按右鍵另存。';
+  resultFiles=items.map(it=>new File([it.blob],it.name,{type:'image/png'}));
+  let canShareAll=false;try{canShareAll=!!(navigator.share&&navigator.canShare&&navigator.canShare({files:resultFiles}));}catch(e){}
+  $('#resultShare').hidden=!canShareAll;
+  $('#resultShare').textContent=items.length>1?`全部存到相簿（${items.length} 張）`:'存到相簿';
   const box=$('#resultImgs');box.textContent='';
   for(const it of items){const im=document.createElement('img');im.src=URL.createObjectURL(it.blob);im.alt=it.name;box.append(im);}
   $('#result').hidden=false;$('#resultClose').focus();
 }
+$('#resultShare').addEventListener('click',async()=>{
+  try{await navigator.share({files:resultFiles,title:S.title||'Day Night'});status('在分享選單選「儲存影像」就會存進相簿。');}
+  catch(err){if(!err||err.name!=='AbortError')status('無法開啟分享，請長按圖片儲存。');}
+});
 $('#resultClose').addEventListener('click',()=>{$('#result').hidden=true;$$('#resultImgs img').forEach(i=>URL.revokeObjectURL(i.src));});
 $('#result').addEventListener('click',e=>{if(e.target.id==='result')$('#resultClose').click();});
 function hasShots(){return S.shots.day.length+S.shots.night.length>0;}
@@ -1377,13 +1388,12 @@ $('#exportPair').addEventListener('click',()=>busy(async()=>{
   for(const side of['day','night']){if(!S.shots[side].length)continue;
     const r=await renderBlob({layout:lay,side});const name=`${safeName(S.title)}-${side==='day'?'日間':'夜間'}-${r.w}x${r.h}.png`;
     out.push({blob:r.blob,name});}
-  let fell=false,saved=0;
-  for(const it of out){const how=await saveFile(it.blob,it.name);if(how==='fallback')fell=true;else if(how==='saved')saved++;}
-  if(fell)showResult(out);
-  status(fell?`已產生 ${out.length} 張。`:`已儲存 ${saved} 張。`);
+  const q=currentQuality();
+  showResult(out,`長按圖片選「儲存到照片」，或按下方按鈕一次存進相簿。尺寸 ${q.w}×${q.h}。`);
+  status(`已產生 ${out.length} 張，尺寸 ${q.w}×${q.h}。`);
 }));
 if(navigator.share&&navigator.canShare){
-  $('#shareOne').hidden=false;
+  $('#shareOne').hidden=false;$('#exportOne').classList.add('ghost');
   $('#shareOne').addEventListener('click',()=>busy(async()=>{
     const r=await renderBlob();const name=`${safeName(S.title)}-${r.w}x${r.h}.png`;const file=new File([r.blob],name,{type:'image/png'});
     if(navigator.canShare({files:[file]})){try{await navigator.share({files:[file],title:S.title||'Day Night'});status('在分享選單選「儲存影像」就會存進相簿。');return;}
