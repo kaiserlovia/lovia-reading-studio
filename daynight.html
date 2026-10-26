@@ -746,6 +746,7 @@ function bestInkFor(bg,prefer){
 }
 
 /* ---------------- backgrounds ---------------- */
+let TB={top:'#EDE9DE',bottom:'#A5B09E'}; // gradient ends for the poster being drawn
 function sideBase(side){
   if(S.bg==='light')return tonesFor(side).light;
   if(S.bg==='dark')return tonesFor(side).dark;
@@ -755,7 +756,7 @@ function sideBase(side){
 function overlayImageModes(ctx,p,side,base){
   if(S.bg==='image'&&S.bgImage){ctx.save();ctx.globalAlpha=S.bgOpacity;drawCover(ctx,blurredImage(S.bgImage,S.bgBlur),p);ctx.restore();}
   else if(S.bg==='glass'){
-    const src=S.cover||(S.shots[side==='blend'?'day':side][0]||S.shots.day[0]||S.shots.night[0]||{}).prev;
+    const src=S.cover||(S.shots[side][0]||S.shots.day[0]||S.shots.night[0]||{}).prev;
     if(src){
       drawCover(ctx,blurredImage(src,110+S.glass*80),p,1.25);
       ctx.fillStyle=rgba(base,.12+.5*(1-S.glass));ctx.fillRect(p.x,p.y,p.w,p.h);
@@ -778,7 +779,7 @@ function paintPanel(ctx,panel,W,H){
     g.addColorStop(0,mix(base,'#FFFFFF',dark?.07:.35));g.addColorStop(1,mix(base,dark?'#000000':S.colors[side].ink,dark?.28:.10));
     ctx.fillStyle=g;ctx.fillRect(p.x,p.y,p.w,p.h);
   }else if(S.bg==='tb'){
-    const g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,S.tbTop);g.addColorStop(1,S.tbBottom);ctx.fillStyle=g;ctx.fillRect(p.x,p.y,p.w,p.h);
+    const g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,TB.top);g.addColorStop(1,TB.bottom);ctx.fillStyle=g;ctx.fillRect(p.x,p.y,p.w,p.h);
   }else overlayImageModes(ctx,p,side,base);
   ctx.restore();
 }
@@ -786,13 +787,13 @@ function paintPanel(ctx,panel,W,H){
 function paintBlend(ctx,geo,W,H){
   const full={x:0,y:0,w:W,h:H};
   if(S.bg==='custom'){ctx.fillStyle=S.customBg;ctx.fillRect(0,0,W,H);return()=>S.customBg;}
-  if(S.bg==='tb'){const g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,S.tbTop);g.addColorStop(1,S.tbBottom);ctx.fillStyle=g;ctx.fillRect(0,0,W,H);return(x,y)=>mix(S.tbTop,S.tbBottom,clamp(y/H,0,1));}
+  if(S.bg==='tb'){const g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,TB.top);g.addColorStop(1,TB.bottom);ctx.fillStyle=g;ctx.fillRect(0,0,W,H);return(x,y)=>mix(TB.top,TB.bottom,clamp(y/H,0,1));}
   const tone=side=>S.bg==='light'?tonesFor(side).light:S.bg==='dark'?tonesFor(side).dark:S.colors[side].bg;
   const dc=tone(geo.A),nc=tone(geo.B);
   const g=geo.dir==='v'?ctx.createLinearGradient(0,0,W,0):ctx.createLinearGradient(0,0,0,H);
   g.addColorStop(0,dc);g.addColorStop(.28,dc);g.addColorStop(.72,nc);g.addColorStop(1,nc);
   ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
-  overlayImageModes(ctx,full,'blend',mix(dc,nc,.5));
+  overlayImageModes(ctx,full,geo.A,mix(dc,nc,.5));
   return(x,y)=>{const t=geo.dir==='v'?x/W:y/H;return mix(dc,nc,clamp((t-.28)/.44,0,1));};
 }
 
@@ -802,6 +803,8 @@ function drawPoster(ctx,W,H,opt={}){
   const u=Math.min(W,H)/100, m=u*6;
   const A=(opt.order||S.order)==='nd'?'night':'day',B=A==='day'?'night':'day';
   const geo=geometry(W,H,lay,singleSide,A,B);
+  const flipTB=geo.kind!=='single'&&geo.dir==='h'&&A==='night';
+  TB=flipTB?{top:S.tbBottom,bottom:S.tbTop}:{top:S.tbTop,bottom:S.tbBottom};
   const f=curFont();
   const hits=[];
   let bgAt=null;
@@ -848,7 +851,7 @@ function drawPoster(ctx,W,H,opt={}){
   const hasTop=els.length>0;
   const topEdge=hasTop?top+u*3.2:m;
   const fivePal=S.palette==='five'&&S.swatches;
-  const panelBg=(side,y)=>S.bg==='tb'?mix(S.tbTop,S.tbBottom,clamp(y/H,0,1)):sideBase(side);
+  const panelBg=(side,y)=>S.bg==='tb'?mix(TB.top,TB.bottom,clamp(y/H,0,1)):sideBase(side);
   const inkAt=(side,y)=>(S.bg==='image'||S.bg==='glass')?S.colors[side].ink:bestInkFor(panelBg(side,y),S.colors[side].ink);
   const footOn=S.sideLabels||(S.swatches&&!fivePal)||fivePal;
   const footH=footOn?u*8.2:0;
