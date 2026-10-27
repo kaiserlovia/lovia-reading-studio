@@ -896,7 +896,7 @@
     lastPlacements=images.map((image,i)=>imagePlacement(image,i,count));
     images.forEach((image,i) => {
       const p=lastPlacements[i];
-      if (image) { drawAdaptiveFrame(p,line,theme); drawFittedImage(image,p); }
+      if (image&&!anim?.noShots) { drawAdaptiveFrame(p,line,theme); drawFittedImage(image,p); }
     });
     drawTrackedText(refs.name.value || DEFAULT_TEXT.name,179,175,
       {color:textInk(theme.ink),size:Number(refs.titleSize.value),minSize:18,tracking:5,maxWidth:1670,bold:true,kinghwa:true});
@@ -1725,7 +1725,36 @@
     compare:'中间的分隔线来回扫过，日夜在同一个框里切换。',pairs:'每组前后交换，后面那张翻到前面。',alternate:'整张画报在日夜、夜日两种顺序之间淡入淡出。',
     hero:'主图轮流换人，每张图片轮流当大图。',
   };
-  function motionDesc(){return MOTION_DESC[layoutMode]||'整张画报在日间组和夜间组之间淡入淡出。';}
+  const ROTATING={focus:'中间放大的那张轮流换人，旁边的图片跟着移位。',overlap:'最上面那张滑到最底下，下一张浮上来，一张一张轮流翻到最上层。'};
+  function motionDesc(v){
+    if(ROTATING[layoutMode]&&v!=='daynight')return ROTATING[layoutMode]+(v==='both'?'日间组转完淡入夜间组，再转一轮。':'');
+    return MOTION_DESC[layoutMode]||'整张画报在日间组和夜间组之间淡入淡出。';
+  }
+  function motionVariants(){
+    if(!ROTATING[layoutMode])return null;
+    return [{v:'one',label:'只转这一组'},{v:'both',label:'日间转完换夜间'},{v:'daynight',label:'日夜淡入淡出'}];
+  }
+  // the live group's images rotated one slot per step; each image becomes a sprite that moves between slots
+  function rotationSpec(OW,OH,dir){
+    const k=OW/CANVAS_W,keep={images,imageOffsets,imageScales};
+    const idx=images.map((img,i)=>img?i:-1).filter(i=>i>=0),n=idx.length;
+    const steps=[],maxRect={};
+    try{
+      for(let i=0;i<n;i++){
+        const rot=dir==='left'?[...idx.slice(i),...idx.slice(0,i)]:[...idx.slice(n-i),...idx.slice(0,n-i)];
+        images=rot.map(j=>keep.images[j]);imageOffsets=rot.map(j=>keep.imageOffsets[j]||{x:0,y:0});imageScales=rot.map(j=>keep.imageScales[j]??100);
+        steps.push(rot.map((id,slot)=>{const r=imagePlacement(images[slot],slot,n);if(!maxRect[id]||r.w>maxRect[id].w)maxRect[id]=r;return{id,rect:r,z:slot,slot};}));
+      }
+    }finally{({images,imageOffsets,imageScales}=keep);}
+    const base=renderLayer(OW,OH,{noShots:true}),theme=displayColors(),line=posterLine(),sprites={};
+    for(const id of idx){
+      const r=maxRect[id],pad=90,c=document.createElement('canvas');
+      c.width=Math.ceil((r.w+pad*2)*k);c.height=Math.ceil((r.h+pad*2)*k);
+      const prior=ctx;try{ctx=c.getContext('2d');ctx.setTransform(k,0,0,k,(pad-r.x)*k,(pad-r.y)*k);drawAdaptiveFrame(r,line,theme);drawFittedImage(images[id],r);}finally{ctx=prior;}
+      sprites[id]={img:c,sr:r,pad};
+    }
+    return {W:OW,H:OH,type:'tween',k,base,sprites,steps,wrap:dir==='left'?'fade':'under',paletteSources:[base,...Object.values(sprites).map(x=>x.img)]};
+  }
   function posterLine(){return rgbaFromHex(refs.ruleColor.value,Number(refs.ruleOpacity.value)/100);}
   function withLiveGroup(name,fn){
     if(name===activeGroup)return fn();
@@ -1743,7 +1772,7 @@
     finally{ctx=prior;anim=priorAnim;}
     return c;
   }
-  async function buildMotion(OW,OH){
+  async function buildMotion(OW,OH,variant){
     await document.fonts.ready;
     const k=OW/CANVAS_W,base={W:OW,H:OH};
     const filled=name=>groupOf(name).images.some(Boolean),both=filled('day')&&filled('night');
@@ -1793,6 +1822,19 @@
         const keep=dnOrder;let l0,l1;
         try{l0=renderLayer(OW,OH);dnOrder=keep==='dn'?'nd':'dn';l1=renderLayer(OW,OH);}finally{dnOrder=keep;}
         return{...base,type:'fade',layers:[l0,l1],paletteSources:[l0,l1]};
+      }
+      if(ROTATING[layoutMode]&&variant!=='daynight'){
+        const dir=layoutMode==='focus'?'left':'right';
+        const first=activeGroup,second=first==='day'?'night':'day';
+        const count=name=>groupOf(name).images.filter(Boolean).length;
+        if(count(first)<2)return none('轮转需要这一组至少两张图片。');
+        const a=withLiveGroup(first,()=>rotationSpec(OW,OH,dir));
+        if(variant!=='both')return a;
+        if(count(second)<2)return none('日间转完换夜间需要两组都至少两张图片。');
+        const b=withLiveGroup(second,()=>rotationSpec(OW,OH,dir));
+        const la=withLiveGroup(first,()=>renderLayer(OW,OH)),lb=withLiveGroup(second,()=>renderLayer(OW,OH));
+        return{...base,type:'seq',parts:[{spec:a,weight:a.steps.length},{spec:{...base,type:'xfade',from:la,to:lb},weight:.7},{spec:b,weight:b.steps.length},{spec:{...base,type:'xfade',from:lb,to:la},weight:.7}],
+          paletteSources:[...a.paletteSources,...b.paletteSources]};
       }
       if(layoutMode==='hero'){
         const idx=images.map((img,i)=>img?i:-1).filter(i=>i>=0);
@@ -1877,7 +1919,7 @@
     if(!window.LoviaMotion&&tries<50){setTimeout(()=>mountPresets(tries+1),100);return;}
     if(window.LoviaMotion&&!mountPresets.motion){
       mountPresets.motion=true;
-      window.LoviaMotion.mount({buttons:[document.getElementById('openMotion')],ratio:()=>CANVAS_W/CANVAS_H,describe:motionDesc,build:buildMotion,
+      window.LoviaMotion.mount({buttons:[document.getElementById('openMotion')],ratio:()=>CANVAS_W/CANVAS_H,describe:motionDesc,build:buildMotion,variants:motionVariants,
         filename:()=>(refs.name.value||'Lovia-Reading-Gallery').trim().replace(/[\\/:*?"<>|\x00-\x1f]/g,'-').replace(/\s+/g,'-').slice(0,45)+'-'+layoutMode});
     }
     if(window.LoviaStudio&&window.LoviaStudio.mountPresets){
