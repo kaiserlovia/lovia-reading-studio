@@ -100,8 +100,9 @@
   let dragState = null;
   let gradientCustomized = false;
   let selectedFont='kinghwa';
-  let importedFontFamily='';
-  let importedFontFace=null;
+  const importedFonts={}; // imported fonts by key: uploaded, uploaded2… (no limit); file slots font, font2…
+  let textStyle={}; // per field: {font, day, night}; a field without an entry follows the overall settings
+  let openField=null, MARKS=null, lastMarks=[];
   let fontImportVersion=0;
   const backdropBuffer = document.createElement('canvas');
   // Day/night: the live image variables above hold the group being edited; the other group waits here.
@@ -109,7 +110,7 @@
   let compareAt=.5, comparePair=0, heroIndex=-1, compareHandle=false;
   let textMode='auto', textDay='#2F3A31', textNight='#F1F0E7', textTouched=false; // custom poster text colours
   let paletteLocked=false; // a saved setting with its own palette keeps it when screenshots change
-  const keptFiles={background:null,cover:null,font:null};
+  const keptFiles={background:null,cover:null}; // imported fonts keep their files in importedFonts
   let anim=null; // set while a motion layer is drawn: {fill, compareOnly, noShots, collect} // files behind the uploaded backdrop, cover and font
   let activeGroup='day';
   let dnOrder='dn'; // 'dn': day first (left / in front); 'nd': night first
@@ -185,7 +186,7 @@
     refreshAndroidSwatches();
     ctx=previewCtx;
     ctx.setTransform(previewScale,0,0,previewScale,0,0);
-    drawPoster();
+    MARKS=[];drawPoster();const marks=MARKS;MARKS=null;markText(marks);
     miniCtx.setTransform(1,0,0,1,0,0);
     miniCtx.clearRect(0,0,miniCanvas.width,miniCanvas.height);
     miniCtx.imageSmoothingEnabled=true;
@@ -217,16 +218,24 @@
     rule(x, y - size, x, y + size, color, 3);
   }
 
-  function activeFontFamily() {
-    return selectedFont==='uploaded'&&importedFontFamily
-      ? '"' + importedFontFamily + '", "Songti SC", serif'
-      : FONT_PRESETS[selectedFont] || FONT_PRESETS.kinghwa;
+  const hasFont=key=>key in FONT_PRESETS||!!importedFonts[key];
+  function familyOf(key) {
+    return importedFonts[key]
+      ? '"' + importedFonts[key].family + '", "Songti SC", serif'
+      : FONT_PRESETS[key] || FONT_PRESETS.kinghwa;
   }
+  function activeFontFamily() { return familyOf(selectedFont); }
+  // a text field's own font, or the overall one
+  function fieldFamily(field) {
+    const k=textStyle[field]&&textStyle[field].font;
+    return k&&hasFont(k)?familyOf(k):activeFontFamily();
+  }
+  function fieldInk(field,side) { const t=textStyle[field]; return t&&t[side]||null; }
 
   function selectGlobalFont(key) {
-    if(!(key in FONT_PRESETS) && !(key==='uploaded'&&importedFontFamily))return;
+    if(!hasFont(key))return;
     selectedFont=key;
-    refs.fontPresets.forEach(button=>{
+    document.querySelectorAll('.font-preset[data-font]').forEach(button=>{
       const active=button.dataset.font===key;
       button.classList.toggle('selected',active);
       button.setAttribute('aria-pressed',String(active));
@@ -235,48 +244,74 @@
     if(key==='kinghwa'){
       document.fonts.load('bold 61px "KingHwaOldSong"').then(scheduleDraw).catch(()=>{});
     }
+    renderTextCards();
   }
 
-  async function importLocalFont(file) {
-    if(!file)return;
+  const fontSlot=k=>k.replace('uploaded','font'), slotKey=sl=>sl.replace('font','uploaded');
+  // the overall font grid shows every imported font after the presets
+  function renderUploadedPresets() {
+    const first=document.getElementById('uploadedFontPreset');
+    document.querySelectorAll('.font-preset[data-font^="uploaded"]:not(#uploadedFontPreset)').forEach(b=>b.remove());
+    const keys=Object.keys(importedFonts).sort((a,b)=>(Number(a.slice(8))||1)-(Number(b.slice(8))||1));
+    first.hidden=!keys.length;
+    let after=first;
+    keys.forEach((k,i)=>{
+      const btn=i===0?first:first.cloneNode(true);
+      if(i>0){btn.removeAttribute('id');btn.querySelectorAll('[id]').forEach(x=>x.removeAttribute('id'));after.after(btn);after=btn;
+        btn.addEventListener('click',()=>selectGlobalFont(btn.dataset.font));}
+      btn.dataset.font=k;
+      btn.querySelector('.font-sample').style.fontFamily='"'+importedFonts[k].family+'", serif';
+      btn.querySelector('.font-preset-name').textContent='已导入 · '+importedFonts[k].name;
+      const on=selectedFont===k;btn.classList.toggle('selected',on);btn.setAttribute('aria-pressed',String(on));
+    });
+  }
+  // opts.key reloads a saved font into its own slot; opts.field applies a new import to one text field
+  async function importLocalFont(file, opts={}) {
+    if(!file)return null;
     if(!/\.(ttf|otf|woff2?)$/i.test(file.name)){
       refs.fontImportStatus.textContent='字体格式不支持，请选择 TTF、OTF、WOFF 或 WOFF2。';
       announce('请选择受支持的字体文件');
-      return;
+      return null;
     }
     if(file.size>40*1024*1024){
       refs.fontImportStatus.textContent='字体文件过大，请选择 40MB 以内的文件。';
       announce('字体文件请控制在 40MB 以内');
-      return;
+      return null;
+    }
+    let key=opts.key;
+    if(!key){
+      const same=Object.entries(importedFonts).find(([,f])=>f.file&&f.file.name===file.name&&f.file.size===file.size);
+      if(same)key=same[0];
+      else{let n=1;while(importedFonts[n===1?'uploaded':'uploaded'+n])n++;key=n===1?'uploaded':'uploaded'+n;}
     }
     const request=++fontImportVersion;
     refs.fontImportButton.disabled=true;
     refs.fontImportStatus.textContent='正在导入：'+file.name+'…';
     try {
       if(!('FontFace' in window))throw new Error('当前浏览器不支持本地字体导入');
-      const data=await file.arrayBuffer();
-      const family='LoviaImportedFont'+request;
-      const face=new FontFace(family,data,{style:'normal',weight:'normal'});
-      await face.load();
-      if(request!==fontImportVersion)return;
-      document.fonts.add(face);
-      keptFiles.font=file;
-      if(importedFontFace)document.fonts.delete(importedFontFace);
-      importedFontFace=face;
-      importedFontFamily=family;
-      const customButton=document.getElementById('uploadedFontPreset');
-      customButton.hidden=false;
-      document.getElementById('uploadedFontSample').style.fontFamily='"'+family+'", serif';
-      document.getElementById('uploadedFontLabel').textContent='已导入 · '+file.name.replace(/\.[^.]+$/,'').slice(0,12);
+      const old=importedFonts[key];
+      if(!old||old.file!==file){
+        const data=await file.arrayBuffer();
+        const family='LoviaImportedFont'+request;
+        const face=new FontFace(family,data,{style:'normal',weight:'normal'});
+        await face.load();
+        document.fonts.add(face);
+        if(old&&old.face)document.fonts.delete(old.face);
+        importedFonts[key]={family,face,file,name:file.name.replace(/\.[^.]+$/,'').slice(0,12)};
+      }
+      renderUploadedPresets();
       refs.fontImportStatus.textContent='已导入 '+file.name+' · 本机使用，刷新后需重新导入';
-      selectGlobalFont('uploaded');
+      if(opts.field){styleOf(opts.field).font=key;renderTextCards();}
+      else if(!opts.key)selectGlobalFont(key);
       await document.fonts.ready;
       scheduleDraw();
-      announce('字体已应用到整张画报');
+      if(!opts.key)announce(opts.field?'字体已应用到这个栏位':'字体已应用到整张画报');
+      return key;
     } catch(error) {
       console.error('Local font import failed',error);
       refs.fontImportStatus.textContent='字体读取失败，请确认文件完整且格式正确。';
       announce(error.message||'无法读取字体文件');
+      return null;
     } finally {
       refs.fontImportButton.disabled=false;
       refs.fontFileInput.value='';
@@ -289,7 +324,7 @@
     const { color = '#333B31', maxWidth = 1450, size = 51, minSize = 25, tracking = 9, align = 'left', italic = false, bold = false, kinghwa = false } = opts;
     let selectedSize = size;
     let effectiveTracking = tracking;
-    const family=activeFontFamily();
+    const family=opts.family||activeFontFamily();
     const fontForSize = v => `${italic ? 'italic ' : ''}${bold ? 'bold ' : ''}${v}px ${family}`;
     const lengthAt = (v, spacing) => {
       ctx.font = fontForSize(v);
@@ -302,6 +337,7 @@
     ctx.fillStyle = color;
     ctx.textBaseline = 'middle';
     let penX = align === 'right' ? x - width : align === 'center' ? x - width / 2 : x;
+    if (MARKS && opts.key) MARKS.push({key:opts.key,x:penX,y:centerY-selectedSize*.62,w:width,h:selectedSize*1.24});
     for (const ch of text) {
       ctx.fillText(ch, penX, centerY);
       penX += ctx.measureText(ch).width + effectiveTracking;
@@ -899,9 +935,9 @@
       if (image&&!anim?.noShots) { drawAdaptiveFrame(p,line,theme); drawFittedImage(image,p); }
     });
     drawTrackedText(refs.name.value || DEFAULT_TEXT.name,179,175,
-      {color:textInk(theme.ink),size:Number(refs.titleSize.value),minSize:18,tracking:5,maxWidth:1670,bold:true,kinghwa:true});
+      {color:textInk(theme.ink,'day','title'),size:Number(refs.titleSize.value),minSize:18,tracking:5,maxWidth:1670,bold:true,kinghwa:true,key:'title',family:fieldFamily('title')});
     drawTrackedText('AUTHOR / '+(refs.author.value || DEFAULT_TEXT.author),3421,175,
-      {color:textInk(theme.ink),size:Number(refs.authorSize.value),minSize:18,tracking:8,maxWidth:1430,align:'right'});
+      {color:textInk(theme.ink,'day','author'),size:Number(refs.authorSize.value),minSize:18,tracking:8,maxWidth:1430,align:'right',key:'author',family:fieldFamily('author')});
     sortedColors(currentColors).forEach((color,i) => {
       const x=200+67*i,y=CANVAS_H-160;
       ctx.beginPath();ctx.arc(x,y,21,0,Math.PI*2);
@@ -911,13 +947,14 @@
     const message=refs.footerText.value.trim();
     if (message) {
       drawTrackedText(message,3421,CANVAS_H-190,
-        {color:textInk(theme.ink),size:Number(refs.messageSize.value),minSize:15,tracking:4,maxWidth:1450,align:'right'});
+        {color:textInk(theme.ink,'day','message'),size:Number(refs.messageSize.value),minSize:15,tracking:4,maxWidth:1450,align:'right',key:'message',family:fieldFamily('message')});
     }
     drawTrackedText(refs.date.value || DEFAULT_TEXT.date,3421,CANVAS_H-121,
-      {color:textInk(theme.ink),size:Number(refs.dateSize.value),minSize:16,tracking:7,maxWidth:900,align:'right'});
+      {color:textInk(theme.ink,'day','date'),size:Number(refs.dateSize.value),minSize:16,tracking:7,maxWidth:900,align:'right',key:'date',family:fieldFamily('date')});
   }
 
-  function textInk(auto,side='day') {
+  function textInk(auto,side='day',field) {
+    const own=field&&fieldInk(field,side);if(own)return own;
     if(textMode!=='custom')return auto;
     return side==='night'?textNight:textDay;
   }
@@ -940,18 +977,20 @@
       el.value=v.toLowerCase();if(el.dataset.androidHsv)el.style.backgroundColor=v;
     }
   }
-  function drawPosterText(ink) {
+  // ink is the overall colour for this half; a field with its own colour uses that instead
+  function drawPosterText(ink,side='day') {
+    const c=field=>fieldInk(field,side)||ink;
     drawTrackedText(refs.name.value || DEFAULT_TEXT.name,179,175,
-      {color:ink,size:Number(refs.titleSize.value),minSize:18,tracking:5,maxWidth:1670,bold:true,kinghwa:true});
+      {color:c('title'),size:Number(refs.titleSize.value),minSize:18,tracking:5,maxWidth:1670,bold:true,kinghwa:true,key:'title',family:fieldFamily('title')});
     drawTrackedText('AUTHOR / '+(refs.author.value || DEFAULT_TEXT.author),3421,175,
-      {color:ink,size:Number(refs.authorSize.value),minSize:18,tracking:8,maxWidth:1430,align:'right'});
+      {color:c('author'),size:Number(refs.authorSize.value),minSize:18,tracking:8,maxWidth:1430,align:'right',key:'author',family:fieldFamily('author')});
     const message=refs.footerText.value.trim();
     if (message) {
       drawTrackedText(message,3421,CANVAS_H-190,
-        {color:ink,size:Number(refs.messageSize.value),minSize:15,tracking:4,maxWidth:1450,align:'right'});
+        {color:c('message'),size:Number(refs.messageSize.value),minSize:15,tracking:4,maxWidth:1450,align:'right',key:'message',family:fieldFamily('message')});
     }
     drawTrackedText(refs.date.value || DEFAULT_TEXT.date,3421,CANVAS_H-121,
-      {color:ink,size:Number(refs.dateSize.value),minSize:16,tracking:7,maxWidth:900,align:'right'});
+      {color:c('date'),size:Number(refs.dateSize.value),minSize:16,tracking:7,maxWidth:900,align:'right',key:'date',family:fieldFamily('date')});
   }
   function drawCompareDivider(p,xd,line,withHandle) {
     ctx.save();ctx.shadowColor='rgba(14,24,18,.35)';ctx.shadowBlur=28;
@@ -999,11 +1038,11 @@
       if(item.group===activeGroup)lastPlacements[item.index]=item.p;
     }
     if(anim?.fill){
-      drawPosterText(anim.fill==='night'?textInk(nightInk,'night'):textInk(theme.ink));
+      drawPosterText(anim.fill==='night'?textInk(nightInk,'night'):textInk(theme.ink),anim.fill==='night'?'night':'day');
     } else if(halves){
       const geo=dayNightGeometry();
       ctx.save();tracePolygon(geo.day);ctx.clip();drawPosterText(textInk(theme.ink));ctx.restore();
-      ctx.save();tracePolygon(geo.night);ctx.clip();drawPosterText(textInk(nightInk,'night'));ctx.restore();
+      ctx.save();tracePolygon(geo.night);ctx.clip();drawPosterText(textInk(nightInk,'night'),'night');ctx.restore();
     } else drawPosterText(textInk(theme.ink));
     sortedColors(currentColors).forEach((color,i) => {
       const x=200+67*i,y=CANVAS_H-160;
@@ -1449,11 +1488,11 @@
 
   function bindControls() {
     refs.fontPresets.forEach(button=>button.addEventListener('click',()=>selectGlobalFont(button.dataset.font)));
-    refs.fontImportButton.addEventListener('click',()=>refs.fontFileInput.click());
-    refs.fontFileInput.addEventListener('change',event=>importLocalFont(event.target.files?.[0]));
+    refs.fontImportButton.addEventListener('click',()=>{fontTarget=null;refs.fontFileInput.click();});
+    refs.fontFileInput.addEventListener('change',event=>{const f=fontTarget;fontTarget=null;importLocalFont(event.target.files?.[0],f?{field:f}:{});});
     for (const input of [refs.name, refs.author, refs.date, refs.footerText]) input.addEventListener('input', scheduleDraw);
     for(const [ref,valueId] of [[refs.titleSize,'titleFontSizeValue'],[refs.authorSize,'authorFontSizeValue'],[refs.dateSize,'dateFontSizeValue'],[refs.messageSize,'messageFontSizeValue']]){
-      ref.addEventListener('input',()=>{document.getElementById(valueId).textContent=ref.value;scheduleDraw();});
+      ref.addEventListener('input',()=>{document.getElementById(valueId).textContent=ref.value;scheduleDraw();const card=ref.closest('.text-card');if(card)renderChips(card);});
     }
     document.querySelectorAll('[data-scale-mode]').forEach(button=>button.addEventListener('click',()=>setScaleMode(button.dataset.scaleMode)));
     document.querySelectorAll('[data-group]').forEach(button=>button.addEventListener('click',()=>setActiveGroup(button.dataset.group)));
@@ -1692,6 +1731,7 @@
   async function initialize() {
     setupResponsivePreview();
     bindControls();
+    renderTextCards();
     bindCanvasDrag();
     initializePlatformColorPicker();
     syncPaletteInputs();
@@ -1864,12 +1904,13 @@
       customColor:refs.customColor.value, blur:refs.blur.value, opacity:refs.backdropOpacity.value, glass:refs.glassStrength.value,
       gradient:{start:refs.gradientStart.value,end:refs.gradientEnd.value,customized:gradientCustomized},
       quality:selectedExportQuality, palette:paletteCustom?[...currentColors]:null,
-      textMode, textDay, textNight, textTouched,
+      textMode, textDay, textNight, textTouched, textStyle:JSON.parse(JSON.stringify(textStyle)),
     };
     const files={};
     if(currentTheme==='image'&&keptFiles.background)files.background=keptFiles.background;
     if(currentTheme==='glass'&&keptFiles.cover)files.cover=keptFiles.cover;
-    if(selectedFont==='uploaded'&&keptFiles.font)files.font=keptFiles.font;
+    const used=new Set([selectedFont,...Object.values(textStyle).map(t=>t.font)]);
+    for(const k of used)if(k&&importedFonts[k])files[fontSlot(k)]=importedFonts[k].file;
     return {settings,files};
   }
   function setControl(el,value,event='input') {
@@ -1882,8 +1923,17 @@
     const asFile=(b,n)=>b instanceof File?b:new File([b],n,{type:b.type||''});
     if(files.background)await replaceBackdropAsset('background',asFile(files.background,'background.png'));
     if(files.cover)await replaceBackdropAsset('cover',asFile(files.cover,'cover.png'));
-    if(st.font==='uploaded'&&files.font)await importLocalFont(asFile(files.font,files.font.name||'font.ttf'));
-    else if(st.font in FONT_PRESETS)selectGlobalFont(st.font);
+    for(const sl of Object.keys(files).filter(x=>/^font\d*$/.test(x)))
+      await importLocalFont(asFile(files[sl],files[sl].name||'font.ttf'),{key:slotKey(sl)});
+    // settings saved before per-field styles existed leave every field following the overall settings
+    textStyle={};openField=null;
+    for(const [k,t] of Object.entries(st.textStyle||{})){
+      if(!TEXT_FIELDS.includes(k)||!t||typeof t!=='object')continue;
+      const c={};if(t.font&&hasFont(t.font))c.font=t.font;if(t.day)c.day=t.day;if(t.night)c.night=t.night;
+      if(Object.keys(c).length)textStyle[k]=c;
+    }
+    if(hasFont(st.font))selectGlobalFont(st.font);
+    else if(st.font)selectGlobalFont('kinghwa');
     if(st.ratio)setCanvasRatio(st.ratio);
     let theme=st.theme;
     if(theme==='image'&&!backgroundImage)theme='light';
@@ -1912,8 +1962,87 @@
     for(const el of refs.colors)if(el.dataset.androidHsv)el.style.backgroundColor=el.value;
     if(st.textDay)textDay=st.textDay;if(st.textNight)textNight=st.textNight;textTouched=!!st.textTouched;
     setTextMode(st.textMode||'auto');
+    renderTextCards();
     renderLayoutChoices();
     scheduleDraw();
+  }
+  /* text cards: each field's own font, size and colour */
+  const TEXT_FIELDS=['title','author','date','message'];
+  const FIELD_NAMES={title:'主题名称',author:'作者',date:'日期',message:'想说的话'};
+  const SIZE_REF={title:'titleSize',author:'authorSize',date:'dateSize',message:'messageSize'};
+  const SIZE_DEFAULT={title:61,author:48,date:41,message:33};
+  let fontTarget=null; // null = the overall font, otherwise the field that asked for the import
+  function styleOf(field){if(!textStyle[field])textStyle[field]={};return textStyle[field];}
+  function tidyStyle(field){const t=textStyle[field];if(t&&!t.font&&!t.day&&!t.night)delete textStyle[field];}
+  function presetName(key){
+    if(importedFonts[key])return '已导入 · '+importedFonts[key].name;
+    const b=document.querySelector(`.font-preset[data-font="${key}"] .font-preset-name`);return b?b.textContent:key;
+  }
+  function presetSampleFamily(key){return importedFonts[key]?'"'+importedFonts[key].family+'", serif':FONT_PRESETS[key];}
+  // the colour a field shows now on each side, for the swatches
+  function shownInk(side){
+    if(textMode==='custom')return side==='night'?textNight:textDay;
+    const t=displayColors().ink;
+    return side==='night'?(nightTone().dark&&luminance(nightTone().dark)<125?'#F1F0E7':'#2F3A31'):t;
+  }
+  function renderChips(card){
+    const key=card.dataset.field,t=textStyle[key]||{},own=t.font&&hasFont(t.font),open=openField===key;
+    const chips=card.querySelector('.text-chips');chips.textContent='';
+    const chip=(set)=>{const b=document.createElement('button');b.type='button';b.className='text-chip'+(set?' set':'');
+      b.setAttribute('aria-expanded',String(open));
+      b.addEventListener('click',()=>{openField=open?null:key;renderTextCards();markText(lastMarks);});chips.append(b);return b;};
+    const fc=chip(own);const aa=document.createElement('span');aa.textContent='Aa';aa.style.fontFamily=own?presetSampleFamily(t.font):activeFontFamily();
+    const fn=document.createElement('span');fn.textContent=own?presetName(t.font).replace('已导入 · ',''):'跟全局';fc.append(aa,fn);
+    const v=Number(refs[SIZE_REF[key]].value);chip(v!==SIZE_DEFAULT[key]).textContent='字号 '+v;
+    const hasInk=!!(t.day||t.night),cc=chip(hasInk);
+    const dot=c=>{const d=document.createElement('span');d.className='text-dot';d.style.background=c;return d;};
+    if(hasInk){cc.append(dot(t.day||shownInk('day')),dot(t.night||shownInk('night')),document.createTextNode('自订'));}
+    else{const d=dot('');d.style.background=`conic-gradient(${shownInk('day')} 0 50%,${shownInk('night')} 0)`;cc.append(d,document.createTextNode('跟全局'));}
+  }
+  function renderTextCards(){
+    for(const card of document.querySelectorAll('.text-card')){
+      const key=card.dataset.field,t=textStyle[key]||{},open=openField===key;
+      card.classList.toggle('open',open);
+      renderChips(card);
+      const ed=card.querySelector('.text-edit');ed.hidden=!open;
+      ed.querySelectorAll('.text-fonts,.text-colors').forEach(x=>x.remove());
+      if(!open)continue;
+      const strip=document.createElement('div');strip.className='text-fonts';strip.setAttribute('role','group');strip.setAttribute('aria-label',FIELD_NAMES[key]+'的字体');
+      const fbtn=k=>{const b=document.createElement('button');b.type='button';b.className='text-font'+(k?'':' follow');
+        const cur=t.font&&hasFont(t.font)?t.font:null;b.setAttribute('aria-pressed',String(cur===k));
+        const big=document.createElement('b'),sm=document.createElement('small');
+        if(k){big.textContent='Aa 字';big.style.fontFamily=presetSampleFamily(k);if(k==='kinghwa'||k==='sans')big.style.fontWeight='700';if(k==='light')big.style.fontWeight='300';sm.textContent=presetName(k).replace('已导入 · ','');}
+        else{big.textContent='跟全局';sm.textContent=presetName(selectedFont).replace('已导入 · ','');}
+        b.append(big,sm);
+        b.addEventListener('click',()=>{if(k)styleOf(key).font=k;else if(textStyle[key]){delete textStyle[key].font;tidyStyle(key);}renderTextCards();scheduleDraw();});
+        strip.append(b);};
+      fbtn(null);for(const k of [...Object.keys(FONT_PRESETS),...Object.keys(importedFonts)])fbtn(k);
+      const add=document.createElement('button');add.type='button';add.className='text-font add-font';
+      const ab=document.createElement('b');ab.textContent='＋ 导入';const as=document.createElement('small');as.textContent='TTF / OTF / WOFF';add.append(ab,as);
+      add.addEventListener('click',()=>{fontTarget=key;refs.fontFileInput.click();});strip.append(add);
+      ed.prepend(strip);
+      const cols=document.createElement('div');cols.className='text-colors';
+      for(const side of ['day','night']){
+        const l=document.createElement('label'),inp=document.createElement('input');inp.type='color';inp.value=(t[side]||shownInk(side)).toLowerCase();
+        inp.setAttribute('aria-label',FIELD_NAMES[key]+(side==='day'?'的文字颜色':'在夜间那一半的颜色'));
+        inp.addEventListener('input',()=>{const st=styleOf(key);st[side]=inp.value.toUpperCase();
+          // the first pick fixes both sides, so the other side does not jump back to auto
+          const o=side==='day'?'night':'day';if(!st[o])st[o]=shownInk(o);renderChips(card);scheduleDraw();});
+        l.append(inp,document.createTextNode(side==='day'?'文字':'夜间那一半'));cols.append(l);
+      }
+      const reset=document.createElement('button');reset.type='button';reset.className='text-reset';reset.textContent='还原成全局';
+      reset.addEventListener('click',()=>{delete textStyle[key];setControl(refs[SIZE_REF[key]],SIZE_DEFAULT[key]);renderTextCards();scheduleDraw();});
+      cols.append(reset);ed.append(cols);
+    }
+  }
+  function markText(marks){
+    lastMarks=marks||[];const el=document.getElementById('textMark');if(!el)return;
+    const bs=lastMarks.filter(b=>b.key===openField&&b.w>0);
+    if(!bs.length){el.hidden=true;return;}
+    const x0=Math.min(...bs.map(b=>b.x)),y0=Math.min(...bs.map(b=>b.y)),x1=Math.max(...bs.map(b=>b.x+b.w)),y1=Math.max(...bs.map(b=>b.y+b.h));
+    const cb=canvas.getBoundingClientRect(),pb=el.parentElement.getBoundingClientRect(),kx=cb.width/CANVAS_W,ky=cb.height/CANVAS_H,pad=5;
+    Object.assign(el.style,{left:(cb.left-pb.left+x0*kx-pad)+'px',top:(cb.top-pb.top+y0*ky-pad)+'px',width:((x1-x0)*kx+pad*2)+'px',height:((y1-y0)*ky+pad*2)+'px'});
+    el.hidden=false;
   }
   function mountPresets(tries=0) {
     if(!window.LoviaMotion&&tries<50){setTimeout(()=>mountPresets(tries+1),100);return;}

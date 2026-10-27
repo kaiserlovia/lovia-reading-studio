@@ -6,9 +6,9 @@
   <meta name="theme-color" content="#eeeee9">
   <meta name="description" content="Lovia 阅读主题展示工坊：轻量预览、自由排版、高清导出。">
   <title>Lovia — Reading Gallery Studio</title>
-  <link rel="stylesheet" href="./styles.css?v=20261027-v13">
-  <script src="./app.js?v=20261027-v17" defer></script>
-  <script src="./studio-shell.js?v=14" defer></script>
+  <link rel="stylesheet" href="./styles.css?v=20261027-v14">
+  <script src="./app.js?v=20261027-v18" defer></script>
+  <script src="./studio-shell.js?v=15" defer></script>
   <script src="./studio-motion.js?v=2" defer></script>
 </head>
 <body>
@@ -42,6 +42,7 @@
           </div>
           <div class="canvas-stage">
             <canvas id="posterCanvas" width="1200" height="900" role="img" aria-label="阅读主题一至五图海报实时预览"></canvas>
+            <div id="textMark" hidden></div>
           </div>
           <div class="preview-caption">
             <span><span class="tiny-sparkle">✳</span> 每张截图完整呈现 · 原始比例 · 无文字重绘</span>
@@ -73,17 +74,9 @@
         <div class="editor-scroll">
           <section class="editor-section" aria-labelledby="textSectionTitle">
             <div class="section-title"><span>01</span><h3 id="textSectionTitle">文字与署名</h3><span class="section-description">TYPOGRAPHY</span></div>
-            <label class="field-label" for="themeName">左上 · 主题名称</label>
-            <input class="text-input" id="themeName" type="text" maxlength="70" autocomplete="off" value="THE SURREAL LIBRARY" placeholder="输入主题名称">
-            <label class="field-label" for="authorName">右上 · 作者</label>
-            <div class="prefixed-field"><span>AUTHOR /</span><input id="authorName" type="text" maxlength="48" autocomplete="off" value="LOVIA" placeholder="你的名字"></div>
-            <label class="field-label" for="dateText">右下 · 日期</label>
-            <div class="date-field"><input class="text-input" id="dateText" type="text" maxlength="24" autocomplete="off" value="OCT. 2026" placeholder="例如 OCT. 2026"><button id="todayButton" type="button">今天</button></div>
-            <label class="field-label" for="footerText">右下 · 想说的话 <span class="field-hint">可留空，与日期同时显示</span></label>
-            <input class="text-input" id="footerText" type="text" maxlength="60" autocomplete="off" placeholder="例如 MADE WITH LOVE">
 
             <div class="global-font-panel" aria-labelledby="globalFontTitle">
-              <div class="global-font-heading"><div><span class="field-label" id="globalFontTitle">全局字体预设</span><p>整张画报的主题名、作者、日期和留言同步切换</p></div><span class="font-global-mark">Aa / 字</span></div>
+              <div class="global-font-heading"><div><span class="field-label" id="globalFontTitle">全局字体预设</span><p>没有单独设定字体的栏位都用这里的字体</p></div><span class="font-global-mark">Aa / 字</span></div>
               <div class="font-preset-grid" role="group" aria-label="全局字体预设">
                 <button type="button" class="font-preset selected" data-font="kinghwa" aria-pressed="true"><span class="font-sample">Aa 字</span><span class="font-preset-name">京华老宋</span></button>
                 <button type="button" class="font-preset" data-font="song" aria-pressed="false"><span class="font-sample">Aa 字</span><span class="font-preset-name">典雅宋体</span></button>
@@ -102,12 +95,6 @@
               <input id="fontFileInput" type="file" accept=".ttf,.otf,.woff,.woff2,font/ttf,font/otf,font/woff,font/woff2" hidden>
               <p class="font-import-status" id="fontImportStatus" role="status" aria-live="polite">导入后可直接选择；仅本机加载，刷新需重新导入。</p>
             </div>
-            <div class="font-controls">
-              <div class="font-control"><div class="range-label"><label for="titleFontSize">主题名称字号</label><output id="titleFontSizeValue">61</output></div><input id="titleFontSize" class="range-input" type="range" min="24" max="110" step="1" value="61"></div>
-              <div class="font-control"><div class="range-label"><label for="authorFontSize">作者字号</label><output id="authorFontSizeValue">48</output></div><input id="authorFontSize" class="range-input" type="range" min="20" max="95" step="1" value="48"></div>
-              <div class="font-control"><div class="range-label"><label for="dateFontSize">日期字号</label><output id="dateFontSizeValue">41</output></div><input id="dateFontSize" class="range-input" type="range" min="18" max="85" step="1" value="41"></div>
-              <div class="font-control"><div class="range-label"><label for="messageFontSize">自定义文案字号</label><output id="messageFontSizeValue">33</output></div><input id="messageFontSize" class="range-input" type="range" min="18" max="85" step="1" value="33"></div>
-            </div>
             <div class="direction-panel text-color-panel">
               <span>文字颜色</span>
               <div class="text-color-controls">
@@ -121,7 +108,33 @@
                 </div>
               </div>
             </div>
-            <p class="section-note">自订时主题名称、作者、日期和留言都用「文字」的颜色；日夜对开、斜切、对切、上日下夜的夜间那一半用「夜间那一半」的颜色。</p>
+            <p class="section-note">自订时主题名称、作者、日期和留言都用「文字」的颜色；日夜对开、斜切、对切、上日下夜的夜间那一半用「夜间那一半」的颜色。下面的栏位单独设了颜色，就用栏位自己的。</p>
+            <div class="text-cards">
+              <div class="text-card" data-field="title">
+              <label class="field-label" for="themeName">左上 · 主题名称</label>
+              <input class="text-input" id="themeName" type="text" maxlength="70" autocomplete="off" value="THE SURREAL LIBRARY" placeholder="输入主题名称">
+                <div class="text-chips"></div>
+                <div class="text-edit" hidden><div class="font-control"><div class="range-label"><label for="titleFontSize">字号</label><output id="titleFontSizeValue">61</output></div><input id="titleFontSize" class="range-input" type="range" min="24" max="110" step="1" value="61"></div></div>
+              </div>
+              <div class="text-card" data-field="author">
+              <label class="field-label" for="authorName">右上 · 作者</label>
+              <div class="prefixed-field"><span>AUTHOR /</span><input id="authorName" type="text" maxlength="48" autocomplete="off" value="LOVIA" placeholder="你的名字"></div>
+                <div class="text-chips"></div>
+                <div class="text-edit" hidden><div class="font-control"><div class="range-label"><label for="authorFontSize">字号</label><output id="authorFontSizeValue">48</output></div><input id="authorFontSize" class="range-input" type="range" min="20" max="95" step="1" value="48"></div></div>
+              </div>
+              <div class="text-card" data-field="date">
+              <label class="field-label" for="dateText">右下 · 日期</label>
+              <div class="date-field"><input class="text-input" id="dateText" type="text" maxlength="24" autocomplete="off" value="OCT. 2026" placeholder="例如 OCT. 2026"><button id="todayButton" type="button">今天</button></div>
+                <div class="text-chips"></div>
+                <div class="text-edit" hidden><div class="font-control"><div class="range-label"><label for="dateFontSize">字号</label><output id="dateFontSizeValue">41</output></div><input id="dateFontSize" class="range-input" type="range" min="18" max="85" step="1" value="41"></div></div>
+              </div>
+              <div class="text-card" data-field="message">
+              <label class="field-label" for="footerText">右下 · 想说的话 <span class="field-hint">可留空，与日期同时显示</span></label>
+              <input class="text-input" id="footerText" type="text" maxlength="60" autocomplete="off" placeholder="例如 MADE WITH LOVE">
+                <div class="text-chips"></div>
+                <div class="text-edit" hidden><div class="font-control"><div class="range-label"><label for="messageFontSize">字号</label><output id="messageFontSizeValue">33</output></div><input id="messageFontSize" class="range-input" type="range" min="18" max="85" step="1" value="33"></div></div>
+              </div>
+            </div>
           </section>
 
           <section class="editor-section" aria-labelledby="imageSectionTitle">
