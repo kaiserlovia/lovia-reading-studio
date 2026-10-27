@@ -109,7 +109,8 @@
   let compareAt=.5, comparePair=0, heroIndex=-1, compareHandle=false;
   let textMode='auto', textDay='#2F3A31', textNight='#F1F0E7', textTouched=false; // custom poster text colours
   let paletteLocked=false; // a saved setting with its own palette keeps it when screenshots change
-  const keptFiles={background:null,cover:null,font:null}; // files behind the uploaded backdrop, cover and font
+  const keptFiles={background:null,cover:null,font:null};
+  let anim=null; // set while a motion layer is drawn: {fill, compareOnly, noShots, collect} // files behind the uploaded backdrop, cover and font
   let activeGroup='day';
   let dnOrder='dn'; // 'dn': day first (left / in front); 'nd': night first
   const groupStore={night:{images:[null],userObjectURLs:[null],imageOffsets:[{x:0,y:0}],imageScales:[100],selectedImageIndex:0}};
@@ -663,11 +664,11 @@
         const d=first[i],n=second[i],front=d||n;
         units.push({d,n,a:d&&n?front.a*(1+OX)/(1+OY):front.a,maxH:(d&&n?Math.min(d.maxH,n.maxH):front.maxH)*(d&&n?1+OY:1)});
       }
-      for(const r of placeRow(units,{x:areaX,y:areaY,w:areaW,h:areaH},units.length>3?50:80)){
+      for(const [ui,r] of placeRow(units,{x:areaX,y:areaY,w:areaW,h:areaH},units.length>3?50:80).entries()){
         const {d,n}=r.it;
         if(d&&n){const fw=r.w/(1+OX),fh=r.h/(1+OY);
-          out.push({...n,p:{x:r.x+fw*OX,y:r.y,w:fw,h:fh}});
-          out.push({...d,p:{x:r.x,y:r.y+fh*OY,w:fw,h:fh}});
+          out.push({...n,unit:ui,p:{x:r.x+fw*OX,y:r.y,w:fw,h:fh}});
+          out.push({...d,unit:ui,p:{x:r.x,y:r.y+fh*OY,w:fw,h:fh}});
         } else {const one=d||n;out.push({...one,p:{x:r.x,y:r.y,w:r.w,h:r.h}});}
       }
     }
@@ -952,6 +953,17 @@
     drawTrackedText(refs.date.value || DEFAULT_TEXT.date,3421,CANVAS_H-121,
       {color:ink,size:Number(refs.dateSize.value),minSize:16,tracking:7,maxWidth:900,align:'right'});
   }
+  function drawCompareDivider(p,xd,line,withHandle) {
+    ctx.save();ctx.shadowColor='rgba(14,24,18,.35)';ctx.shadowBlur=28;
+    ctx.fillStyle='#fbfbf8';ctx.fillRect(xd-5,p.y,10,p.h);
+    ctx.restore();
+    if(!withHandle)return;
+    ctx.save();ctx.shadowColor='rgba(14,24,18,.35)';ctx.shadowBlur=28;ctx.fillStyle='#fbfbf8';
+    const cy=p.y+p.h/2,R=58;ctx.beginPath();ctx.arc(xd,cy,R,0,Math.PI*2);ctx.fill();ctx.restore();
+    setStroke(line,2);ctx.beginPath();ctx.arc(xd,cy,R,0,Math.PI*2);ctx.stroke();
+    ctx.fillStyle=line;const a=R*.36;
+    for(const sx of [-1,1]){ctx.beginPath();ctx.moveTo(xd+sx*R*.22,cy-a);ctx.lineTo(xd+sx*(R*.22+a*.9),cy);ctx.lineTo(xd+sx*R*.22,cy+a);ctx.fill();}
+  }
   function drawDayNightPoster(theme,line) {
     const halves=['split','diagonal','compare','rows'].includes(layoutMode);
     let nightInk=theme.ink;
@@ -960,36 +972,35 @@
       const geo=dayNightGeometry();
       const tone=nightTone();
       const nightBg=currentTheme==='dark'?mixedColor(tone.dark,'#0E1210',.25):tone.dark;
-      ctx.save();tracePolygon(geo.night);ctx.clip();
-      ctx.globalAlpha=(currentTheme==='image'||currentTheme==='glass')?.88:1;
-      ctx.fillStyle=nightBg;ctx.fillRect(0,0,CANVAS_W,CANVAS_H);
-      ctx.restore();
+      if(anim?.fill!=='day'){
+        ctx.save();if(anim?.fill!=='night'){tracePolygon(geo.night);ctx.clip();}
+        ctx.globalAlpha=(currentTheme==='image'||currentTheme==='glass')?.88:1;
+        ctx.fillStyle=nightBg;ctx.fillRect(0,0,CANVAS_W,CANVAS_H);
+        ctx.restore();
+      }
       nightInk=luminance(nightBg)<125?'#F1F0E7':'#2F3A31';
     }
     const placed=dayNightPlacements();
     lastPlacements=images.map(()=>null);
     for(const item of placed){
+      if(anim?.fill&&item.group!==anim.fill)continue;
+      if(anim?.collect)anim.collect.push(item);
+      if(anim?.noShots)continue;
       drawAdaptiveFrame(item.p,line,theme);
       if(item.compareFirst){
-        drawFittedImage(item.compareFirst.image,item.p);
-        if(item.compareSecond){
+        if(anim?.compareOnly==='second'&&item.compareSecond)drawFittedImage(item.compareSecond.image,item.p);
+        else drawFittedImage(item.compareFirst.image,item.p);
+        if(item.compareSecond&&!anim?.compareOnly){
           const p=item.p,xd=p.x+p.w*compareAt;
           ctx.save();ctx.beginPath();ctx.rect(xd,p.y,p.x+p.w-xd,p.h);ctx.clip();drawFittedImage(item.compareSecond.image,p);ctx.restore();
-          ctx.save();ctx.shadowColor='rgba(14,24,18,.35)';ctx.shadowBlur=28;
-          ctx.fillStyle='#fbfbf8';ctx.fillRect(xd-5,p.y,10,p.h);
-          ctx.restore();
-          if(ctx===previewCtx||compareHandle){ // the drag handle only shows on screen unless asked for
-          ctx.save();ctx.shadowColor='rgba(14,24,18,.35)';ctx.shadowBlur=28;ctx.fillStyle='#fbfbf8';
-          const cy=p.y+p.h/2,R=58;ctx.beginPath();ctx.arc(xd,cy,R,0,Math.PI*2);ctx.fill();ctx.restore();
-          setStroke(line,2);ctx.beginPath();ctx.arc(xd,cy,R,0,Math.PI*2);ctx.stroke();
-          ctx.fillStyle=line;const a=R*.36;
-          for(const sx of [-1,1]){ctx.beginPath();ctx.moveTo(xd+sx*R*.22,cy-a);ctx.lineTo(xd+sx*(R*.22+a*.9),cy);ctx.lineTo(xd+sx*R*.22,cy+a);ctx.fill();}
-          }
+          drawCompareDivider(p,xd,line,ctx===previewCtx||compareHandle); // the drag handle only shows on screen unless asked for
         }
       } else drawFittedImage(item.image,item.p);
       if(item.group===activeGroup)lastPlacements[item.index]=item.p;
     }
-    if(halves){
+    if(anim?.fill){
+      drawPosterText(anim.fill==='night'?textInk(nightInk,'night'):textInk(theme.ink));
+    } else if(halves){
       const geo=dayNightGeometry();
       ctx.save();tracePolygon(geo.day);ctx.clip();drawPosterText(textInk(theme.ink));ctx.restore();
       ctx.save();tracePolygon(geo.night);ctx.clip();drawPosterText(textInk(nightInk,'night'));ctx.restore();
@@ -1708,6 +1719,95 @@
     mountPresets();
   }
 
+  /* ---------- motion (GIF / video): still layers for the shared animator ---------- */
+  const MOTION_DESC={
+    split:'两半轮流压过彼此：日间那半慢慢盖过夜间，再被夜间盖回来。',diagonal:'两半沿着斜线轮流压过彼此。',rows:'上下两半轮流压过彼此。',
+    compare:'中间的分隔线来回扫过，日夜在同一个框里切换。',pairs:'每组前后交换，后面那张翻到前面。',alternate:'整张画报在日夜、夜日两种顺序之间淡入淡出。',
+    hero:'主图轮流换人，每张图片轮流当大图。',
+  };
+  function motionDesc(){return MOTION_DESC[layoutMode]||'整张画报在日间组和夜间组之间淡入淡出。';}
+  function posterLine(){return rgbaFromHex(refs.ruleColor.value,Number(refs.ruleOpacity.value)/100);}
+  function withLiveGroup(name,fn){
+    if(name===activeGroup)return fn();
+    const other=groupStore[name];
+    const saved={images,imageOffsets,imageScales,selectedImageIndex,derivedColors};
+    images=other.images;imageOffsets=other.imageOffsets;imageScales=other.imageScales;selectedImageIndex=other.selectedImageIndex||0;
+    derivedColors=analyzeColors(images);
+    try{return fn();}
+    finally{({images,imageOffsets,imageScales,selectedImageIndex,derivedColors}=saved);}
+  }
+  function renderLayer(OW,OH,a={}){
+    const c=document.createElement('canvas');c.width=OW;c.height=OH;
+    const prior=ctx,priorAnim=anim;
+    try{ctx=c.getContext('2d',{alpha:false});const k=OW/CANVAS_W;ctx.setTransform(k,0,0,k,0,0);anim=a;drawPoster();}
+    finally{ctx=prior;anim=priorAnim;}
+    return c;
+  }
+  async function buildMotion(OW,OH){
+    await document.fonts.ready;
+    const k=OW/CANVAS_W,base={W:OW,H:OH};
+    const filled=name=>groupOf(name).images.some(Boolean),both=filled('day')&&filled('night');
+    const NEED_BOTH='动态需要日间组和夜间组都有图片。在「展示图片」切换到夜间组即可添加。';
+    try{
+      const none=reason=>({none:true,reason,still:renderLayer(OW,OH)});
+      if(['split','diagonal','rows'].includes(layoutMode)){
+        if(!both)return none(NEED_BOTH);
+        const A=dnOrder==='nd'?'night':'day',B=A==='day'?'night':'day';
+        const LA=renderLayer(OW,OH,{fill:A}),LB=renderLayer(OW,OH,{fill:B});
+        const pts=dayNightGeometry()[A].map(q=>[...q]),dir=layoutMode==='rows'?'h':'v';
+        const size=dir==='v'?CANVAS_W:CANVAS_H,reach=size*(.5+(dayNightGeometry().k||0))+2;
+        const sign=pts.some(q=>(dir==='v'?q[0]:q[1])===0)?1:-1;
+        const clipA=(c,s)=>{c.beginPath();pts.forEach(([x,y],i)=>{
+          if(dir==='v'){if(x>0&&x<CANVAS_W)x=Math.max(0,Math.min(CANVAS_W,x+sign*s*reach));}
+          else if(y>0&&y<CANVAS_H)y=Math.max(0,Math.min(CANVAS_H,y+sign*s*reach));
+          i?c.lineTo(x*k,y*k):c.moveTo(x*k,y*k);});c.closePath();};
+        return{...base,type:'push',A:LA,B:LB,clipA,paletteSources:[LA,LB]};
+      }
+      if(layoutMode==='compare'){
+        const items=[];renderLayer(8,8,{noShots:true,collect:items});
+        const it=items.find(i=>i.compareSecond);if(!it)return none(NEED_BOTH);
+        const first=renderLayer(OW,OH,{compareOnly:'first'}),second=renderLayer(OW,OH,{compareOnly:'second'});
+        const p=it.p,line=posterLine();
+        return{...base,type:'wipe',first,second,paletteSources:[first,second],paletteExtra:['#FBFBF8'],phone:{x:p.x*k,y:p.y*k,w:p.w*k,h:p.h*k},
+          divider:(c,x)=>{const prior=ctx;try{ctx=c;c.save();c.setTransform(k,0,0,k,0,0);drawCompareDivider(p,x/k,line,compareHandle);c.restore();}finally{ctx=prior;}}};
+      }
+      if(layoutMode==='pairs'){
+        const items=[];const baseL=renderLayer(OW,OH,{noShots:true,collect:items});
+        const theme=displayColors(),line=posterLine();
+        const sprite=it=>{const p=it.p,pad=90,c=document.createElement('canvas');
+          c.width=Math.ceil((p.w+pad*2)*k);c.height=Math.ceil((p.h+pad*2)*k);
+          const prior=ctx;try{ctx=c.getContext('2d');ctx.setTransform(k,0,0,k,(pad-p.x)*k,(pad-p.y)*k);drawAdaptiveFrame(p,line,theme);drawFittedImage(it.image,p);}finally{ctx=prior;}
+          return{img:c,x:(p.x-pad)*k,y:(p.y-pad)*k,w:p.w*k};};
+        // the placement list holds each pair as back card then front card
+        const pairs=[],statics=[];
+        for(let i=0;i<items.length;i++){
+          const a=items[i],b=items[i+1];
+          if(b&&a.unit!==undefined&&a.unit===b.unit){pairs.push({a:sprite(b),b:sprite(a)});i++;}
+          else statics.push(sprite(a));
+        }
+        if(!pairs.length)return none(NEED_BOTH);
+        return{...base,type:'swap',base:baseL,pairs,statics,paletteSources:[renderLayer(OW,OH)]};
+      }
+      if(layoutMode==='alternate'){
+        if(!both)return none(NEED_BOTH);
+        const keep=dnOrder;let l0,l1;
+        try{l0=renderLayer(OW,OH);dnOrder=keep==='dn'?'nd':'dn';l1=renderLayer(OW,OH);}finally{dnOrder=keep;}
+        return{...base,type:'fade',layers:[l0,l1],paletteSources:[l0,l1]};
+      }
+      if(layoutMode==='hero'){
+        const idx=images.map((img,i)=>img?i:-1).filter(i=>i>=0);
+        if(idx.length<2)return none('主图轮流需要至少两张图片。');
+        const keep=heroIndex,layers=[];
+        try{for(const i of idx){heroIndex=i;layers.push(renderLayer(OW,OH));}}finally{heroIndex=keep;}
+        return{...base,type:'cycle',layers,paletteSources:layers};
+      }
+      // classic layouts: the day group's poster and the night group's poster fade into each other
+      if(!both)return none(NEED_BOTH);
+      const l0=withLiveGroup('day',()=>renderLayer(OW,OH)),l1=withLiveGroup('night',()=>renderLayer(OW,OH));
+      return{...base,type:'fade',layers:[l0,l1],paletteSources:[l0,l1]};
+    } finally { scheduleDraw(); }
+  }
+
   /* ---------- saved settings (设置): kept in this browser, shareable as a link ---------- */
   function collectSettings() {
     const hasImages=images.some(Boolean);
@@ -1774,6 +1874,12 @@
     scheduleDraw();
   }
   function mountPresets(tries=0) {
+    if(!window.LoviaMotion&&tries<50){setTimeout(()=>mountPresets(tries+1),100);return;}
+    if(window.LoviaMotion&&!mountPresets.motion){
+      mountPresets.motion=true;
+      window.LoviaMotion.mount({buttons:[document.getElementById('openMotion')],ratio:()=>CANVAS_W/CANVAS_H,describe:motionDesc,build:buildMotion,
+        filename:()=>(refs.name.value||'Lovia-Reading-Gallery').trim().replace(/[\\/:*?"<>|\x00-\x1f]/g,'-').replace(/\s+/g,'-').slice(0,45)+'-'+layoutMode});
+    }
     if(window.LoviaStudio&&window.LoviaStudio.mountPresets){
       window.LoviaStudio.mountPresets({bar:document.getElementById('presetBar'),saveButtons:[document.getElementById('savePreset')],collect:collectSettings,apply:applySettings,notify:announce});
     } else if(tries<50) setTimeout(()=>mountPresets(tries+1),100);
