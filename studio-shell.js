@@ -17,7 +17,7 @@
     '键鍵闭閉阅閱阴陰随隨预預题題颜顏风風饰飾饱飽鲜鮮顶頂击擊并並机機横橫画畫盘盤确確约約胧朧师師' +
     '两兩汇匯昼晝标標档檔没沒准準产產码碼积積笔筆签籤红紅纸紙给給缀綴脑腦盖蓋里裡记記详詳这這录錄' +
     '长長间間电電页頁顺順颗顆么麼齐齊鹜鶩较較寻尋经經级級志誌萤螢着著组組启啟带帶范範钮鈕内內' +
-    '删刪区區结結连連链鏈侧側订訂项項压壓备備扫掃畅暢轮輪转轉';
+    '删刪区區结結连連链鏈侧側订訂项項压壓备備扫掃畅暢轮輪转轉云雲别別继繼续續';
   // whole words that differ beyond single characters
   const WORDS_S2T = [['屏幕', '螢幕'], ['复制', '複製'], ['视频', '影片'], ['相册', '相簿']];
   const s2t = new Map(), t2s = new Map();
@@ -241,10 +241,20 @@
   const PT = SRC === 'sc'
     ? { name: '设置', saved: '已存成「%」，下次在「我的设置」点一下就能套用。', applied: '已套用「%」，换上新截图就好。', link: '已复制设置链接，贴到其他装置或传给朋友打开就能套用（不含截图和上传的档案）。',
         linkFail: '无法自动复制，请长按下面的链接复制：', fromLink: '已套用链接里的设置。想留着用，请到导出按「储存本次设定」。', del: '删除', delSure: '确定删除？',
-        overwrite: '用目前设定覆盖', copy: '复制链接', done: '完成', rename: '设置名称', more: '更多选项', head: '我的设置', updated: '已用目前设定更新「%」。', full: '浏览器空间不足，这次没有存成功。', files: '（含上传的底图、封面或字体）' }
+        overwrite: '用目前设定覆盖', copy: '复制链接', done: '完成', rename: '设置名称', more: '更多选项', head: '我的设置', updated: '已用目前设定更新「%」。', full: '浏览器空间不足，这次没有存成功。', files: '（含上传的底图、封面或字体）',
+        cloud: '存到云端', cloudUpdate: '更新云端', cloudBusy: '储存中…', cloudSaved: '已把「%」存到云端，分享链接已复制。', cloudUpdated: '已更新云端的「%」。',
+        share: '复制分享链接', edit: '复制编辑链接', shareDone: '已复制分享链接，对方打开就能套用（含底图和封面，不含字体）。', editDone: '已复制编辑链接，请自己保存好。',
+        cloudNote: '存到云端后，分享链接会带上底图和封面；编辑链接可以在别的装置继续修改，请不要给别人。',
+        cloudOpened: '已套用云端设置「%」。想留着用，请到导出按「储存本次设定」。', cloudOwned: '已打开云端设置「%」，并加到「我的设置」。', noFont: '这个设置用了上传的字体，分享链接不含字体，请自己上传。',
+        loading: '正在读取云端设置…' }
     : { name: '設置', saved: '已存成「%」，下次在「我的設置」點一下就能套用。', applied: '已套用「%」，換上新截圖就好。', link: '已複製設置連結，貼到其他裝置或傳給朋友打開就能套用（不含截圖和上傳的檔案）。',
         linkFail: '無法自動複製，請長按下面的連結複製：', fromLink: '已套用連結裡的設置。想留著用，請到匯出按「儲存本次設定」。', del: '刪除', delSure: '確定刪除？',
-        overwrite: '用目前設定覆蓋', copy: '複製連結', done: '完成', rename: '設置名稱', more: '更多選項', head: '我的設置', updated: '已用目前設定更新「%」。', full: '瀏覽器空間不足，這次沒有存成功。', files: '（含上傳的底圖、封面或字體）' };
+        overwrite: '用目前設定覆蓋', copy: '複製連結', done: '完成', rename: '設置名稱', more: '更多選項', head: '我的設置', updated: '已用目前設定更新「%」。', full: '瀏覽器空間不足，這次沒有存成功。', files: '（含上傳的底圖、封面或字體）',
+        cloud: '存到雲端', cloudUpdate: '更新雲端', cloudBusy: '儲存中…', cloudSaved: '已把「%」存到雲端，分享連結已複製。', cloudUpdated: '已更新雲端的「%」。',
+        share: '複製分享連結', edit: '複製編輯連結', shareDone: '已複製分享連結，對方打開就能套用（含底圖和封面，不含字體）。', editDone: '已複製編輯連結，請自己保存好。',
+        cloudNote: '存到雲端後，分享連結會帶上底圖和封面；編輯連結可以在別的裝置繼續修改，請不要給別人。',
+        cloudOpened: '已套用雲端設置「%」。想留著用，請到匯出按「儲存本次設定」。', cloudOwned: '已打開雲端設置「%」，並加到「我的設置」。', noFont: '這個設置用了上傳的字體，分享連結不含字體，請自己上傳。',
+        loading: '正在讀取雲端設置…' };
   const PCSS = `
   .sp{display:grid;gap:8px;margin:4px 0 14px}
   .sp[hidden]{display:none!important}
@@ -262,7 +272,9 @@
   .sp-acts button{border:1px solid var(--sp-line,rgba(46,57,49,.28));background:transparent;color:inherit;border-radius:8px;padding:7px 10px;font:inherit;font-size:13px;cursor:pointer}
   .sp-acts .sp-del[data-sure]{border-color:#b4533f;color:#b4533f}
   .sp-acts .sp-done{margin-left:auto}
-  .sp-link{width:100%;box-sizing:border-box;font-size:12px!important}`;
+  .sp-link{width:100%;box-sizing:border-box;font-size:12px!important}
+  .sp-note{margin:0;font-size:12px;line-height:1.5;opacity:.7}
+  .sp-cloud{font-size:11px;opacity:.55;margin-left:4px}`;
   const presetKey = 'studio.presets.' + PAGE;
   const readList = () => { try { return JSON.parse(store.get(presetKey) || '[]'); } catch (e) { return []; } };
   const writeList = list => { try { localStorage.setItem(presetKey, JSON.stringify(list)); return true; } catch (e) { return false; } };
@@ -285,6 +297,15 @@
   const encode = obj => { const b = new TextEncoder().encode(JSON.stringify(obj)); let bin = ''; b.forEach(c => { bin += String.fromCharCode(c); }); return btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); };
   const decode = str => { const bin = atob(str.replace(/-/g, '+').replace(/_/g, '/')); return JSON.parse(new TextDecoder().decode(Uint8Array.from(bin, c => c.charCodeAt(0)))); };
   const fill = (t, name) => fromSrc(t).replace('%', name);
+  // the shared cloud client lives at the site root (reeden-tools.github.io/shared/); without it, cloud buttons stay hidden
+  let cloudLoad = null;
+  const cloud = () => cloudLoad || (cloudLoad = new Promise(res => {
+    if (window.ReedenCloud) return res(window.ReedenCloud);
+    const sc = document.createElement('script'); sc.src = '/shared/cloud.v1.js';
+    sc.onload = () => res(window.ReedenCloud || null); sc.onerror = () => res(null);
+    document.head.append(sc);
+  }));
+  const PAGE_FILE = { lovia: 'index.html', daynight: 'daynight.html' };
 
   function mountPresets(o) {
     // o: {bar, saveButtons[], collect():{settings, files}, apply(settings, files), notify(msg)}
@@ -317,12 +338,65 @@
     }
     async function copyLink(p, holder) {
       const url = location.href.split('#')[0] + '#s=' + encode({ v: 1, page: PAGE, name: p.name, settings: p.settings });
-      try { await navigator.clipboard.writeText(url); notify(fromSrc(PT.link)); }
+      copyUrl(url, holder, PT.link);
+    }
+    async function copyUrl(url, holder, okText) {
+      try { await navigator.clipboard.writeText(url); notify(fromSrc(okText)); }
       catch (e) {
         notify(fromSrc(PT.linkFail));
         const inp = document.createElement('input'); inp.className = 'sp-link'; inp.readOnly = true; inp.value = url; inp.setAttribute('data-i18n-skip', '');
         holder.append(inp); inp.focus(); inp.select();
       }
+    }
+    let cloudBusy = false, RC = null;
+    async function cloudSave(p, holder, btn) {
+      if (cloudBusy || !RC) return; cloudBusy = true;
+      const label = btn.textContent; btn.disabled = true; btn.textContent = fromSrc(PT.cloudBusy);
+      try {
+        const it = readList().find(x => x.id === p.id) || p;
+        const files = it.files && it.files.length ? (await getFiles(it.id)) || {} : {};
+        const meta = {}; for (const k of Object.keys(files)) meta[k] = { name: files[k].name || '', type: files[k].type || '' };
+        const body = { data: { page: PAGE, name: it.name, settings: it.settings, files: meta }, title: it.name, schema_version: PAGE === 'lovia' ? 'lovia-1' : 'dn-0' };
+        let c = it.cloud, fresh = false;
+        if (!c || !c.key) { const r = await RC.create('showcase', body); c = { id: r.id, key: r.key, slots: [] }; fresh = true; }
+        else await RC.update('showcase', c.id, c.key, body);
+        for (const k of Object.keys(files)) await RC.putFile('showcase', c.id, c.key, k, files[k], files[k].name || k);
+        for (const k of c.slots || []) if (!files[k]) await RC.deleteFile('showcase', c.id, c.key, k).catch(() => {});
+        c.slots = Object.keys(files);
+        const l = readList(), x = l.find(y => y.id === it.id); if (x) { x.cloud = c; writeList(l); }
+        render();
+        if (fresh) { try { await navigator.clipboard.writeText(RC.links(c.id).share); notify(fill(PT.cloudSaved, it.name)); } catch (e) { notify(fill(PT.cloudUpdated, it.name)); } }
+        else notify(fill(PT.cloudUpdated, it.name));
+      } catch (e) { notify(RC.message(e)); }
+      finally { cloudBusy = false; btn.disabled = false; btn.textContent = label; }
+    }
+    async function openCloud(link) {
+      history.replaceState(null, '', location.href.split('#')[0]);
+      let w;
+      try { notify(fromSrc(PT.loading)); w = await RC.get('showcase', link.id, link.key); }
+      catch (e) { notify(RC.message(e)); return; }
+      const d = w.data || {};
+      if (d.page && d.page !== PAGE && PAGE_FILE[d.page]) { location.replace(PAGE_FILE[d.page] + '#w=' + link.id + (link.key ? '.' + link.key : '')); return; }
+      if (!d.settings) return;
+      const files = {};
+      for (const f of w.files || []) {
+        try {
+          const b = await RC.getFile('showcase', link.id, f.slot, link.key);
+          const m = (d.files || {})[f.slot] || {};
+          files[f.slot] = new File([b], m.name || f.filename || f.slot, { type: m.type || f.mime || b.type });
+        } catch (e) {}
+      }
+      await o.apply(JSON.parse(JSON.stringify(d.settings)), files);
+      const name = d.name || w.title || fromSrc(PT.name);
+      const missingFont = d.files && d.files.font && !files.font;
+      if (w.owner) {
+        const l = readList(); let it = l.find(x => x.cloud && x.cloud.id === link.id);
+        if (!it) { it = { id: 'p' + Date.now().toString(36), name, settings: d.settings, files: [], at: Date.now() }; l.push(it); }
+        it.name = name; it.settings = d.settings; it.files = Object.keys(files); it.at = Date.now();
+        it.cloud = { id: link.id, key: link.key, slots: (w.files || []).map(f => f.slot) };
+        if (writeList(l)) { try { await putFiles(it.id, files); } catch (e) { it.files = []; writeList(l); } }
+        activeId = it.id; render(); notify(fill(PT.cloudOwned, name));
+      } else notify(fill(PT.cloudOpened, name) + (missingFont ? fromSrc(PT.noFont) : ''));
     }
     function render() {
       const list = readList();
@@ -333,6 +407,7 @@
       for (const p of list) {
         const chip = document.createElement('span'); chip.className = 'sp-chip'; if (p.id === activeId) chip.dataset.active = '';
         const a = document.createElement('button'); a.type = 'button'; a.className = 'sp-apply'; a.textContent = p.name; a.setAttribute('data-i18n-skip', '');
+        if (p.cloud) { const ic = document.createElement('span'); ic.className = 'sp-cloud'; ic.textContent = '☁'; ic.setAttribute('aria-hidden', 'true'); a.append(ic); }
         a.addEventListener('click', () => apply(p));
         const m = document.createElement('button'); m.type = 'button'; m.className = 'sp-more'; m.textContent = '⋯'; m.setAttribute('aria-label', fromSrc(PT.more) + ' · ' + p.name); m.setAttribute('data-i18n-skip', '');
         m.addEventListener('click', () => { editingId = editingId === p.id ? null : p.id; render(); });
@@ -355,11 +430,28 @@
           writeList(readList().filter(x => x.id !== p.id)); dropFiles(p.id); if (activeId === p.id) activeId = null; editingId = null; render();
         });
         btn(PT.done, 'sp-done', () => { commit(); editingId = null; render(); });
-        box.append(name, acts); bar.append(box);
+        box.append(name, acts);
+        if (RC) {
+          const acts2 = document.createElement('div'); acts2.className = 'sp-acts';
+          const b2 = (txt, fn) => { const b = document.createElement('button'); b.type = 'button'; b.textContent = fromSrc(txt); b.addEventListener('click', () => fn(b)); acts2.append(b); return b; };
+          b2(p.cloud && p.cloud.key ? PT.cloudUpdate : PT.cloud, b => { commit(); cloudSave(p, box, b); });
+          if (p.cloud) {
+            b2(PT.share, () => copyUrl(RC.links(p.cloud.id).share, box, PT.shareDone));
+            if (p.cloud.key) b2(PT.edit, () => copyUrl(RC.links(p.cloud.id, p.cloud.key).edit, box, PT.editDone));
+          }
+          const note = document.createElement('p'); note.className = 'sp-note'; note.textContent = fromSrc(PT.cloudNote);
+          box.append(acts2, note);
+        }
+        bar.append(box);
       }
     }
     (o.saveButtons || []).forEach(b => b && b.addEventListener('click', save));
     render();
+    cloud().then(rc => {
+      RC = rc; if (!rc) return;
+      render();
+      const link = rc.parseHash(); if (link) openCloud(link);
+    });
     // a shared link: #s=...
     const m = location.hash.match(/^#s=([A-Za-z0-9_-]+)/);
     if (m) {
