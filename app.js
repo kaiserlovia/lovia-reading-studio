@@ -105,7 +105,8 @@
   let fontImportVersion=0;
   const backdropBuffer = document.createElement('canvas');
   // Day/night: the live image variables above hold the group being edited; the other group waits here.
-  const DN_LAYOUTS=['pairs','split','diagonal','alternate'];
+  const DN_LAYOUTS=['pairs','split','diagonal','alternate','compare','rows'];
+  let compareAt=.5, comparePair=0, heroIndex=-1;
   let activeGroup='day';
   let dnOrder='dn'; // 'dn': day first (left / in front); 'nd': night first
   const groupStore={night:{images:[null],userObjectURLs:[null],imageOffsets:[{x:0,y:0}],imageScales:[100],selectedImageIndex:0}};
@@ -508,7 +509,9 @@
     const areaY = 330, areaH = CANVAS_H - 655;
     const nw = image?.naturalWidth || 942, nh = image?.naturalHeight || 2048;
     let x, y, w, h;
-    if (layoutMode === 'focus' && count >= 2) {
+    if (layoutMode === 'hero' && count >= 2) {
+      ({x,y,w,h}=heroLayout(areaX,areaY,areaW,areaH)[index]);
+    } else if (layoutMode === 'focus' && count >= 2) {
       const center = (count-1)/2;
       const weights = Array.from({length:count},(_,i)=> i===Math.floor(center) ? 1.35 : count>3 ? (.76 - .12*Math.abs(i-center)) : .82);
       const gap = count >= 4 ? 44 : 90;
@@ -555,8 +558,44 @@
     return {x,y,w,h};
   }
 
+  function currentHeroIndex() {
+    if(heroIndex>=0&&heroIndex<images.length&&images[heroIndex])return heroIndex;
+    for(let i=images.length-1;i>=0;i--)if(images[i])return i;
+    return 0;
+  }
+  function heroLayout(areaX,areaY,areaW,areaH) {
+    // one large screenshot plus the others in a small grid beside it; never enlarged past their own pixels
+    const dims=images.map(img=>({w:img?.naturalWidth||942,h:img?.naturalHeight||2048}));
+    const hi=currentHeroIndex(),others=dims.map((d,i)=>i).filter(i=>i!==hi);
+    const gap=70,maxA=Math.max(...others.map(i=>dims[i].w/dims[i].h));
+    let best=null;
+    for(const f of [1,.92,.84,.76,.68,.6]){
+      const hh=Math.min(areaH*f,dims[hi].h),hw=hh*dims[hi].w/dims[hi].h,restW=areaW-hw-gap;
+      if(restW<=0)continue;
+      for(let c=1;c<=Math.min(2,others.length);c++){
+        const r=Math.ceil(others.length/c);
+        let th=Math.min((areaH-(r-1)*gap)/r,(restW-(c-1)*gap)/(c*maxA),hh*.62);
+        th=Math.min(th,...others.map(i=>dims[i].h));
+        if(th<=0)continue;
+        const area=hw*hh+others.reduce((sum,i)=>sum+th*th*dims[i].w/dims[i].h,0);
+        if(!best||area>best.area)best={hh,hw,c,r,th,area};
+      }
+    }
+    const out=[];
+    if(!best)return dims.map(()=>({x:areaX,y:areaY,w:10,h:10}));
+    const {hh,hw,c,r,th}=best,colW=maxA*th,totalW=hw+gap+c*colW+(c-1)*gap,x0=areaX+(areaW-totalW)/2;
+    out[hi]={x:x0,y:areaY+(areaH-hh)/2,w:hw,h:hh};
+    const gridH=r*th+(r-1)*gap,gy=areaY+(areaH-gridH)/2,gx=x0+hw+gap;
+    others.forEach((i,k)=>{const col=k%c,row=Math.floor(k/c),w=th*dims[i].w/dims[i].h;
+      out[i]={x:gx+col*(colW+gap)+(colW-w)/2,y:gy+row*(th+gap),w,h:th};});
+    return out;
+  }
   function dayNightGeometry() {
     const W=CANVAS_W,H=CANVAS_H,k=layoutMode==='diagonal'?.07:0;
+    if(layoutMode==='rows'){
+      const top=[[0,0],[W,0],[W,H/2],[0,H/2]],bottom=[[0,H/2],[W,H/2],[W,H],[0,H]];
+      return dnOrder==='nd'?{k:0,day:bottom,night:top}:{k:0,day:top,night:bottom};
+    }
     const left=k?[[0,0],[W*(.5+k),0],[W*(.5-k),H],[0,H]]:[[0,0],[W/2,0],[W/2,H],[0,H]];
     const right=k?[[W*(.5+k),0],[W,0],[W,H],[W*(.5-k),H]]:[[W/2,0],[W,0],[W,H],[W/2,H]];
     return dnOrder==='nd'?{k,day:right,night:left}:{k,day:left,night:right};
@@ -590,7 +629,22 @@
     const list=group=>groupOf(group).images.map((img,i)=>img?entry(group,img,i):null).filter(Boolean);
     const first=list(dnOrder==='nd'?'night':'day'),second=list(dnOrder==='nd'?'day':'night');
     const out=[];
-    if(layoutMode==='split'||layoutMode==='diagonal'){
+    if(layoutMode==='compare'){
+      // one screenshot frame: the first group on the left, the second past the divider
+      const n=Math.max(first.length,second.length);
+      const i=Math.max(0,Math.min(comparePair,n-1));
+      const a=first.find(e=>e.index===i)||first[0],b=second.find(e=>e.index===i)||second[0],one=a||b;
+      if(one){
+        const r=placeRow([one],{x:areaX,y:areaY,w:areaW,h:areaH},0)[0];
+        const owner=groupOf(activeGroup).images[one.index]?activeGroup:one.group;
+        out.push({...one,group:owner,compareFirst:a,compareSecond:a&&b?b:null,p:r});
+      }
+    } else if(layoutMode==='rows'){
+      const half=(areaH-90)/2;
+      for(const [items,y0] of [[first,areaY],[second,areaY+half+90]]){
+        for(const r of placeRow(items,{x:areaX,y:y0,w:areaW,h:half},items.length>3?44:70))out.push({...r.it,p:r});
+      }
+    } else if(layoutMode==='split'||layoutMode==='diagonal'){
       const {k}=dayNightGeometry();
       const inner=70+k*CANVAS_W*.75;
       for(const [items,x0,x1] of [[first,areaX,CANVAS_W/2-inner],[second,CANVAS_W/2+inner,areaX+areaW]]){
@@ -673,7 +727,7 @@
   }
 
   function setLayout(key) {
-    if (!['even','stagger','overlap','focus',...DN_LAYOUTS].includes(key)) return;
+    if (!['even','stagger','overlap','focus','hero',...DN_LAYOUTS].includes(key)) return;
     layoutMode = key;
     refs.layoutButtons.forEach(button=>{
       const selected=button.dataset.layout===key;
@@ -683,9 +737,36 @@
     document.getElementById('directionPanel').hidden = !['stagger','overlap'].includes(key);
     const orderPanel=document.getElementById('dnOrderPanel');
     if(orderPanel)orderPanel.hidden=!DN_LAYOUTS.includes(key);
+    renderLayoutChoices();
     resetPositions(false);
     refreshAutoColors();
     scheduleDraw();
+  }
+  function renderLayoutChoices() {
+    const comparePanel=document.getElementById('comparePanel'),heroPanel=document.getElementById('heroPanel');
+    if(comparePanel){
+      comparePanel.hidden=layoutMode!=='compare';
+      const box=document.getElementById('comparePairs');box.textContent='';
+      const n=Math.max(groupOf('day').images.length,groupOf('night').images.length);
+      comparePair=Math.max(0,Math.min(comparePair,n-1));
+      for(let i=0;i<n;i++){
+        const b=document.createElement('button');b.type='button';b.className='direction-option'+(i===comparePair?' selected':'');
+        b.textContent='第 '+(i+1)+' 组';b.setAttribute('aria-pressed',String(i===comparePair));
+        b.addEventListener('click',()=>{comparePair=i;renderLayoutChoices();resetPositions(false);scheduleDraw();});
+        box.append(b);
+      }
+    }
+    if(heroPanel){
+      heroPanel.hidden=layoutMode!=='hero';
+      const box=document.getElementById('heroButtons');box.textContent='';
+      const cur=currentHeroIndex();
+      images.forEach((img,i)=>{if(!img)return;
+        const b=document.createElement('button');b.type='button';b.className='direction-option'+(i===cur?' selected':'');
+        b.textContent='第 '+(i+1)+' 张';b.setAttribute('aria-pressed',String(i===cur));
+        b.addEventListener('click',()=>{heroIndex=i;renderLayoutChoices();resetPositions(false);scheduleDraw();});
+        box.append(b);
+      });
+    }
   }
   function setDayNightOrder(key) {
     if(!['dn','nd'].includes(key))return;
@@ -845,7 +926,7 @@
       {color:ink,size:Number(refs.dateSize.value),minSize:16,tracking:7,maxWidth:900,align:'right'});
   }
   function drawDayNightPoster(theme,line) {
-    const halves=layoutMode==='split'||layoutMode==='diagonal';
+    const halves=['split','diagonal','compare','rows'].includes(layoutMode);
     let nightInk=theme.ink;
     if(halves){
       // the night half takes its tone from the night screenshots
@@ -861,7 +942,20 @@
     const placed=dayNightPlacements();
     lastPlacements=images.map(()=>null);
     for(const item of placed){
-      drawAdaptiveFrame(item.p,line,theme);drawFittedImage(item.image,item.p);
+      drawAdaptiveFrame(item.p,line,theme);
+      if(item.compareFirst){
+        drawFittedImage(item.compareFirst.image,item.p);
+        if(item.compareSecond){
+          const p=item.p,xd=p.x+p.w*compareAt;
+          ctx.save();ctx.beginPath();ctx.rect(xd,p.y,p.x+p.w-xd,p.h);ctx.clip();drawFittedImage(item.compareSecond.image,p);ctx.restore();
+          ctx.save();ctx.shadowColor='rgba(14,24,18,.35)';ctx.shadowBlur=28;
+          ctx.fillStyle='#fbfbf8';ctx.fillRect(xd-5,p.y,10,p.h);
+          const cy=p.y+p.h/2,R=58;ctx.beginPath();ctx.arc(xd,cy,R,0,Math.PI*2);ctx.fill();ctx.restore();
+          setStroke(line,2);ctx.beginPath();ctx.arc(xd,cy,R,0,Math.PI*2);ctx.stroke();
+          ctx.fillStyle=line;const a=R*.36;
+          for(const sx of [-1,1]){ctx.beginPath();ctx.moveTo(xd+sx*R*.22,cy-a);ctx.lineTo(xd+sx*(R*.22+a*.9),cy);ctx.lineTo(xd+sx*R*.22,cy+a);ctx.fill();}
+        }
+      } else drawFittedImage(item.image,item.p);
       if(item.group===activeGroup)lastPlacements[item.index]=item.p;
     }
     if(halves){
@@ -1021,6 +1115,7 @@
       ' · 图片完整保留，可在海报中拖动位置':'尚未添加图片，请选择上方“逐张添加”或“一键添加”';
     renderTiles();
     syncGroupButtons();
+    renderLayoutChoices();
   }
 
   async function loadUserFile(file) {
@@ -1319,6 +1414,8 @@
     document.querySelectorAll('[data-scale-mode]').forEach(button=>button.addEventListener('click',()=>setScaleMode(button.dataset.scaleMode)));
     document.querySelectorAll('[data-group]').forEach(button=>button.addEventListener('click',()=>setActiveGroup(button.dataset.group)));
     refs.imageScale.addEventListener('input',()=>applyImageScale(Number(refs.imageScale.value)));
+    const compareRange=document.getElementById('compareAt');
+    if(compareRange)compareRange.addEventListener('input',()=>{compareAt=Number(compareRange.value)/100;document.getElementById('compareAtValue').textContent=compareRange.value+'%';scheduleDraw();});
     refs.imageScaleNumber.addEventListener('input',()=>{
       const raw=refs.imageScaleNumber.value.trim();
       if(!raw)return;
