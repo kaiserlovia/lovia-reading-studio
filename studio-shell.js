@@ -247,7 +247,7 @@
         cloudNote: '存到云端后，分享链接会带上底图和封面；编辑链接可以在别的装置继续修改，请不要给别人。',
         cloudOpened: '已套用云端设置「%」。想留着用，请到导出按「储存本次设定」。', cloudOwned: '已打开云端设置「%」，并加到「我的设置」。', noFont: '这个设置用的字体「%」这台装置没有，先用默认字体；上传同一个字体就会换回来。',
         loading: '正在读取云端设置…', mine: '我的作品集', make: '制作', toMine: '看我的作品集', open: '打开', goOn: '继续改', current: '目前这个', noThumb: '套用一次就会有预览图', remove: '移除', removeSure: '确定移除？', collLabel: '作品集链接', collCopy: '复制作品集链接', collDone: '已复制作品集链接，请自己保存好。', collMoved: '已把作品集搬到这台装置。', collMissing: '找不到这个作品集，链接可能不完整。',
-        h: 0, hMine: '你的代号：%。别人输入代号就能看你的作品集，也能套用成自己的一份，但改不到你的作品。', hCopy: '复制作品集页链接', hCopied: '已复制作品集页链接，可以直接分享。', hPwBtn: '改密码', hPwNew: '新密码（至少 6 个字）', hSave: '储存', hPwDone: '密码改好了。', hClaimNote: '取一个代号：别人输入代号就能看你的作品集；换装置时输入代号和密码，就能拿回全部作品继续改。忘记密码就救不回来，请记好。', hName: '代号', hPw: '密码', hPwMin: '密码（至少 6 个字）', hCreate: '建立', hCreated: '代号「%」建立好了。', hLoginSum: '在别的装置做过？用代号和密码拿回作品', hLogin: '登入', hLoggedIn: '已用「%」拿回作品集。', hLook: '看别人的作品集', hLookBtn: '查看', hNotFound: '找不到这个代号。', oHead: '「%」的作品集：可以打开看、套用成自己的一份，改不到原本的作品。', oBack: '← 回到我的作品集', oSvg: '看 SVG 工坊的作品', oNone: '这个作品集里没有展示作品。', oApply: '打开套用', oNoThumb: '没有预览图',
+        h: 0, hMine: '你的代号：%。别人输入代号就能看你的作品集，也能套用成自己的一份，但改不到你的作品。', hCopy: '复制作品集页链接', hCopied: '已复制作品集页链接，可以直接分享。', hPwBtn: '看密码', hPwHide: '收起密码', hPwNew: '换新密码', hPwSure: '确定换？原本的密码会失效', hPwCopy: '复制', hPwCopied: '已复制密码，请存好。', hPwNote: '换装置时，输入代号和这组密码就能拿回作品。请另外存好；这台装置随时能再按「看密码」。', hPwDone: '换好新密码了，请存好。', hClaimNote: '取一个代号：别人输入代号就能看你的作品集；密码由系统产生，换装置时输入代号和密码，就能拿回全部作品继续改。', hName: '代号', hPw: '密码', hCreate: '建立', hCreated: '代号「%」建立好了，请存好密码。', hLoginSum: '在别的装置做过？用代号和密码拿回作品', hLogin: '登入', hLoggedIn: '已用「%」拿回作品集。', hLook: '看别人的作品集', hLookBtn: '查看', hNotFound: '找不到这个代号。', oHead: '「%」的作品集：可以打开看、套用成自己的一份，改不到原本的作品。', oBack: '← 回到我的作品集', oSvg: '看 SVG 工坊的作品', oNone: '这个作品集里没有展示作品。', oApply: '打开套用', oNoThumb: '没有预览图',
         collNote: '在新装置打开作品集链接，就能把整个作品集搬过去。这个链接可以修改你所有的作品，请自己保存好，不要给别人。', styleLovia: 'Lovia 经典', styleDn: 'Day Night',
         mineNote: '这台装置存过云端的设置，两种风格都在这里；在别的装置用编辑链接打开过的，也会列在那台装置上。', mineEmpty: '目前没有存到云端的设置。在「我的设置」按设置旁的「⋯」，再按「存到云端」，就会出现在这里。' }
     : { name: '設置', saved: '已存成「%」，下次在「我的設置」點一下就能套用。', applied: '已套用「%」，換上新截圖就好。', link: '已複製設置連結，貼到其他裝置或傳給朋友打開就能套用（不含截圖和上傳的檔案）。',
@@ -258,7 +258,7 @@
         cloudNote: '存到雲端後，分享連結會帶上底圖和封面；編輯連結可以在別的裝置繼續修改，請不要給別人。',
         cloudOpened: '已套用雲端設置「%」。想留著用，請到匯出按「儲存本次設定」。', cloudOwned: '已打開雲端設置「%」，並加到「我的設置」。', noFont: '這個設置用的字體「%」這台裝置沒有，先用默認字體；上傳同一個字體就會換回來。',
         loading: '正在讀取雲端設置…', mine: '我的作品集', make: '製作', toMine: '看我的作品集', open: '打開', goOn: '繼續改', current: '目前這個', noThumb: '套用一次就會有預覽圖', remove: '移除', removeSure: '確定移除？', collLabel: '作品集連結', collCopy: '複製作品集連結', collDone: '已複製作品集連結，請自己保存好。', collMoved: '已把作品集搬到這台裝置。', collMissing: '找不到這個作品集，連結可能不完整。',
-        h: 0, hMine: '你的代號：%。別人輸入代號就能看你的作品集，也能套用成自己的一份，但改不到你的作品。', hCopy: '複製作品集頁連結', hCopied: '已複製作品集頁連結，可以直接分享。', hPwBtn: '改密碼', hPwNew: '新密碼（至少 6 個字）', hSave: '儲存', hPwDone: '密碼改好了。', hClaimNote: '取一個代號：別人輸入代號就能看你的作品集；換裝置時輸入代號和密碼，就能拿回全部作品繼續改。忘記密碼就救不回來，請記好。', hName: '代號', hPw: '密碼', hPwMin: '密碼（至少 6 個字）', hCreate: '建立', hCreated: '代號「%」建立好了。', hLoginSum: '在別的裝置做過？用代號和密碼拿回作品', hLogin: '登入', hLoggedIn: '已用「%」拿回作品集。', hLook: '看別人的作品集', hLookBtn: '查看', hNotFound: '找不到這個代號。', oHead: '「%」的作品集：可以打開看、套用成自己的一份，改不到原本的作品。', oBack: '← 回到我的作品集', oSvg: '看 SVG 工坊的作品', oNone: '這個作品集裡沒有展示作品。', oApply: '打開套用', oNoThumb: '沒有預覽圖',
+        h: 0, hMine: '你的代號：%。別人輸入代號就能看你的作品集，也能套用成自己的一份，但改不到你的作品。', hCopy: '複製作品集頁連結', hCopied: '已複製作品集頁連結，可以直接分享。', hPwBtn: '看密碼', hPwHide: '收起密碼', hPwNew: '換新密碼', hPwSure: '確定換？原本的密碼會失效', hPwCopy: '複製', hPwCopied: '已複製密碼，請存好。', hPwNote: '換裝置時，輸入代號和這組密碼就能拿回作品。請另外存好；這台裝置隨時能再按「看密碼」。', hPwDone: '換好新密碼了，請存好。', hClaimNote: '取一個代號：別人輸入代號就能看你的作品集；密碼由系統產生，換裝置時輸入代號和密碼，就能拿回全部作品繼續改。', hName: '代號', hPw: '密碼', hCreate: '建立', hCreated: '代號「%」建立好了，請存好密碼。', hLoginSum: '在別的裝置做過？用代號和密碼拿回作品', hLogin: '登入', hLoggedIn: '已用「%」拿回作品集。', hLook: '看別人的作品集', hLookBtn: '查看', hNotFound: '找不到這個代號。', oHead: '「%」的作品集：可以打開看、套用成自己的一份，改不到原本的作品。', oBack: '← 回到我的作品集', oSvg: '看 SVG 工坊的作品', oNone: '這個作品集裡沒有展示作品。', oApply: '打開套用', oNoThumb: '沒有預覽圖',
         collNote: '在新裝置打開作品集連結，就能把整個作品集搬過去。這個連結可以修改你所有的作品，請自己保存好，不要給別人。', styleLovia: 'Lovia 經典', styleDn: 'Day Night',
         mineNote: '這台裝置存過雲端的設置，兩種風格都在這裡；在別的裝置用編輯連結打開過的，也會列在那台裝置上。', mineEmpty: '目前沒有存到雲端的設置。在「我的設置」按設置旁的「⋯」，再按「存到雲端」，就會出現在這裡。' };
   const PCSS = `
@@ -305,6 +305,9 @@
   .sg-h summary{cursor:pointer;opacity:.75}
   .sg-h details form{margin-top:6px}
   .sg-h p{margin:0;line-height:1.5}
+  .sg-pw{display:grid;gap:6px}
+  .sg-pw div{display:flex;gap:6px}
+  .sg-pw input{font-family:ui-monospace,Menlo,monospace;letter-spacing:.04em}
   .sg-h [hidden]{display:none!important}
   .sp-acts .sp-rm[data-sure]{border-color:#b4533f;color:#b4533f}
   .sp-tag{font-size:11px;opacity:.6}`;
@@ -334,7 +337,7 @@
   let cloudLoad = null;
   const cloud = () => cloudLoad || (cloudLoad = new Promise(res => {
     if (window.ReedenCloud) return res(window.ReedenCloud);
-    const sc = document.createElement('script'); sc.src = '/shared/cloud.v1.js?v=2';
+    const sc = document.createElement('script'); sc.src = '/shared/cloud.v1.js?v=3';
     sc.onload = () => res(window.ReedenCloud || null); sc.onerror = () => res(null);
     document.head.append(sc);
   }));
@@ -579,9 +582,10 @@
     }
     // ---- handles: anyone with the name can look and apply; the password brings the works back ----
     let other = null; // someone's collection being looked at: {handle, items}
+    let pwOpen = false; // the generated password is shown right after it is made, then on request
     function form(fields, label, onSubmit) {
       const f = document.createElement('form');
-      const ins = fields.map(([ph, type, ac]) => { const i = document.createElement('input'); i.placeholder = fromSrc(ph); i.setAttribute('aria-label', fromSrc(ph)); i.type = type || 'text'; if (ac) i.autocomplete = ac; i.maxLength = type === 'password' ? 128 : 20; i.setAttribute('data-i18n-skip', ''); return i; });
+      const ins = fields.map(([ph, type, ac]) => { const i = document.createElement('input'); i.placeholder = fromSrc(ph); i.setAttribute('aria-label', fromSrc(ph)); i.type = type || 'text'; if (ac) i.autocomplete = ac; i.maxLength = type === 'password' ? 128 : 20; if (type === 'password') { i.autocapitalize = 'off'; i.spellcheck = false; } i.setAttribute('data-i18n-skip', ''); return i; });
       const b = document.createElement('button'); b.type = 'submit'; b.textContent = fromSrc(label);
       f.append(...ins, b);
       f.addEventListener('submit', async e => { e.preventDefault(); b.disabled = true; try { await onSubmit(ins.map(i => i.value.trim())); } catch (err) { notify(err && err.code === 'not_found' ? fromSrc(PT.hNotFound) : RC.message(err)); } finally { b.disabled = false; } });
@@ -594,14 +598,23 @@
         box.append(para(fill(PT.hMine, h)));
         const acts = document.createElement('div'); acts.className = 'sp-acts';
         const c = document.createElement('button'); c.type = 'button'; c.textContent = fromSrc(PT.hCopy); c.addEventListener('click', () => copyUrl(H.link(), box, PT.hCopied));
-        const pw = document.createElement('button'); pw.type = 'button'; pw.textContent = fromSrc(PT.hPwBtn);
-        const pf = form([[PT.hPwNew, 'password', 'new-password']], PT.hSave, async ([v]) => { await H.setPassword(v); notify(fromSrc(PT.hPwDone)); pf.hidden = true; });
-        pf.hidden = true; pw.addEventListener('click', () => { pf.hidden = !pf.hidden; });
-        acts.append(c, pw); box.append(acts, pf);
+        const pwBox = document.createElement('div'); pwBox.className = 'sg-pw'; pwBox.hidden = !(pwOpen && H.password());
+        const pwIn = document.createElement('input'); pwIn.readOnly = true; pwIn.value = H.password() || ''; pwIn.setAttribute('aria-label', fromSrc(PT.hPw)); pwIn.setAttribute('data-i18n-skip', '');
+        const pwCp = document.createElement('button'); pwCp.type = 'button'; pwCp.textContent = fromSrc(PT.hPwCopy); pwCp.addEventListener('click', () => copyUrl(pwIn.value, pwBox, PT.hPwCopied));
+        const row = document.createElement('div'); row.append(pwIn, pwCp); pwBox.append(row, para(fromSrc(PT.hPwNote)));
+        const pw = document.createElement('button'); pw.type = 'button'; pw.textContent = fromSrc(pwBox.hidden ? PT.hPwBtn : PT.hPwHide); pw.hidden = !H.password();
+        pw.addEventListener('click', () => { pwOpen = pwBox.hidden; pwBox.hidden = !pwOpen; pw.textContent = fromSrc(pwOpen ? PT.hPwHide : PT.hPwBtn); });
+        const nw = document.createElement('button'); nw.type = 'button'; nw.textContent = fromSrc(PT.hPwNew); let sure = 0;
+        nw.addEventListener('click', async () => {
+          if (Date.now() - sure > 4000) { sure = Date.now(); nw.textContent = fromSrc(PT.hPwSure); setTimeout(() => { if (Date.now() - sure >= 4000) nw.textContent = fromSrc(PT.hPwNew); }, 4100); return; }
+          sure = 0; nw.disabled = true;
+          try { await H.setPassword(); pwOpen = true; notify(fromSrc(PT.hPwDone)); renderMine(); } catch (err) { notify(RC.message(err)); nw.disabled = false; nw.textContent = fromSrc(PT.hPwNew); }
+        });
+        acts.append(c, pw, nw); box.append(acts, pwBox);
       } else {
         if (n || (RC.collection && RC.collection.get())) {
-          box.append(para(fromSrc(PT.hClaimNote)), form([[PT.hName, 'text', 'username'], [PT.hPwMin, 'password', 'new-password']], PT.hCreate, async ([name, pw]) => {
-            await syncMine(); const r = await H.claim(name, pw); notify(fill(PT.hCreated, r)); renderMine();
+          box.append(para(fromSrc(PT.hClaimNote)), form([[PT.hName, 'text', 'username']], PT.hCreate, async ([name]) => {
+            await syncMine(); const r = await H.claim(name); pwOpen = true; notify(fill(PT.hCreated, r)); renderMine();
           }));
         }
         const d = document.createElement('details'); const sum = document.createElement('summary'); sum.textContent = fromSrc(PT.hLoginSum);
