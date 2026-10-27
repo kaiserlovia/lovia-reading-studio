@@ -19,7 +19,7 @@
     '长長间間电電页頁顺順颗顆么麼齐齊鹜鶩较較寻尋经經级級志誌萤螢着著组組启啟带帶范範钮鈕内內' +
     '删刪区區结結连連链鏈侧側订訂项項压壓备備扫掃畅暢轮輪转轉云雲别別继繼续續';
   // whole words that differ beyond single characters
-  const WORDS_S2T = [['屏幕', '螢幕'], ['复制', '複製'], ['视频', '影片'], ['相册', '相簿']];
+  const WORDS_S2T = [['屏幕', '螢幕'], ['复制', '複製'], ['视频', '影片'], ['相册', '相簿'], ['制作', '製作']];
   const s2t = new Map(), t2s = new Map();
   for (let i = 0; i + 1 < PAIRS.length; i += 2) { s2t.set(PAIRS[i], PAIRS[i + 1]); t2s.set(PAIRS[i + 1], PAIRS[i]); }
 
@@ -246,8 +246,8 @@
         share: '复制分享链接', edit: '复制编辑链接', shareDone: '已复制分享链接，对方打开就能套用（含底图和封面，不含字体）。', editDone: '已复制编辑链接，请自己保存好。',
         cloudNote: '存到云端后，分享链接会带上底图和封面；编辑链接可以在别的装置继续修改，请不要给别人。',
         cloudOpened: '已套用云端设置「%」。想留着用，请到导出按「储存本次设定」。', cloudOwned: '已打开云端设置「%」，并加到「我的设置」。', noFont: '这个设置用了上传的字体，分享链接不含字体，请自己上传。',
-        loading: '正在读取云端设置…', mine: '我的云端作品', open: '打开', close: '收起', styleLovia: 'Lovia 经典', styleDn: 'Day Night',
-        mineNote: '这台装置存过云端的设置，两种风格都在这里；在别的装置用编辑链接打开过的，也会列在那台装置上。', mineEmpty: '目前没有存到云端的设置。' }
+        loading: '正在读取云端设置…', mine: '我的作品集', make: '制作', toMine: '看我的作品集', open: '打开', goOn: '继续改', current: '目前这个', noThumb: '套用一次就会有预览图', styleLovia: 'Lovia 经典', styleDn: 'Day Night',
+        mineNote: '这台装置存过云端的设置，两种风格都在这里；在别的装置用编辑链接打开过的，也会列在那台装置上。', mineEmpty: '目前没有存到云端的设置。在「我的设置」按设置旁的「⋯」，再按「存到云端」，就会出现在这里。' }
     : { name: '設置', saved: '已存成「%」，下次在「我的設置」點一下就能套用。', applied: '已套用「%」，換上新截圖就好。', link: '已複製設置連結，貼到其他裝置或傳給朋友打開就能套用（不含截圖和上傳的檔案）。',
         linkFail: '無法自動複製，請長按下面的連結複製：', fromLink: '已套用連結裡的設置。想留著用，請到匯出按「儲存本次設定」。', del: '刪除', delSure: '確定刪除？',
         overwrite: '用目前設定覆蓋', copy: '複製連結', done: '完成', rename: '設置名稱', more: '更多選項', head: '我的設置', updated: '已用目前設定更新「%」。', full: '瀏覽器空間不足，這次沒有存成功。', files: '（含上傳的底圖、封面或字體）',
@@ -255,8 +255,8 @@
         share: '複製分享連結', edit: '複製編輯連結', shareDone: '已複製分享連結，對方打開就能套用（含底圖和封面，不含字體）。', editDone: '已複製編輯連結，請自己保存好。',
         cloudNote: '存到雲端後，分享連結會帶上底圖和封面；編輯連結可以在別的裝置繼續修改，請不要給別人。',
         cloudOpened: '已套用雲端設置「%」。想留著用，請到匯出按「儲存本次設定」。', cloudOwned: '已打開雲端設置「%」，並加到「我的設置」。', noFont: '這個設置用了上傳的字體，分享連結不含字體，請自己上傳。',
-        loading: '正在讀取雲端設置…', mine: '我的雲端作品', open: '打開', close: '收起', styleLovia: 'Lovia 經典', styleDn: 'Day Night',
-        mineNote: '這台裝置存過雲端的設置，兩種風格都在這裡；在別的裝置用編輯連結打開過的，也會列在那台裝置上。', mineEmpty: '目前沒有存到雲端的設置。' };
+        loading: '正在讀取雲端設置…', mine: '我的作品集', make: '製作', toMine: '看我的作品集', open: '打開', goOn: '繼續改', current: '目前這個', noThumb: '套用一次就會有預覽圖', styleLovia: 'Lovia 經典', styleDn: 'Day Night',
+        mineNote: '這台裝置存過雲端的設置，兩種風格都在這裡；在別的裝置用編輯連結打開過的，也會列在那台裝置上。', mineEmpty: '目前沒有存到雲端的設置。在「我的設置」按設置旁的「⋯」，再按「存到雲端」，就會出現在這裡。' };
   const PCSS = `
   .sp{display:grid;gap:8px;margin:4px 0 14px}
   .sp[hidden]{display:none!important}
@@ -279,10 +279,19 @@
   .sp-cloud{font-size:11px;opacity:.55;margin-left:4px}
   .sp-top{display:flex;align-items:center;justify-content:space-between;gap:8px}
   .sp-mine-btn{border:0;background:none;color:inherit;font:inherit;font-size:12px;padding:4px 0;cursor:pointer;text-decoration:underline;text-underline-offset:3px;opacity:.8}
-  .sp-item{display:grid;gap:6px;padding-bottom:10px;border-bottom:1px solid var(--sp-line,rgba(46,57,49,.28))}
-  .sp-item:last-of-type{border-bottom:0;padding-bottom:0}
-  .sp-item-t{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 8px;font-size:14px;min-width:0}
-  .sp-item-t b{font-weight:600;overflow-wrap:anywhere}
+  .sv{display:flex;justify-content:center;gap:4px;border-bottom:1px solid var(--sp-line,rgba(46,57,49,.2));margin:8px auto 0;max-width:1200px;padding:0 16px;font:500 14px/1 -apple-system,BlinkMacSystemFont,"PingFang SC","PingFang TC","Microsoft YaHei",sans-serif}
+  .sv button{appearance:none;background:none;border:0;color:inherit;opacity:.6;font:inherit;padding:12px 14px 11px;border-bottom:2px solid transparent;margin-bottom:-1px;cursor:pointer;white-space:nowrap}
+  .sv button[aria-selected="true"]{opacity:1;border-bottom-color:currentColor}
+  .sg{display:none;max-width:1200px;margin:0 auto;padding:18px 16px 60px;box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","PingFang TC","Microsoft YaHei",sans-serif}
+  html.sp-mine .sg{display:block}
+  html.sp-mine main,html.sp-mine .mobile-actions,html.sp-mine .mobile-preview-dock,html.sp-mine .site-footer{display:none!important}
+  .sg-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px;margin-top:14px}
+  .sg-card{display:grid;gap:8px;align-content:start;padding:10px;border:1px solid var(--sp-line,rgba(46,57,49,.28));border-radius:12px;background:var(--sp-bg,#fff);min-width:0}
+  .sg-card[data-cur]{border-color:var(--sp-active,#2e3931);box-shadow:inset 0 0 0 1px var(--sp-active,#2e3931)}
+  .sg-card img{display:block;width:100%;height:auto;border-radius:8px;background:rgba(0,0,0,.04)}
+  .sg-none{display:grid;place-items:center;aspect-ratio:4/3;border:1px dashed var(--sp-line,rgba(46,57,49,.28));border-radius:8px;font-size:12px;opacity:.6;text-align:center;padding:10px}
+  .sg-t{display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 8px;font-size:14px;min-width:0}
+  .sg-t b{font-weight:600;overflow-wrap:anywhere}
   .sp-tag{font-size:11px;opacity:.6}`;
   const presetKey = 'studio.presets.' + PAGE;
   const readList = (page = PAGE) => { try { return JSON.parse(store.get('studio.presets.' + page) || '[]'); } catch (e) { return []; } };
@@ -315,13 +324,23 @@
     document.head.append(sc);
   }));
   const PAGE_FILE = { lovia: 'index.html', daynight: 'daynight.html' };
+  // a small JPEG of the poster as it looks now, for the gallery
+  function snapshot() {
+    const cv = document.getElementById(PAGE === 'lovia' ? 'posterCanvas' : 'cv');
+    if (!cv || !cv.width) return null;
+    try {
+      const w = 480, h = Math.round(cv.height * w / cv.width), c = document.createElement('canvas'); c.width = w; c.height = h;
+      c.getContext('2d').drawImage(cv, 0, 0, w, h); return c.toDataURL('image/jpeg', 0.78);
+    } catch (e) { return null; }
+  }
+  const settle = () => new Promise(r => setTimeout(r, 600));
 
   function mountPresets(o) {
     // o: {bar, saveButtons[], collect():{settings, files}, apply(settings, files), notify(msg)}
     if (!o || !o.bar) return;
     const style = document.createElement('style'); style.textContent = PCSS; document.head.append(style);
     const bar = o.bar; bar.classList.add('sp');
-    let activeId = null, editingId = null, showMine = false;
+    let activeId = null, editingId = null, view = 'make';
     const notify = msg => { try { o.notify(msg); } catch (e) {} };
     function nextName(list) { let n = 1; const names = new Set(list.map(p => p.name)); while (names.has(fromSrc(PT.name) + ' ' + n)) n++; return fromSrc(PT.name) + ' ' + n; }
     async function save() {
@@ -331,11 +350,13 @@
       if (!writeList(list)) { notify(fromSrc(PT.full)); return; }
       try { await putFiles(p.id, files); } catch (e) { p.files = []; writeList(list); }
       activeId = p.id; render(); notify(fill(PT.saved, p.name) + (p.files.length ? fromSrc(PT.files) : ''));
+      setThumb(p.id);
     }
     async function apply(p) {
       const files = p.files && p.files.length ? (await getFiles(p.id)) || {} : {};
       await o.apply(JSON.parse(JSON.stringify(p.settings)), files);
       activeId = p.id; render(); notify(fill(PT.applied, p.name));
+      settle().then(() => setThumb(p.id));
     }
     async function overwrite(p) {
       const list = readList(), it = list.find(x => x.id === p.id); if (!it) return;
@@ -344,6 +365,13 @@
       if (!writeList(list)) { notify(fromSrc(PT.full)); return; }
       try { await putFiles(it.id, files); } catch (e) {}
       activeId = it.id; render(); notify(fill(PT.updated, it.name));
+      setThumb(it.id);
+    }
+    function setThumb(id) {
+      const t = snapshot(); if (!t) return;
+      const l = readList(), it = l.find(x => x.id === id); if (!it) return;
+      it.thumb = t; if (!writeList(l)) { it.thumb = null; writeList(l); }
+      if (view === 'mine') renderMine();
     }
     async function copyLink(p, holder) {
       const url = location.href.split('#')[0] + '#s=' + encode({ v: 1, page: PAGE, name: p.name, settings: p.settings });
@@ -405,38 +433,67 @@
         it.cloud = { id: link.id, key: link.key, slots: (w.files || []).map(f => f.slot), at: w.updated_at || Date.now() };
         if (writeList(l)) { try { await putFiles(it.id, files); } catch (e) { it.files = []; writeList(l); } }
         activeId = it.id; render(); notify(fill(had ? PT.applied : PT.cloudOwned, name));
+        settle().then(() => setThumb(it.id));
       } else notify(fill(PT.cloudOpened, name) + (missingFont ? fromSrc(PT.noFont) : ''));
     }
     // every cloud-saved setting in this browser, from both styles
     const mineList = () => ['lovia', 'daynight'].flatMap(pg => readList(pg).filter(p => p.cloud && p.cloud.key).map(p => ({ p, page: pg })))
       .sort((a, b) => (b.p.cloud.at || b.p.at || 0) - (a.p.cloud.at || a.p.at || 0));
-    function renderMine(box) {
+    // the gallery tab: every cloud-saved setting from both styles, shown as its poster
+    let nav = null, gal = null;
+    function mountGallery() {
+      const main = document.querySelector('main'); if (!main || nav) return;
+      nav = document.createElement('nav'); nav.className = 'sv'; nav.setAttribute('role', 'tablist');
+      gal = document.createElement('section'); gal.className = 'sg'; gal.setAttribute('aria-live', 'polite');
+      main.before(nav, gal); renderTabs();
+    }
+    function renderTabs() {
+      if (!nav) return; nav.textContent = '';
+      const n = mineList().length;
+      for (const [v, txt] of [['make', fromSrc(PT.make)], ['mine', fromSrc(PT.mine) + (n ? ' · ' + n : '')]]) {
+        const b = document.createElement('button'); b.type = 'button'; b.setAttribute('role', 'tab'); b.textContent = txt; b.setAttribute('aria-selected', String(view === v));
+        b.addEventListener('click', () => setView(v)); nav.append(b);
+      }
+    }
+    function setView(v) {
+      view = v; root.classList.toggle('sp-mine', v === 'mine'); renderTabs();
+      if (v === 'mine') renderMine(); else window.dispatchEvent(new Event('resize'));
+      scrollTo({ top: 0 });
+    }
+    function renderMine() {
+      if (!gal) return; gal.textContent = '';
       const items = mineList();
       const note = document.createElement('p'); note.className = 'sp-note'; note.textContent = fromSrc(items.length ? PT.mineNote : PT.mineEmpty);
-      box.append(note);
+      const grid = document.createElement('div'); grid.className = 'sg-grid';
       for (const { p, page } of items) {
-        const it = document.createElement('div'); it.className = 'sp-item';
-        const t = document.createElement('div'); t.className = 'sp-item-t';
+        const cur = page === PAGE && p.id === activeId;
+        const card = document.createElement('div'); card.className = 'sg-card'; if (cur) card.dataset.cur = '';
+        if (p.thumb) { const im = document.createElement('img'); im.src = p.thumb; im.alt = p.name; im.loading = 'lazy'; card.append(im); }
+        else { const n = document.createElement('div'); n.className = 'sg-none'; n.textContent = fromSrc(PT.noThumb); card.append(n); }
+        const t = document.createElement('div'); t.className = 'sg-t';
         const n = document.createElement('b'); n.textContent = p.name; n.setAttribute('data-i18n-skip', '');
         const tag = document.createElement('span'); tag.className = 'sp-tag'; tag.textContent = fromSrc(page === 'lovia' ? PT.styleLovia : PT.styleDn);
         const at = p.cloud.at || p.at; const d = at ? new Date(at) : null;
         const when = document.createElement('span'); when.className = 'sp-tag'; when.setAttribute('data-i18n-skip', '');
         if (d) when.textContent = d.getFullYear() + '/' + (d.getMonth() + 1) + '/' + d.getDate();
         t.append(n, tag, when);
+        if (cur) { const c = document.createElement('span'); c.className = 'sp-tag'; c.textContent = fromSrc(PT.current); t.append(c); }
         const acts = document.createElement('div'); acts.className = 'sp-acts';
         const b = (txt, fn) => { const x = document.createElement('button'); x.type = 'button'; x.textContent = fromSrc(txt); x.addEventListener('click', fn); acts.append(x); };
-        b(PT.open, () => {
-          if (page === PAGE) { showMine = false; apply(p); }
+        b(cur ? PT.goOn : PT.open, () => {
+          if (page === PAGE) { setView('make'); if (!cur) apply(p); }
           else location.href = PAGE_FILE[page] + '#w=' + p.cloud.id + '.' + p.cloud.key;
         });
-        b(PT.share, () => copyUrl(RC.links(p.cloud.id).share.replace(/[^/]*#/, PAGE_FILE[page] + '#'), it, PT.shareDone));
-        b(PT.edit, () => copyUrl(RC.links(p.cloud.id, p.cloud.key).edit.replace(/[^/]*#/, PAGE_FILE[page] + '#'), it, PT.editDone));
-        it.append(t, acts); box.append(it);
+        b(PT.share, () => copyUrl(RC.links(p.cloud.id).share.replace(/[^/]*#/, PAGE_FILE[page] + '#'), card, PT.shareDone));
+        b(PT.edit, () => copyUrl(RC.links(p.cloud.id, p.cloud.key).edit.replace(/[^/]*#/, PAGE_FILE[page] + '#'), card, PT.editDone));
+        card.append(t, acts); grid.append(card);
       }
+      gal.append(note, grid);
     }
     function render() {
       const list = readList();
       const mine = RC ? mineList() : [];
+      renderTabs(); if (view === 'mine') renderMine();
       bar.hidden = !list.length && !mine.length; bar.textContent = '';
       if (bar.hidden) return;
       const top = document.createElement('div'); top.className = 'sp-top';
@@ -444,16 +501,9 @@
       top.append(head);
       if (mine.length) {
         const mb = document.createElement('button'); mb.type = 'button'; mb.className = 'sp-mine-btn';
-        mb.textContent = fromSrc(showMine ? PT.close : PT.mine) + (showMine ? '' : ' · ' + mine.length);
-        mb.setAttribute('aria-expanded', String(showMine));
-        mb.addEventListener('click', () => { showMine = !showMine; if (showMine) editingId = null; render(); });
+        mb.textContent = fromSrc(PT.toMine) + ' · ' + mine.length;
+        mb.addEventListener('click', () => setView('mine'));
         top.append(mb);
-      }
-      if (showMine && mine.length) {
-        const box = document.createElement('div'); box.className = 'sp-edit';
-        renderMine(box);
-        bar.append(top, box);
-        return;
       }
       const row = document.createElement('div'); row.className = 'sp-row';
       for (const p of list) {
@@ -462,7 +512,7 @@
         if (p.cloud) { const ic = document.createElement('span'); ic.className = 'sp-cloud'; ic.textContent = '☁'; ic.setAttribute('aria-hidden', 'true'); a.append(ic); }
         a.addEventListener('click', () => apply(p));
         const m = document.createElement('button'); m.type = 'button'; m.className = 'sp-more'; m.textContent = '⋯'; m.setAttribute('aria-label', fromSrc(PT.more) + ' · ' + p.name); m.setAttribute('data-i18n-skip', '');
-        m.addEventListener('click', () => { editingId = editingId === p.id ? null : p.id; showMine = false; render(); });
+        m.addEventListener('click', () => { editingId = editingId === p.id ? null : p.id; render(); });
         chip.append(a, m); row.append(chip);
       }
       if (list.length) bar.append(top, row); else bar.append(top);
@@ -501,7 +551,7 @@
     render();
     cloud().then(rc => {
       RC = rc; if (!rc) return;
-      render();
+      mountGallery(); render();
       const link = rc.parseHash(); if (link) openCloud(link);
     });
     // a shared link: #s=...
