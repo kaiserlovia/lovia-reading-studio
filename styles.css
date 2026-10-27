@@ -490,3 +490,14 @@ h2{font:400 23px Georgia,"Noto Serif SC",serif;margin-top:8px}
 .compare-range{display:flex;align-items:center;gap:8px;font-size:10px;color:#728574}
 .compare-range input{width:150px;accent-color:#7b9580}
 .compare-pairs{flex-wrap:wrap;justify-content:flex-end}
+
+/* ---------- saved settings and text colour ---------- */
+#presetBar{--sp-line:#d8e4d7;--sp-bg:#fff;--sp-active:#7b9580;color:#496952}
+.save-preset{width:100%;margin-bottom:10px;border:1px solid #c9d6c8;background:#fff;color:#496952;display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap}
+.save-preset small{font-size:10px;color:#93a493;font-weight:400}
+.text-color-panel{align-items:flex-start}
+.text-color-controls{display:flex;flex-direction:column;align-items:flex-end;gap:8px;min-width:0}
+.text-color-inputs{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:10px}
+.text-color-inputs[hidden]{display:none!important}
+.text-color-inputs label{display:flex;align-items:center;gap:6px;font-size:10px;color:#728574}
+.text-color-inputs input[type=color]{width:34px;height:26px;border:1px solid #d8e4d7;border-radius:4px;padding:1px;background:#fff}

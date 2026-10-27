@@ -7,8 +7,8 @@
   <meta name="description" content="Lovia 阅读主题展示工坊：轻量预览、自由排版、高清导出。">
   <title>Lovia — Reading Gallery Studio</title>
   <link rel="stylesheet" href="./styles.css?v=20261027-v13">
-  <script src="./app.js?v=20261027-v13" defer></script>
-  <script src="./studio-shell.js?v=3" defer></script>
+  <script src="./app.js?v=20261027-v15" defer></script>
+  <script src="./studio-shell.js?v=4" defer></script>
 </head>
 <body>
   <div class="app-shell">
@@ -107,6 +107,20 @@
               <div class="font-control"><div class="range-label"><label for="dateFontSize">日期字号</label><output id="dateFontSizeValue">41</output></div><input id="dateFontSize" class="range-input" type="range" min="18" max="85" step="1" value="41"></div>
               <div class="font-control"><div class="range-label"><label for="messageFontSize">自定义文案字号</label><output id="messageFontSizeValue">33</output></div><input id="messageFontSize" class="range-input" type="range" min="18" max="85" step="1" value="33"></div>
             </div>
+            <div class="direction-panel text-color-panel">
+              <span>文字颜色</span>
+              <div class="text-color-controls">
+                <div class="direction-options">
+                  <button type="button" class="direction-option selected" data-text-mode="auto" aria-pressed="true">自动</button>
+                  <button type="button" class="direction-option" data-text-mode="custom" aria-pressed="false">自订</button>
+                </div>
+                <div class="text-color-inputs" id="textColorInputs" hidden>
+                  <label><input type="color" id="textDayColor" value="#2f3a31" aria-label="文字颜色">文字</label>
+                  <label><input type="color" id="textNightColor" value="#f1f0e7" aria-label="夜间那一半的文字颜色">夜间那一半</label>
+                </div>
+              </div>
+            </div>
+            <p class="section-note">自订时主题名称、作者、日期和留言都用「文字」的颜色；日夜对开、斜切、对切、上日下夜的夜间那一半用「夜间那一半」的颜色。</p>
           </section>
 
           <section class="editor-section" aria-labelledby="imageSectionTitle">
@@ -118,6 +132,7 @@
               <button type="button" class="ratio-option" data-ratio="1:1" aria-pressed="false"><strong>1:1</strong><small>方形画报</small></button>
             </div>
             </div>
+            <div id="presetBar" hidden></div>
             <div class="scale-mode-switch group-switch" role="group" aria-label="截图分组">
               <button type="button" data-group="day" class="active" aria-pressed="true"><strong>日间组</strong><small id="dayGroupCount">尚未添加</small></button>
               <button type="button" data-group="night" aria-pressed="false"><strong>夜间组</strong><small id="nightGroupCount">尚未添加</small></button>
@@ -261,7 +276,7 @@
           </section>
         </div>
 
-        <div class="editor-footer"><button class="button button-dark download-main" type="button" id="downloadButton"><span>↓</span> 下载高清 PNG <small id="downloadResolution">3600 × 2700</small></button><p>所有编辑仅在当前浏览器处理 · 无需上传到服务器</p></div>
+        <div class="editor-footer"><button class="button save-preset" type="button" id="savePreset"><span aria-hidden="true">＋</span> 储存本次设定 <small>下次在「展示图片」一键套用</small></button><button class="button button-dark download-main" type="button" id="downloadButton"><span>↓</span> 下载高清 PNG <small id="downloadResolution">3600 × 2700</small></button><p>所有编辑仅在当前浏览器处理 · 无需上传到服务器</p></div>
       </aside>
     </main>
     <nav class="mobile-actions" aria-label="手机快捷操作">

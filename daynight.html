@@ -80,6 +80,7 @@ button{cursor:pointer}
 
 /* segmented + chips */
 .seg{display:flex;flex-wrap:wrap;gap:6px}
+#presetBar{--sp-line:var(--line);--sp-bg:var(--sheet);--sp-active:var(--ink)}
 .seg button,.chip{border:1px solid var(--line);background:var(--sheet);border-radius:8px;padding:7px 12px;font-size:14px;line-height:1.3}
 .seg button[aria-pressed="true"],.chip[aria-pressed="true"]{background:var(--btn-bg);color:var(--btn-fg);border-color:var(--btn-bg)}
 
@@ -236,6 +237,7 @@ button{cursor:pointer}
     <section class="pane is-active" id="pane-shots" role="tabpanel" aria-labelledby="tab-shots">
       <h2 class="pane-title">截圖</h2>
       <p class="hint">日間、夜間各放 1 到 5 張，順序就是畫報上的順序。點預覽裡的截圖可以拖動位置。</p>
+      <div id="presetBar" hidden></div>
       <div class="row">
         <button class="btn ghost small" id="clearSamples">移除示範截圖</button>
         <button class="btn ghost small" id="resetPos">全部復位</button>
@@ -451,6 +453,15 @@ button{cursor:pointer}
         <h3>對齊</h3>
         <div class="seg" data-seg="align"><button data-v="left" aria-pressed="true">置左</button><button data-v="center" aria-pressed="false">置中</button></div>
       </div>
+      <div class="group">
+        <h3>文字顏色</h3>
+        <div class="seg" data-seg="textMode"><button data-v="auto" aria-pressed="true">自動</button><button data-v="custom" aria-pressed="false">自訂</button></div>
+        <div id="textColorRows" hidden>
+          <div class="color-row"><span>日間</span><input type="color" id="textDay" value="#342e2a" aria-label="日間那一側的文字顏色"><span class="muted-note" id="textDayHex">#342E2A</span></div>
+          <div class="color-row"><span>夜間</span><input type="color" id="textNight" value="#e7e7eb" aria-label="夜間那一側的文字顏色"><span class="muted-note" id="textNightHex">#E7E7EB</span></div>
+        </div>
+        <p class="hint" id="textColorHint">自動會依底色挑最清楚的顏色。自訂時，落在日間那一側的標題、署名、標籤和頁面名稱用「日間」的顏色，夜間那一側用「夜間」的。</p>
+      </div>
     </section>
 
     <!-- EXPORT -->
@@ -465,6 +476,7 @@ button{cursor:pointer}
         <button class="btn" id="shareOne" hidden>存到相簿</button>
         <button class="btn" id="exportOne">下載 PNG</button>
         <button class="btn ghost" id="exportPair">日間、夜間各存一張</button>
+        <button class="btn ghost" id="savePreset">儲存本次設定</button>
         <button class="btn ghost" id="openLarge2">放大預覽</button>
         <p class="status" id="status" aria-live="polite"></p>
       </div>
@@ -511,7 +523,7 @@ button{cursor:pointer}
   </div>
 </div>
 
-<script src="./studio-shell.js?v=3"></script>
+<script src="./studio-shell.js?v=4"></script>
 <script>
 (()=>{
 'use strict';
@@ -566,6 +578,7 @@ const S={
   title:'Weather', tagline:'一套日間與夜間的閱讀主題', author:'Chi', message:'',
   showDate:true, date:fmtToday(),
   sideLabels:true, labelDay:'日間', labelNight:'夜間', captions:true,
+  textMode:'auto', textDay:'#342E2A', textNight:'#E7E7EB',
   font:'wenkai', titleSize:1, authorSize:1, dateSize:1, messageSize:1, align:'left', quality:'高清',
   colors:{day:{bg:'#F4EDE5',ink:'#342E2A',accent:'#ECAC81'},night:{bg:'#3A3D45',ink:'#E7E7EB',accent:'#A5A6AC'}},
   autoColor:{day:true,night:true},
@@ -752,6 +765,10 @@ function geometry(W,H,lay,side,A='day',B='night'){
     return{kind:'split',dir,k,A,B,panels:[{side:A,...d,poly:pd},{side:B,...n,poly:pn}]};
   }
   return{kind:'blend',dir:W>=H?'v':'h',A,B,panels:[{side:'blend',x:0,y:0,w:W,h:H}]};
+}
+function textInk(side,auto){
+  if(S.textMode!=='custom')return auto;
+  return side==='night'?S.textNight:S.textDay;
 }
 function bestInkFor(bg,prefer){
   const cands=[prefer,S.colors.day.ink,S.colors.night.ink].filter(Boolean);
@@ -983,7 +1000,7 @@ function drawPoster(ctx,W,H,opt={}){
     drawShot(ctx,s,{x,y,w,h},pl.side,u,opt.preview,pl.compare?(c2,r,rad)=>drawCompareHalf(c2,r,rad,pl.compare,u,opt.preview):null);
     hits.push({shot:s,side:pl.side,x,y,w,h});
     if(capOn&&pl.cap&&s.label){
-      const ink=bgAt?bestInkFor(bgAt(x+w/2,y+h)):inkAt(pl.side,y+h);
+      const ink=textInk(bgAt?posSide(x+w/2,y+h):pl.side,bgAt?bestInkFor(bgAt(x+w/2,y+h)):inkAt(pl.side,y+h));
       const pad=S.frame==='phone'?w*.045:S.frame==='corners'?u*1.2:0;
       ctx.font=font(u*1.85,f.bw,f);ctx.textAlign='center';ctx.fillStyle=rgba(ink,.74);
       const capX=pl.capX!==undefined?pl.capX+pl.capW/2+s.dx*mn:x+w/2;
@@ -992,12 +1009,16 @@ function drawPoster(ctx,W,H,opt={}){
   }
 
   /* text */
+  function posSide(x,y){ // which side a point of a blended poster sits on
+    if(geo.kind==='single')return singleSide;
+    return (geo.dir==='v'?x<W/2:y<H/2)?A:B;
+  }
   const drawEl=(e,ink)=>{ctx.font=font(e.size,e.w,f);ctx.textAlign=e.align;ctx.fillStyle=rgba(ink,e.alpha);if(e.maxW)fitText(ctx,e.t,e.x,e.y,e.maxW);else ctx.fillText(e.t,e.x,e.y);};
   if(geo.kind==='split'){
-    for(const p of geo.panels){ctx.save();panelPath(ctx,p);ctx.clip();els.forEach(e=>drawEl(e,inkAt(p.side,e.y)));ctx.restore();}
+    for(const p of geo.panels){ctx.save();panelPath(ctx,p);ctx.clip();els.forEach(e=>drawEl(e,textInk(p.side,inkAt(p.side,e.y))));ctx.restore();}
   }else if(geo.kind==='blend'){
-    for(const e of els){const bx=e.align==='left'?e.x+u*10:e.align==='right'?e.x-u*10:e.x;drawEl(e,bestInkFor(bgAt(bx,e.y)));}
-  }else els.forEach(e=>drawEl(e,inkAt(singleSide,e.y)));
+    for(const e of els){const bx=e.align==='left'?e.x+u*10:e.align==='right'?e.x-u*10:e.x;drawEl(e,textInk(posSide(bx,e.y),bestInkFor(bgAt(bx,e.y))));}
+  }else els.forEach(e=>drawEl(e,textInk(singleSide,inkAt(singleSide,e.y))));
 
   /* decorative rules (Lovia) */
   if(S.rules){
@@ -1013,23 +1034,23 @@ function drawPoster(ctx,W,H,opt={}){
     const fy=p=>p.y+p.h-m*.95-u*1.2;
     const sw=S.swatches&&!fivePal;
     let dotsLeft=m;
-    if(geo.kind==='single'){const p=geo.panels[0];drawFooter(ctx,singleSide,m,fy(p),'left',inkAt(singleSide,fy(p)),u,f,sw);dotsLeft=m+footLabelWidth(ctx,singleSide,u,f);}
+    if(geo.kind==='single'){const p=geo.panels[0];drawFooter(ctx,singleSide,m,fy(p),'left',textInk(singleSide,inkAt(singleSide,fy(p))),u,f,sw);dotsLeft=m+footLabelWidth(ctx,singleSide,u,f);}
     else if(geo.kind==='split'){
-      for(const p of geo.panels){let x=p.x+m;if(geo.k&&geo.dir==='v'&&p===geo.panels[1])x=p.x-geo.k*W+m;drawFooter(ctx,p.side,x,fy(p),'left',inkAt(p.side,fy(p)),u,f,sw);
+      for(const p of geo.panels){let x=p.x+m;if(geo.k&&geo.dir==='v'&&p===geo.panels[1])x=p.x-geo.k*W+m;drawFooter(ctx,p.side,x,fy(p),'left',textInk(p.side,inkAt(p.side,fy(p))),u,f,sw);
         if(p.y+p.h>=H-1)dotsLeft=Math.max(dotsLeft,x+footLabelWidth(ctx,p.side,u,f));}
     }else{
       const y=H-m*.95-u*1.2;
-      drawFooter(ctx,A,m,y,'left',bestInkFor(bgAt(m+u*8,y)),u,f,sw);
-      if(!fivePal)drawFooter(ctx,B,W-m,y,'right',bestInkFor(bgAt(W-m-u*8,y)),u,f,sw);
-      else if(S.sideLabels)drawFooter(ctx,B,m+footLabelWidth(ctx,A,u,f),y,'left',bestInkFor(bgAt(m+u*20,y)),u,f,false);
+      drawFooter(ctx,A,m,y,'left',textInk(posSide(m+u*8,y),bestInkFor(bgAt(m+u*8,y))),u,f,sw);
+      if(!fivePal)drawFooter(ctx,B,W-m,y,'right',textInk(posSide(W-m-u*8,y),bestInkFor(bgAt(W-m-u*8,y))),u,f,sw);
+      else if(S.sideLabels)drawFooter(ctx,B,m+footLabelWidth(ctx,A,u,f),y,'left',textInk(posSide(m+u*20,y),bestInkFor(bgAt(m+u*20,y))),u,f,false);
       dotsLeft=m+footLabelWidth(ctx,A,u,f)+(fivePal?footLabelWidth(ctx,B,u,f):0);
     }
     if(fivePal){
       const y=H-m*.95-u*1.2,x=W-m;
       let ink;
-      if(geo.kind==='single')ink=inkAt(singleSide,y);
-      else if(geo.kind==='split')ink=inkAt(geo.panels[1].side,y);
-      else ink=bestInkFor(bgAt(x-u*10,y));
+      if(geo.kind==='single')ink=textInk(singleSide,inkAt(singleSide,y));
+      else if(geo.kind==='split')ink=textInk(geo.panels[1].side,inkAt(geo.panels[1].side,y));
+      else ink=textInk(posSide(x-u*10,y),bestInkFor(bgAt(x-u*10,y)));
       drawDots(ctx,S.five,x,y,'right',ink,u,x-dotsLeft-u*2);
     }
   }
@@ -1277,6 +1298,7 @@ function syncLayoutUI(){
   $('#bgDesc').textContent=BG_DESC[S.bg]||'';
   $('#fiveRow').hidden=S.palette!=='five';
   $('#ruleColorRow').hidden=!S.rules;$('#ruleOpRow').hidden=!S.rules;
+  $('#textColorRows').hidden=S.textMode!=='custom';
 }
 $$('#layouts button').forEach(b=>b.addEventListener('click',()=>{S.layout=b.dataset.layout;S.sel=null;syncLayoutUI();syncSel();req();}));
 $$('#ratios button').forEach(b=>b.addEventListener('click',()=>{S.ratio=b.dataset.ratio;$$('#ratios button').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));syncQuality();req();}));
@@ -1331,6 +1353,10 @@ const sliders=[
 for(const[id,set,fmt]of sliders){const el=$('#'+id);const out=$('#'+id+'Out');const h=()=>{set(Number(el.value));out.textContent=fmt(el.value);req();};el.addEventListener('input',h);h();}
 $('#rules').addEventListener('change',e=>{S.rules=e.target.checked;syncLayoutUI();req();});
 $('#ruleColor').addEventListener('input',e=>{S.ruleColor=e.target.value.toUpperCase();req();});
+function syncTextColors(){for(const k of['textDay','textNight']){$('#'+k).value=S[k].toLowerCase();$('#'+k+'Hex').textContent=S[k];if($('#'+k).dataset.androidHsv)$('#'+k).style.backgroundColor=S[k];}}
+for(const k of['textDay','textNight'])$('#'+k).addEventListener('input',e=>{S[k]=e.target.value.toUpperCase();$('#'+k+'Hex').textContent=S[k];req();});
+// switching to custom starts from the colours the poster shows now
+$$('[data-seg="textMode"] button').forEach(b=>b.addEventListener('click',()=>{if(b.dataset.v==='custom'&&!S.textTouched){S.textDay=S.colors.day.ink;S.textNight=S.colors.night.ink;S.textTouched=true;syncTextColors();req();}}));
 
 /* ---------------- UI: colours ---------------- */
 function syncColorInputs(){
@@ -1360,12 +1386,13 @@ function renderFive(){
     const n=document.createElement('span');n.textContent=String(i+1).padStart(2,'0');l.append(inp,n);box.append(l);});
 }
 $('#fiveAuto').addEventListener('click',()=>{S.fiveCustom=false;autoFive();renderFive();req();status('已重新取色。');});
+const keptFiles={bg:null,cover:null,font:null}; // the files behind the uploaded backdrop, cover and font
 async function pickImage(input,nameEl,set){
   const file=input.files[0];input.value='';if(!file)return;
-  try{const im=await fileToImage(file);set(im);nameEl.textContent=file.name;req();}catch(err){status(err.message);}
+  try{const im=await fileToImage(file);set(im,file);nameEl.textContent=file.name;req();}catch(err){status(err.message);}
 }
-$('#bgFile').addEventListener('change',e=>pickImage(e.target,$('#bgFileName'),im=>S.bgImage=im));
-$('#coverFile').addEventListener('change',e=>pickImage(e.target,$('#coverFileName'),im=>S.cover=im));
+$('#bgFile').addEventListener('change',e=>pickImage(e.target,$('#bgFileName'),(im,f)=>{S.bgImage=im;keptFiles.bg=f;}));
+$('#coverFile').addEventListener('change',e=>pickImage(e.target,$('#coverFileName'),(im,f)=>{S.cover=im;keptFiles.cover=f;}));
 
 /* ---------------- UI: text ---------------- */
 const textIds=['title','tagline','author','date','message','labelDay','labelNight'];
@@ -1388,12 +1415,16 @@ async function ensureFont(){
   const f=curFont();const txt=[S.title,S.tagline,S.author,S.date,S.message,S.labelDay,S.labelNight,'首頁書架閱讀頁目錄筆記#0123456789ABCDEF'].join('');
   try{await Promise.race([Promise.all([document.fonts.load(`${f.tw} 40px "${f.fam}"`,txt),document.fonts.load(`${f.bw} 40px "${f.fam}"`,txt)]),new Promise(r=>setTimeout(r,4000))]);}catch(e){}
 }
+async function loadLocalFont(file){
+  if(!('FontFace'in window))throw new Error('這個瀏覽器不支援匯入字體。');
+  const face=new FontFace('ShowcaseLocal',await file.arrayBuffer());await face.load();document.fonts.add(face);
+  localFont={name:(file.name||'font').replace(/\.[^.]+$/,'').slice(0,10),stack:'"ShowcaseLocal",serif',fam:'ShowcaseLocal',tw:400,bw:400};
+  keptFiles.font=file;
+}
 $('#fontFile').addEventListener('change',async e=>{
   const file=e.target.files[0];e.target.value='';if(!file)return;
   try{
-    if(!('FontFace'in window))throw new Error('這個瀏覽器不支援匯入字體。');
-    const face=new FontFace('ShowcaseLocal',await file.arrayBuffer());await face.load();document.fonts.add(face);
-    localFont={name:file.name.replace(/\.[^.]+$/,'').slice(0,10),stack:'"ShowcaseLocal",serif',fam:'ShowcaseLocal',tw:400,bw:400};
+    await loadLocalFont(file);
     S.font='local';renderFonts();req();status(`已套用字體「${localFont.name}」。`);
   }catch(err){status(err.message&&err.message.includes('瀏覽器')?err.message:'這個字體檔無法讀取，請確認是 TTF、OTF、WOFF 或 WOFF2。');}
 });
@@ -1556,6 +1587,45 @@ if(window.LoviaStudio){
   });
 }
 
+/* ---------------- saved settings (設置) ---------------- */
+const PRESET_KEYS=['ratio','layout','single','splitDir','tilt','order','compareAt','compareHandle','size','gap','radius','frame',
+  'rules','ruleColor','ruleOpacity','bg','tint','grain','customBg','tbTop','tbBottom','tbCustom','bgBlur','bgOpacity','glass',
+  'palette','five','fiveCustom','swatches','hexes','title','tagline','author','message','showDate','sideLabels','labelDay','labelNight',
+  'captions','font','titleSize','authorSize','dateSize','messageSize','align','quality','colors','autoColor','textMode','textDay','textNight','textTouched'];
+function collectSettings(){
+  const settings={};for(const k of PRESET_KEYS)if(S[k]!==undefined)settings[k]=JSON.parse(JSON.stringify(S[k]));
+  const files={};
+  if(S.bg==='image'&&keptFiles.bg)files.bg=keptFiles.bg;
+  if(S.bg==='glass'&&keptFiles.cover)files.cover=keptFiles.cover;
+  if(S.font==='local'&&keptFiles.font)files.font=keptFiles.font;
+  return{settings,files};
+}
+const SLIDER_FROM_S={size:100,gap:100,radius:100,tint:100,grain:100,titleSize:100,authorSize:100,dateSize:100,messageSize:100,bgBlur:1,bgOpacity:100,glass:100,ruleOpacity:100,compareAt:100};
+async function applySettings(st,files={}){
+  for(const k of PRESET_KEYS)if(k in st)S[k]=JSON.parse(JSON.stringify(st[k]));
+  S.sel=null;
+  const asFile=(b,n)=>b instanceof File?b:new File([b],n,{type:b.type});
+  try{if(files.bg){const f=asFile(files.bg,'background');S.bgImage=await fileToImage(f);keptFiles.bg=f;$('#bgFileName').textContent=f.name;}}catch(e){}
+  try{if(files.cover){const f=asFile(files.cover,'cover');S.cover=await fileToImage(f);keptFiles.cover=f;$('#coverFileName').textContent=f.name;}}catch(e){}
+  try{if(files.font)await loadLocalFont(asFile(files.font,'font'));}catch(e){}
+  if(S.font==='local'?!localFont:!FONTS[S.font])S.font='wenkai';
+  if(S.bg==='image'&&!S.bgImage)S.bg='solid';
+  // controls
+  $$('#ratios button').forEach(x=>x.setAttribute('aria-pressed',String(x.dataset.ratio===S.ratio)));
+  $$('[data-seg]').forEach(seg=>{const k=seg.dataset.seg;if(k!=='quality'&&S[k]!==undefined)setSeg(k,S[k]);});
+  for(const[id,f]of Object.entries(SLIDER_FROM_S)){const el=$('#'+id);if(!el)continue;el.value=String(Math.round(S[id]*f));el.dispatchEvent(new Event('input'));}
+  $('#rules').checked=S.rules;$('#ruleColor').value=S.ruleColor.toLowerCase();
+  for(const id of['showDate','sideLabels','captions','swatches','hexes','compareHandle'])$('#'+id).checked=!!S[id];
+  for(const id of['title','tagline','author','message','labelDay','labelNight'])$('#'+id).value=S[id];
+  toneCache.clear();
+  for(const side of['day','night'])if(S.autoColor[side])autoColors(side);
+  refreshDerived();
+  if(!S.tbCustom)autoTB();
+  if(!S.fiveCustom)autoFive();
+  syncColorInputs();syncTextColors();renderFonts();syncQuality();syncLayoutUI();syncSel();
+  await ensureFont();req();
+}
+
 /* ---------------- init ---------------- */
 async function init(){
   syncQuality();syncColorInputs();setSeg('frame',S.frame);setSeg('bg',S.bg);setSeg('align',S.align);setSeg('tilt',S.tilt);setSeg('palette',S.palette);setSeg('order',S.order);setSeg('scaleMode',S.scaleMode);
@@ -1564,6 +1634,7 @@ async function init(){
   await loadSamples();renderLists();syncSel();req();
   readyResolve();
   ensureFont().then(req);
+  if(window.LoviaStudio&&LoviaStudio.mountPresets)LoviaStudio.mountPresets({bar:$('#presetBar'),saveButtons:[$('#savePreset')],collect:collectSettings,apply:applySettings,notify:status});
 }
 init();
 })();
