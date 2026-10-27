@@ -17,7 +17,7 @@
     '键鍵闭閉阅閱阴陰随隨预預题題颜顏风風饰飾饱飽鲜鮮顶頂击擊并並机機横橫画畫盘盤确確约約胧朧师師' +
     '两兩汇匯昼晝标標档檔没沒准準产產码碼积積笔筆签籤红紅纸紙给給缀綴脑腦盖蓋里裡记記详詳这這录錄' +
     '长長间間电電页頁顺順颗顆么麼齐齊鹜鶩较較寻尋经經级級志誌萤螢着著组組启啟带帶范範钮鈕内內' +
-    '删刪区區结結连連链鏈侧側订訂项項压壓备備扫掃畅暢轮輪转轉云雲别別继繼续續';
+    '删刪区區结結连連链鏈侧側订訂项項压壓备備扫掃畅暢轮輪转轉云雲别別继繼续續栏欄还還';
   // whole words that differ beyond single characters
   const WORDS_S2T = [['屏幕', '螢幕'], ['复制', '複製'], ['视频', '影片'], ['相册', '相簿'], ['制作', '製作']];
   const s2t = new Map(), t2s = new Map();
@@ -367,13 +367,14 @@
       return blob && blob.size < file.size ? new File([blob], (file.name || 'image').replace(/\.[^.]+$/, '') + '.jpg', { type: 'image/jpeg' }) : file;
     } catch (e) { return file; }
   }
+  const isFontSlot = k => /^font\d*$/.test(k);
   // fonts never go to the cloud; a saved setting only names its font. Look for the same file in this browser's saved settings.
   async function findLocalFont(meta) {
     if (!meta || !meta.name) return null;
     try {
       const all = await fileOp('readonly', st => st.getAll());
-      for (const set of all || []) {
-        const f = set && set.font;
+      for (const set of all || []) for (const k of Object.keys(set || {})) {
+        const f = /^font\d*$/.test(k) && set[k];
         if (f && (f.name || '') === meta.name && (!meta.size || f.size === meta.size)) return f;
       }
     } catch (e) {}
@@ -438,7 +439,7 @@
         const it = readList().find(x => x.id === p.id) || p;
         const files = it.files && it.files.length ? (await getFiles(it.id)) || {} : {};
         const meta = {}; for (const k of Object.keys(files)) meta[k] = { name: files[k].name || '', type: files[k].type || '', size: files[k].size || 0 };
-        const up = {}; for (const k of Object.keys(files)) if (k !== 'font') up[k] = await shrinkImage(files[k]);
+        const up = {}; for (const k of Object.keys(files)) if (!isFontSlot(k)) up[k] = await shrinkImage(files[k]);
         const body = { data: { page: PAGE, name: it.name, settings: it.settings, files: meta }, title: it.name, schema_version: PAGE === 'lovia' ? 'lovia-1' : 'dn-0' };
         let c = it.cloud, fresh = false;
         if (!c || !c.key) { const r = await RC.create('showcase', body); c = { id: r.id, key: r.key, slots: [] }; fresh = true; }
@@ -472,14 +473,17 @@
           files[f.slot] = new File([b], m.name || f.filename || f.slot, { type: m.type || f.mime || b.type });
         } catch (e) {}
       }
-      const fontMeta = d.files && d.files.font;
-      if (fontMeta && !files.font) { const f = await findLocalFont(fontMeta); if (f) files.font = f; }
-      const missingFont = fontMeta && !files.font;
+      const missing = [];
+      for (const [sl, fontMeta] of Object.entries(d.files || {})) {
+        if (!isFontSlot(sl) || files[sl]) continue;
+        const f = await findLocalFont(fontMeta); if (f) files[sl] = f; else missing.push(fontMeta.name || '');
+      }
+      const missingFont = missing.length > 0;
       const st = JSON.parse(JSON.stringify(d.settings));
-      if (missingFont && PAGE === 'lovia' && st.font === 'uploaded') st.font = 'kinghwa';
+      if (missingFont && PAGE === 'lovia' && st.font === 'uploaded' && !files.font) st.font = 'kinghwa';
       await o.apply(st, files);
       const name = d.name || w.title || fromSrc(PT.name);
-      const fontNote = missingFont ? fill(PT.noFont, fontMeta.name || '') : '';
+      const fontNote = missingFont ? fill(PT.noFont, missing.join('、')) : '';
       if (w.owner) {
         const l = readList(); let it = l.find(x => x.cloud && x.cloud.id === link.id); const had = !!it;
         if (!it) { it = { id: 'p' + Date.now().toString(36), name, settings: st, files: [], at: Date.now() }; l.push(it); }
