@@ -245,8 +245,10 @@
         cloud: '存到云端', cloudUpdate: '更新云端', cloudBusy: '储存中…', cloudSaved: '已把「%」存到云端，分享链接已复制。', cloudUpdated: '已更新云端的「%」。',
         share: '复制分享链接', edit: '复制编辑链接', shareDone: '已复制分享链接，对方打开就能套用（含底图和封面，不含字体）。', editDone: '已复制编辑链接，请自己保存好。',
         cloudNote: '存到云端后，分享链接会带上底图和封面；编辑链接可以在别的装置继续修改，请不要给别人。',
-        cloudOpened: '已套用云端设置「%」。想留着用，请到导出按「储存本次设定」。', cloudOwned: '已打开云端设置「%」，并加到「我的设置」。', noFont: '这个设置用了上传的字体，分享链接不含字体，请自己上传。',
-        loading: '正在读取云端设置…', mine: '我的作品集', make: '制作', toMine: '看我的作品集', open: '打开', goOn: '继续改', current: '目前这个', noThumb: '套用一次就会有预览图', styleLovia: 'Lovia 经典', styleDn: 'Day Night',
+        cloudOpened: '已套用云端设置「%」。想留着用，请到导出按「储存本次设定」。', cloudOwned: '已打开云端设置「%」，并加到「我的设置」。', noFont: '这个设置用的字体「%」这台装置没有，先用默认字体；上传同一个字体就会换回来。',
+        loading: '正在读取云端设置…', mine: '我的作品集', make: '制作', toMine: '看我的作品集', open: '打开', goOn: '继续改', current: '目前这个', noThumb: '套用一次就会有预览图', remove: '移除', removeSure: '确定移除？', collLabel: '作品集链接', collCopy: '复制作品集链接', collDone: '已复制作品集链接，请自己保存好。', collMoved: '已把作品集搬到这台装置。', collMissing: '找不到这个作品集，链接可能不完整。',
+        h: 0, hMine: '你的代号：%。别人输入代号就能看你的作品集，也能套用成自己的一份，但改不到你的作品。', hCopy: '复制作品集页链接', hCopied: '已复制作品集页链接，可以直接分享。', hPwBtn: '改密码', hPwNew: '新密码（至少 6 个字）', hSave: '储存', hPwDone: '密码改好了。', hClaimNote: '取一个代号：别人输入代号就能看你的作品集；换装置时输入代号和密码，就能拿回全部作品继续改。忘记密码就救不回来，请记好。', hName: '代号', hPw: '密码', hPwMin: '密码（至少 6 个字）', hCreate: '建立', hCreated: '代号「%」建立好了。', hLoginSum: '在别的装置做过？用代号和密码拿回作品', hLogin: '登入', hLoggedIn: '已用「%」拿回作品集。', hLook: '看别人的作品集', hLookBtn: '查看', hNotFound: '找不到这个代号。', oHead: '「%」的作品集：可以打开看、套用成自己的一份，改不到原本的作品。', oBack: '← 回到我的作品集', oSvg: '看 SVG 工坊的作品', oNone: '这个作品集里没有展示作品。', oApply: '打开套用', oNoThumb: '没有预览图',
+        collNote: '在新装置打开作品集链接，就能把整个作品集搬过去。这个链接可以修改你所有的作品，请自己保存好，不要给别人。', styleLovia: 'Lovia 经典', styleDn: 'Day Night',
         mineNote: '这台装置存过云端的设置，两种风格都在这里；在别的装置用编辑链接打开过的，也会列在那台装置上。', mineEmpty: '目前没有存到云端的设置。在「我的设置」按设置旁的「⋯」，再按「存到云端」，就会出现在这里。' }
     : { name: '設置', saved: '已存成「%」，下次在「我的設置」點一下就能套用。', applied: '已套用「%」，換上新截圖就好。', link: '已複製設置連結，貼到其他裝置或傳給朋友打開就能套用（不含截圖和上傳的檔案）。',
         linkFail: '無法自動複製，請長按下面的連結複製：', fromLink: '已套用連結裡的設置。想留著用，請到匯出按「儲存本次設定」。', del: '刪除', delSure: '確定刪除？',
@@ -254,8 +256,10 @@
         cloud: '存到雲端', cloudUpdate: '更新雲端', cloudBusy: '儲存中…', cloudSaved: '已把「%」存到雲端，分享連結已複製。', cloudUpdated: '已更新雲端的「%」。',
         share: '複製分享連結', edit: '複製編輯連結', shareDone: '已複製分享連結，對方打開就能套用（含底圖和封面，不含字體）。', editDone: '已複製編輯連結，請自己保存好。',
         cloudNote: '存到雲端後，分享連結會帶上底圖和封面；編輯連結可以在別的裝置繼續修改，請不要給別人。',
-        cloudOpened: '已套用雲端設置「%」。想留著用，請到匯出按「儲存本次設定」。', cloudOwned: '已打開雲端設置「%」，並加到「我的設置」。', noFont: '這個設置用了上傳的字體，分享連結不含字體，請自己上傳。',
-        loading: '正在讀取雲端設置…', mine: '我的作品集', make: '製作', toMine: '看我的作品集', open: '打開', goOn: '繼續改', current: '目前這個', noThumb: '套用一次就會有預覽圖', styleLovia: 'Lovia 經典', styleDn: 'Day Night',
+        cloudOpened: '已套用雲端設置「%」。想留著用，請到匯出按「儲存本次設定」。', cloudOwned: '已打開雲端設置「%」，並加到「我的設置」。', noFont: '這個設置用的字體「%」這台裝置沒有，先用默認字體；上傳同一個字體就會換回來。',
+        loading: '正在讀取雲端設置…', mine: '我的作品集', make: '製作', toMine: '看我的作品集', open: '打開', goOn: '繼續改', current: '目前這個', noThumb: '套用一次就會有預覽圖', remove: '移除', removeSure: '確定移除？', collLabel: '作品集連結', collCopy: '複製作品集連結', collDone: '已複製作品集連結，請自己保存好。', collMoved: '已把作品集搬到這台裝置。', collMissing: '找不到這個作品集，連結可能不完整。',
+        h: 0, hMine: '你的代號：%。別人輸入代號就能看你的作品集，也能套用成自己的一份，但改不到你的作品。', hCopy: '複製作品集頁連結', hCopied: '已複製作品集頁連結，可以直接分享。', hPwBtn: '改密碼', hPwNew: '新密碼（至少 6 個字）', hSave: '儲存', hPwDone: '密碼改好了。', hClaimNote: '取一個代號：別人輸入代號就能看你的作品集；換裝置時輸入代號和密碼，就能拿回全部作品繼續改。忘記密碼就救不回來，請記好。', hName: '代號', hPw: '密碼', hPwMin: '密碼（至少 6 個字）', hCreate: '建立', hCreated: '代號「%」建立好了。', hLoginSum: '在別的裝置做過？用代號和密碼拿回作品', hLogin: '登入', hLoggedIn: '已用「%」拿回作品集。', hLook: '看別人的作品集', hLookBtn: '查看', hNotFound: '找不到這個代號。', oHead: '「%」的作品集：可以打開看、套用成自己的一份，改不到原本的作品。', oBack: '← 回到我的作品集', oSvg: '看 SVG 工坊的作品', oNone: '這個作品集裡沒有展示作品。', oApply: '打開套用', oNoThumb: '沒有預覽圖',
+        collNote: '在新裝置打開作品集連結，就能把整個作品集搬過去。這個連結可以修改你所有的作品，請自己保存好，不要給別人。', styleLovia: 'Lovia 經典', styleDn: 'Day Night',
         mineNote: '這台裝置存過雲端的設置，兩種風格都在這裡；在別的裝置用編輯連結打開過的，也會列在那台裝置上。', mineEmpty: '目前沒有存到雲端的設置。在「我的設置」按設置旁的「⋯」，再按「存到雲端」，就會出現在這裡。' };
   const PCSS = `
   .sp{display:grid;gap:8px;margin:4px 0 14px}
@@ -292,6 +296,17 @@
   .sg-none{display:grid;place-items:center;aspect-ratio:4/3;border:1px dashed var(--sp-line,rgba(46,57,49,.28));border-radius:8px;font-size:12px;opacity:.6;text-align:center;padding:10px}
   .sg-t{display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 8px;font-size:14px;min-width:0}
   .sg-t b{font-weight:600;overflow-wrap:anywhere}
+  .sg-coll{display:grid;gap:6px;margin-top:10px;justify-items:start}
+  .sg-coll .sp-note{color:#b4533f;opacity:1}
+  .sg-h{display:grid;gap:8px;margin-top:12px;padding:12px;border:1px solid var(--sp-line,rgba(46,57,49,.28));border-radius:12px;background:var(--sp-bg,#fff);font-size:13px}
+  .sg-h form{display:flex;flex-wrap:wrap;gap:6px;margin:0;align-items:center}
+  .sg-h input{flex:1 1 120px;min-width:0;box-sizing:border-box;border:1px solid var(--sp-line,rgba(46,57,49,.28));border-radius:8px;padding:7px 10px;font:inherit;background:transparent;color:inherit}
+  .sg-h button{border:1px solid var(--sp-line,rgba(46,57,49,.28));background:transparent;color:inherit;border-radius:8px;padding:7px 10px;font:inherit;cursor:pointer}
+  .sg-h summary{cursor:pointer;opacity:.75}
+  .sg-h details form{margin-top:6px}
+  .sg-h p{margin:0;line-height:1.5}
+  .sg-h [hidden]{display:none!important}
+  .sp-acts .sp-rm[data-sure]{border-color:#b4533f;color:#b4533f}
   .sp-tag{font-size:11px;opacity:.6}`;
   const presetKey = 'studio.presets.' + PAGE;
   const readList = (page = PAGE) => { try { return JSON.parse(store.get('studio.presets.' + page) || '[]'); } catch (e) { return []; } };
@@ -319,7 +334,7 @@
   let cloudLoad = null;
   const cloud = () => cloudLoad || (cloudLoad = new Promise(res => {
     if (window.ReedenCloud) return res(window.ReedenCloud);
-    const sc = document.createElement('script'); sc.src = '/shared/cloud.v1.js';
+    const sc = document.createElement('script'); sc.src = '/shared/cloud.v1.js?v=2';
     sc.onload = () => res(window.ReedenCloud || null); sc.onerror = () => res(null);
     document.head.append(sc);
   }));
@@ -334,6 +349,30 @@
     } catch (e) { return null; }
   }
   const settle = () => new Promise(r => setTimeout(r, 600));
+  // backgrounds and covers go up no larger than the poster (3600 px), as JPEG when that is smaller
+  async function shrinkImage(file, max = 3600) {
+    try {
+      const bmp = await createImageBitmap(file);
+      const k = Math.min(1, max / Math.max(bmp.width, bmp.height));
+      if (k === 1 && file.size < 2.5e6) return file;
+      const c = document.createElement('canvas'); c.width = Math.round(bmp.width * k); c.height = Math.round(bmp.height * k);
+      c.getContext('2d').drawImage(bmp, 0, 0, c.width, c.height);
+      const blob = await new Promise(r => c.toBlob(r, 'image/jpeg', 0.9));
+      return blob && blob.size < file.size ? new File([blob], (file.name || 'image').replace(/\.[^.]+$/, '') + '.jpg', { type: 'image/jpeg' }) : file;
+    } catch (e) { return file; }
+  }
+  // fonts never go to the cloud; a saved setting only names its font. Look for the same file in this browser's saved settings.
+  async function findLocalFont(meta) {
+    if (!meta || !meta.name) return null;
+    try {
+      const all = await fileOp('readonly', st => st.getAll());
+      for (const set of all || []) {
+        const f = set && set.font;
+        if (f && (f.name || '') === meta.name && (!meta.size || f.size === meta.size)) return f;
+      }
+    } catch (e) {}
+    return null;
+  }
 
   function mountPresets(o) {
     // o: {bar, saveButtons[], collect():{settings, files}, apply(settings, files), notify(msg)}
@@ -392,16 +431,19 @@
       try {
         const it = readList().find(x => x.id === p.id) || p;
         const files = it.files && it.files.length ? (await getFiles(it.id)) || {} : {};
-        const meta = {}; for (const k of Object.keys(files)) meta[k] = { name: files[k].name || '', type: files[k].type || '' };
+        const meta = {}; for (const k of Object.keys(files)) meta[k] = { name: files[k].name || '', type: files[k].type || '', size: files[k].size || 0 };
+        const up = {}; for (const k of Object.keys(files)) if (k !== 'font') up[k] = await shrinkImage(files[k]);
         const body = { data: { page: PAGE, name: it.name, settings: it.settings, files: meta }, title: it.name, schema_version: PAGE === 'lovia' ? 'lovia-1' : 'dn-0' };
         let c = it.cloud, fresh = false;
         if (!c || !c.key) { const r = await RC.create('showcase', body); c = { id: r.id, key: r.key, slots: [] }; fresh = true; }
         else await RC.update('showcase', c.id, c.key, body);
-        for (const k of Object.keys(files)) await RC.putFile('showcase', c.id, c.key, k, files[k], files[k].name || k);
-        for (const k of c.slots || []) if (!files[k]) await RC.deleteFile('showcase', c.id, c.key, k).catch(() => {});
-        c.slots = Object.keys(files); c.at = Date.now();
+        for (const k of Object.keys(up)) await RC.putFile('showcase', c.id, c.key, k, up[k], up[k].name || k);
+        for (const k of c.slots || []) if (!up[k] && k !== 'thumb') await RC.deleteFile('showcase', c.id, c.key, k).catch(() => {});
+        const th = (readList().find(y => y.id === it.id) || {}).thumb;
+        if (th) await RC.putFile('showcase', c.id, c.key, 'thumb', await (await fetch(th)).blob(), 'thumb.jpg').catch(() => {});
+        c.slots = Object.keys(up); c.at = Date.now();
         const l = readList(), x = l.find(y => y.id === it.id); if (x) { x.cloud = c; writeList(l); }
-        render();
+        render(); syncMine({ keep: [c.id] });
         if (fresh) { try { await navigator.clipboard.writeText(RC.links(c.id).share); notify(fill(PT.cloudSaved, it.name)); } catch (e) { notify(fill(PT.cloudUpdated, it.name)); } }
         else notify(fill(PT.cloudUpdated, it.name));
       } catch (e) { notify(RC.message(e)); }
@@ -417,28 +459,58 @@
       if (!d.settings) return;
       const files = {};
       for (const f of w.files || []) {
+        if (f.slot === 'thumb') continue;
         try {
           const b = await RC.getFile('showcase', link.id, f.slot, link.key);
           const m = (d.files || {})[f.slot] || {};
           files[f.slot] = new File([b], m.name || f.filename || f.slot, { type: m.type || f.mime || b.type });
         } catch (e) {}
       }
-      await o.apply(JSON.parse(JSON.stringify(d.settings)), files);
+      const fontMeta = d.files && d.files.font;
+      if (fontMeta && !files.font) { const f = await findLocalFont(fontMeta); if (f) files.font = f; }
+      const missingFont = fontMeta && !files.font;
+      const st = JSON.parse(JSON.stringify(d.settings));
+      if (missingFont && PAGE === 'lovia' && st.font === 'uploaded') st.font = 'kinghwa';
+      await o.apply(st, files);
       const name = d.name || w.title || fromSrc(PT.name);
-      const missingFont = d.files && d.files.font && !files.font;
+      const fontNote = missingFont ? fill(PT.noFont, fontMeta.name || '') : '';
       if (w.owner) {
         const l = readList(); let it = l.find(x => x.cloud && x.cloud.id === link.id); const had = !!it;
-        if (!it) { it = { id: 'p' + Date.now().toString(36), name, settings: d.settings, files: [], at: Date.now() }; l.push(it); }
-        it.name = name; it.settings = d.settings; it.files = Object.keys(files); it.at = Date.now();
-        it.cloud = { id: link.id, key: link.key, slots: (w.files || []).map(f => f.slot), at: w.updated_at || Date.now() };
+        if (!it) { it = { id: 'p' + Date.now().toString(36), name, settings: st, files: [], at: Date.now() }; l.push(it); }
+        it.name = name; it.settings = st; it.files = Object.keys(files); it.at = Date.now();
+        it.cloud = { id: link.id, key: link.key, slots: (w.files || []).map(f => f.slot).filter(x => x !== 'thumb'), at: w.updated_at || Date.now() };
+        writeOnly(readOnly().filter(x => x.id !== link.id));
         if (writeList(l)) { try { await putFiles(it.id, files); } catch (e) { it.files = []; writeList(l); } }
-        activeId = it.id; render(); notify(fill(had ? PT.applied : PT.cloudOwned, name));
-        settle().then(() => setThumb(it.id));
-      } else notify(fill(PT.cloudOpened, name) + (missingFont ? fromSrc(PT.noFont) : ''));
+        activeId = it.id; render(); notify(fill(had ? PT.applied : PT.cloudOwned, name) + fontNote);
+        settle().then(() => setThumb(it.id)); syncMine({ keep: [link.id] });
+      } else notify(fill(PT.cloudOpened, name) + fontNote);
     }
     // every cloud-saved setting in this browser, from both styles
-    const mineList = () => ['lovia', 'daynight'].flatMap(pg => readList(pg).filter(p => p.cloud && p.cloud.key).map(p => ({ p, page: pg })))
-      .sort((a, b) => (b.p.cloud.at || b.p.at || 0) - (a.p.cloud.at || a.p.at || 0));
+    // works that came in through the collection from another device and have not been opened here yet
+    const readOnly = () => { try { return JSON.parse(store.get('studio.cloudOnly') || '[]'); } catch (e) { return []; } };
+    const writeOnly = l => store.set('studio.cloudOnly', JSON.stringify(l));
+    const mineList = () => {
+      const own = ['lovia', 'daynight'].flatMap(pg => readList(pg).filter(p => p.cloud && p.cloud.key).map(p => ({ p, page: pg })));
+      const ids = new Set(own.map(x => x.p.cloud.id));
+      const far = readOnly().filter(x => !ids.has(x.id) && PAGE_FILE[x.page]).map(x => ({ p: { id: 'c' + x.id, name: x.name, cloud: { id: x.id, key: x.key, at: x.at } }, page: x.page, far: true }));
+      return own.concat(far).sort((a, b) => (b.p.cloud.at || b.p.at || 0) - (a.p.cloud.at || a.p.at || 0));
+    };
+    // merge this browser's works into the cloud collection, then take in what other devices added or removed
+    function syncMine(opt) {
+      if (!RC || !RC.collection) return Promise.resolve();
+      const local = mineList().map(({ p, page }) => ({ id: p.cloud.id, key: p.cloud.key, name: p.name, page, at: p.cloud.at || p.at }));
+      return RC.collection.sync('showcase', local, opt).then(all => {
+        const gone = new Set(all.removed || []);
+        for (const pg of ['lovia', 'daynight']) {
+          const l = readList(pg); let ch = false;
+          for (const x of l) if (x.cloud && gone.has(x.cloud.id)) { delete x.cloud; ch = true; }
+          if (ch) store.set('studio.presets.' + pg, JSON.stringify(l));
+        }
+        const known = new Set(mineList().filter(x => !x.far).map(x => x.p.cloud.id));
+        writeOnly(all.filter(it => it.tool === 'showcase' && !known.has(it.id) && PAGE_FILE[it.page]).map(it => ({ id: it.id, key: it.key, name: it.name || '', page: it.page, at: it.at || 0 })));
+        render();
+      }).catch(() => {});
+    }
     // the gallery tab: every cloud-saved setting from both styles, shown as its poster
     let nav = null, gal = null;
     function mountGallery() {
@@ -452,7 +524,7 @@
       const n = mineList().length;
       for (const [v, txt] of [['make', fromSrc(PT.make)], ['mine', fromSrc(PT.mine) + (n ? ' · ' + n : '')]]) {
         const b = document.createElement('button'); b.type = 'button'; b.setAttribute('role', 'tab'); b.textContent = txt; b.setAttribute('aria-selected', String(view === v));
-        b.addEventListener('click', () => setView(v)); nav.append(b);
+        b.addEventListener('click', () => { if (v === 'mine') other = null; setView(v); }); nav.append(b);
       }
     }
     function setView(v) {
@@ -462,14 +534,17 @@
     }
     function renderMine() {
       if (!gal) return; gal.textContent = '';
+      if (other) return renderOther();
       const items = mineList();
       const note = document.createElement('p'); note.className = 'sp-note'; note.textContent = fromSrc(items.length ? PT.mineNote : PT.mineEmpty);
       const grid = document.createElement('div'); grid.className = 'sg-grid';
-      for (const { p, page } of items) {
+      for (const { p, page, far } of items) {
         const cur = page === PAGE && p.id === activeId;
         const card = document.createElement('div'); card.className = 'sg-card'; if (cur) card.dataset.cur = '';
-        if (p.thumb) { const im = document.createElement('img'); im.src = p.thumb; im.alt = p.name; im.loading = 'lazy'; card.append(im); }
-        else { const n = document.createElement('div'); n.className = 'sg-none'; n.textContent = fromSrc(PT.noThumb); card.append(n); }
+        const none = () => { const n = document.createElement('div'); n.className = 'sg-none'; n.textContent = fromSrc(PT.noThumb); return n; };
+        const src = p.thumb || (RC.fileUrl && RC.fileUrl('showcase', p.cloud.id, 'thumb') + '?t=' + (p.cloud.at || 0));
+        if (src) { const im = document.createElement('img'); im.src = src; im.alt = p.name; im.loading = 'lazy'; im.onerror = () => im.replaceWith(none()); card.append(im); }
+        else card.append(none());
         const t = document.createElement('div'); t.className = 'sg-t';
         const n = document.createElement('b'); n.textContent = p.name; n.setAttribute('data-i18n-skip', '');
         const tag = document.createElement('span'); tag.className = 'sp-tag'; tag.textContent = fromSrc(page === 'lovia' ? PT.styleLovia : PT.styleDn);
@@ -481,14 +556,96 @@
         const acts = document.createElement('div'); acts.className = 'sp-acts';
         const b = (txt, fn) => { const x = document.createElement('button'); x.type = 'button'; x.textContent = fromSrc(txt); x.addEventListener('click', fn); acts.append(x); };
         b(cur ? PT.goOn : PT.open, () => {
-          if (page === PAGE) { setView('make'); if (!cur) apply(p); }
+          if (page === PAGE && far) { setView('make'); openCloud({ id: p.cloud.id, key: p.cloud.key }); }
+          else if (page === PAGE) { setView('make'); if (!cur) apply(p); }
           else location.href = PAGE_FILE[page] + '#w=' + p.cloud.id + '.' + p.cloud.key;
         });
         b(PT.share, () => copyUrl(RC.links(p.cloud.id).share.replace(/[^/]*#/, PAGE_FILE[page] + '#'), card, PT.shareDone));
         b(PT.edit, () => copyUrl(RC.links(p.cloud.id, p.cloud.key).edit.replace(/[^/]*#/, PAGE_FILE[page] + '#'), card, PT.editDone));
+        const rm = document.createElement('button'); rm.type = 'button'; rm.className = 'sp-rm'; rm.textContent = fromSrc(PT.remove);
+        rm.addEventListener('click', () => {
+          if (!rm.hasAttribute('data-sure')) { rm.setAttribute('data-sure', ''); rm.textContent = fromSrc(PT.removeSure); return; }
+          writeOnly(readOnly().filter(x => x.id !== p.cloud.id));
+          const l = readList(page), x = l.find(y => y.cloud && y.cloud.id === p.cloud.id);
+          if (x) { delete x.cloud; store.set('studio.presets.' + page, JSON.stringify(l)); }
+          render(); syncMine({ remove: [p.cloud.id] });
+        });
+        acts.append(rm);
         card.append(t, acts); grid.append(card);
       }
-      gal.append(note, grid);
+      gal.append(note);
+      if (RC.handles) gal.append(handleBox(items.length));
+      gal.append(grid);
+    }
+    // ---- handles: anyone with the name can look and apply; the password brings the works back ----
+    let other = null; // someone's collection being looked at: {handle, items}
+    function form(fields, label, onSubmit) {
+      const f = document.createElement('form');
+      const ins = fields.map(([ph, type, ac]) => { const i = document.createElement('input'); i.placeholder = fromSrc(ph); i.setAttribute('aria-label', fromSrc(ph)); i.type = type || 'text'; if (ac) i.autocomplete = ac; i.maxLength = type === 'password' ? 128 : 20; i.setAttribute('data-i18n-skip', ''); return i; });
+      const b = document.createElement('button'); b.type = 'submit'; b.textContent = fromSrc(label);
+      f.append(...ins, b);
+      f.addEventListener('submit', async e => { e.preventDefault(); b.disabled = true; try { await onSubmit(ins.map(i => i.value.trim())); } catch (err) { notify(err && err.code === 'not_found' ? fromSrc(PT.hNotFound) : RC.message(err)); } finally { b.disabled = false; } });
+      return f;
+    }
+    const para = t => { const p = document.createElement('p'); p.textContent = t; return p; };
+    function handleBox(n) {
+      const H = RC.handles, h = H.mine(), box = document.createElement('div'); box.className = 'sg-h';
+      if (h) {
+        box.append(para(fill(PT.hMine, h)));
+        const acts = document.createElement('div'); acts.className = 'sp-acts';
+        const c = document.createElement('button'); c.type = 'button'; c.textContent = fromSrc(PT.hCopy); c.addEventListener('click', () => copyUrl(H.link(), box, PT.hCopied));
+        const pw = document.createElement('button'); pw.type = 'button'; pw.textContent = fromSrc(PT.hPwBtn);
+        const pf = form([[PT.hPwNew, 'password', 'new-password']], PT.hSave, async ([v]) => { await H.setPassword(v); notify(fromSrc(PT.hPwDone)); pf.hidden = true; });
+        pf.hidden = true; pw.addEventListener('click', () => { pf.hidden = !pf.hidden; });
+        acts.append(c, pw); box.append(acts, pf);
+      } else {
+        if (n || (RC.collection && RC.collection.get())) {
+          box.append(para(fromSrc(PT.hClaimNote)), form([[PT.hName, 'text', 'username'], [PT.hPwMin, 'password', 'new-password']], PT.hCreate, async ([name, pw]) => {
+            await syncMine(); const r = await H.claim(name, pw); notify(fill(PT.hCreated, r)); renderMine();
+          }));
+        }
+        const d = document.createElement('details'); const sum = document.createElement('summary'); sum.textContent = fromSrc(PT.hLoginSum);
+        d.append(sum, form([[PT.hName, 'text', 'username'], [PT.hPw, 'password', 'current-password']], PT.hLogin, async ([name, pw]) => {
+          const r = await H.login(name, pw); await syncMine(); notify(fill(PT.hLoggedIn, r)); renderMine();
+        }));
+        box.append(d);
+      }
+      const look = form([[PT.hName, 'text']], PT.hLookBtn, async ([name]) => { if (name) await lookHandle(name); });
+      look.prepend(Object.assign(document.createElement('span'), { textContent: fromSrc(PT.hLook) }));
+      box.append(look);
+      return box;
+    }
+    async function lookHandle(name) {
+      const r = await RC.handles.view(name);
+      other = { handle: r.handle, items: r.items || [] }; setView('mine');
+    }
+    function renderOther() {
+      gal.textContent = '';
+      const mine = other.items.filter(it => it.tool === 'showcase' && PAGE_FILE[it.page]), svg = other.items.filter(it => it.tool === 'svg').length;
+      const head = document.createElement('p'); head.className = 'sp-note'; head.textContent = fill(PT.oHead, other.handle);
+      const acts = document.createElement('div'); acts.className = 'sp-acts';
+      const back = document.createElement('button'); back.type = 'button'; back.textContent = fromSrc(PT.oBack);
+      back.addEventListener('click', () => { other = null; history.replaceState(null, '', location.href.split('#')[0]); renderMine(); });
+      acts.append(back);
+      if (svg) { const a = document.createElement('a'); a.href = '../svg-studio/#u=' + encodeURIComponent(other.handle); a.textContent = fromSrc(PT.oSvg) + ' · ' + svg; a.style.cssText = 'align-self:center;font-size:13px;color:inherit'; acts.append(a); }
+      const grid = document.createElement('div'); grid.className = 'sg-grid';
+      for (const it of mine) {
+        const card = document.createElement('div'); card.className = 'sg-card';
+        const none = () => { const n = document.createElement('div'); n.className = 'sg-none'; n.textContent = fromSrc(PT.oNoThumb); return n; };
+        const im = document.createElement('img'); im.src = RC.fileUrl('showcase', it.id, 'thumb') + '?t=' + (it.at || 0); im.alt = it.name || ''; im.loading = 'lazy'; im.onerror = () => im.replaceWith(none());
+        const t = document.createElement('div'); t.className = 'sg-t';
+        const n = document.createElement('b'); n.textContent = it.name || fromSrc(PT.name); n.setAttribute('data-i18n-skip', '');
+        const tag = document.createElement('span'); tag.className = 'sp-tag'; tag.textContent = fromSrc(it.page === 'lovia' ? PT.styleLovia : PT.styleDn);
+        t.append(n, tag);
+        const a2 = document.createElement('div'); a2.className = 'sp-acts';
+        const b = (txt, fn) => { const x = document.createElement('button'); x.type = 'button'; x.textContent = fromSrc(txt); x.addEventListener('click', fn); a2.append(x); };
+        b(PT.oApply, () => { if (it.page === PAGE) { other = null; setView('make'); openCloud({ id: it.id, key: null }); } else location.href = PAGE_FILE[it.page] + '#w=' + it.id; });
+        b(PT.share, () => copyUrl(RC.links(it.id).share.replace(/[^/]*#/, PAGE_FILE[it.page] + '#'), card, PT.shareDone));
+        card.append(im, t, a2); grid.append(card);
+      }
+      gal.append(head, acts);
+      if (!mine.length) gal.append(para(fromSrc(PT.oNone)));
+      gal.append(grid);
     }
     function render() {
       const list = readList();
@@ -552,7 +709,13 @@
     cloud().then(rc => {
       RC = rc; if (!rc) return;
       mountGallery(); render();
-      const link = rc.parseHash(); if (link) openCloud(link);
+      const link = rc.parseHash(), cl = rc.collection && rc.collection.parse(), hu = rc.handles && rc.handles.parse();
+      if (link) openCloud(link);
+      else if (hu) lookHandle(hu).catch(e => notify(e && e.code === 'not_found' ? fromSrc(PT.hNotFound) : rc.message(e)));
+      else if (cl) {
+        history.replaceState(null, '', location.href.split('#')[0]);
+        rc.collection.adopt(cl).then(() => syncMine()).then(() => { setView('mine'); notify(fromSrc(PT.collMoved)); }, e => notify(e && e.code === 'not_found' ? fromSrc(PT.collMissing) : rc.message(e)));
+      } else if (rc.collection && (rc.collection.get() || mineList().length)) syncMine();
     });
     // a shared link: #s=...
     const m = location.hash.match(/^#s=([A-Za-z0-9_-]+)/);
