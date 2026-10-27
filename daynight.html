@@ -81,6 +81,7 @@ button{cursor:pointer}
 /* segmented + chips */
 .seg{display:flex;flex-wrap:wrap;gap:6px}
 #presetBar{--sp-line:var(--line);--sp-bg:var(--sheet);--sp-active:var(--ink)}
+.mo{--mo-bg:var(--sheet);--mo-ink:var(--ink);--mo-line:var(--line);--mo-muted:var(--muted);--mo-accent:var(--btn-bg);--mo-on-accent:var(--btn-fg);--mo-accent-bg:transparent;--mo-font:var(--f-ui)}
 .seg button,.chip{border:1px solid var(--line);background:var(--sheet);border-radius:8px;padding:7px 12px;font-size:14px;line-height:1.3}
 .seg button[aria-pressed="true"],.chip[aria-pressed="true"]{background:var(--btn-bg);color:var(--btn-fg);border-color:var(--btn-bg)}
 
@@ -476,6 +477,7 @@ button{cursor:pointer}
         <button class="btn" id="shareOne" hidden>存到相簿</button>
         <button class="btn" id="exportOne">下載 PNG</button>
         <button class="btn ghost" id="exportPair">日間、夜間各存一張</button>
+        <button class="btn ghost" id="openMotion">↻ 動態 GIF／影片</button>
         <button class="btn ghost" id="savePreset">儲存本次設定</button>
         <button class="btn ghost" id="openLarge2">放大預覽</button>
         <p class="status" id="status" aria-live="polite"></p>
@@ -523,7 +525,8 @@ button{cursor:pointer}
   </div>
 </div>
 
-<script src="./studio-shell.js?v=4"></script>
+<script src="./studio-shell.js?v=5"></script>
+<script src="./studio-motion.js?v=1"></script>
 <script>
 (()=>{
 'use strict';
@@ -843,7 +846,9 @@ function drawPoster(ctx,W,H,opt={}){
   let bgAt=null;
 
   /* backgrounds */
-  if(geo.kind==='blend')bgAt=paintBlend(ctx,geo,W,H);
+  const fill=opt.fill&&geo.kind!=='single'?opt.fill:null; // motion layer: one side painted across the whole poster
+  if(fill)paintPanel(ctx,{side:fill,x:0,y:0,w:W,h:H},W,H);
+  else if(geo.kind==='blend')bgAt=paintBlend(ctx,geo,W,H);
   else for(const p of geo.panels)paintPanel(ctx,p,W,H);
   if(S.grain>0){
     ctx.save();const k=W/1400;ctx.globalCompositeOperation='soft-light';ctx.globalAlpha=S.grain*.55;
@@ -885,6 +890,7 @@ function drawPoster(ctx,W,H,opt={}){
   const topEdge=hasTop?top+u*3.2:m;
   const fivePal=S.palette==='five'&&S.swatches;
   const panelBg=(side,y)=>S.bg==='tb'?mix(TB.top,TB.bottom,clamp(y/H,0,1)):sideBase(side);
+  if(fill&&geo.kind==='blend')bgAt=(x,y)=>panelBg(fill,y);
   const inkAt=(side,y)=>(S.bg==='image'||S.bg==='glass')?S.colors[side].ink:bestInkFor(panelBg(side,y),S.colors[side].ink);
   const footOn=S.sideLabels||(S.swatches&&!fivePal)||fivePal;
   const footH=footOn?u*8.2:0;
@@ -981,10 +987,10 @@ function drawPoster(ctx,W,H,opt={}){
         units.push({a:d&&nn?front.a*(1+OX)/(1+OY):front.a,d,nn});}
       const b=shrinkBox(box,S.size);
       const r=fit(units.map(un=>({a:un.a,un})),b,gap*1.1+phoneGap,capH,2);
-      for(const q of r){const{d,nn}=q.it.un;
+      for(const[ui,q]of r.entries()){const{d,nn}=q.it.un;
         if(d&&nn){const fw=q.w/(1+OX),fh=q.h/(1+OY);
-          placed.push({shot:nn,side:B,x:q.x+fw*OX,y:q.y,w:fw/frameScale,h:fh/frameScale,ox:fw*(1-1/frameScale)/2,oy:fh*(1-1/frameScale)/2,z:0,cap:false});
-          placed.push({shot:d,side:A,x:q.x,y:q.y+fh*OY,w:fw/frameScale,h:fh/frameScale,ox:fw*(1-1/frameScale)/2,oy:fh*(1-1/frameScale)/2,z:1,cap:true,capW:q.w,capX:q.x});
+          placed.push({shot:nn,side:B,x:q.x+fw*OX,y:q.y,w:fw/frameScale,h:fh/frameScale,ox:fw*(1-1/frameScale)/2,oy:fh*(1-1/frameScale)/2,z:0,cap:false,unit:ui});
+          placed.push({shot:d,side:A,x:q.x,y:q.y+fh*OY,w:fw/frameScale,h:fh/frameScale,ox:fw*(1-1/frameScale)/2,oy:fh*(1-1/frameScale)/2,z:1,cap:true,capW:q.w,capX:q.x,unit:ui});
         }else{const s=d||nn;placed.push({shot:s,side:d?A:B,x:q.x,y:q.y,w:q.w/frameScale,h:q.h/frameScale,ox:q.w*(1-1/frameScale)/2,oy:q.h*(1-1/frameScale)/2,z:1,cap:true});}
       }
     }
@@ -995,10 +1001,17 @@ function drawPoster(ctx,W,H,opt={}){
   placed.sort((a,b)=>a.z-b.z);
   for(const pl of placed){
     const s=pl.shot;
+    if(fill&&pl.side!==fill)continue;
     let x=pl.x+pl.ox,y=pl.y+pl.oy,w=pl.w,h=pl.h;
     const cx=x+w/2,cy=y+h/2;w*=s.scale;h*=s.scale;x=cx-w/2+s.dx*mn;y=cy-h/2+s.dy*mn;
-    drawShot(ctx,s,{x,y,w,h},pl.side,u,opt.preview,pl.compare?(c2,r,rad)=>drawCompareHalf(c2,r,rad,pl.compare,u,opt.preview):null);
-    hits.push({shot:s,side:pl.side,x,y,w,h});
+    if(opt.collect)opt.collect.push({shot:s,side:pl.side,rect:{x,y,w,h},unit:pl.unit,z:pl.z});
+    if(!opt.noShots){
+      let extra=pl.compare?(c2,r,rad)=>drawCompareHalf(c2,r,rad,pl.compare,u,opt.preview):null;
+      if(pl.compare&&opt.compareOnly==='first')extra=null;
+      if(pl.compare&&opt.compareOnly==='second')extra=(c2,r,rad)=>drawCompareHalf(c2,r,rad,pl.compare,u,opt.preview,0,true);
+      drawShot(ctx,s,{x,y,w,h},pl.side,u,opt.preview,extra);
+    }
+    hits.push({shot:s,side:pl.side,x,y,w,h,compare:!!pl.compare});
     if(capOn&&pl.cap&&s.label){
       const ink=textInk(bgAt?posSide(x+w/2,y+h):pl.side,bgAt?bestInkFor(bgAt(x+w/2,y+h)):inkAt(pl.side,y+h));
       const pad=S.frame==='phone'?w*.045:S.frame==='corners'?u*1.2:0;
@@ -1010,11 +1023,14 @@ function drawPoster(ctx,W,H,opt={}){
 
   /* text */
   function posSide(x,y){ // which side a point of a blended poster sits on
+    if(fill)return fill;
     if(geo.kind==='single')return singleSide;
     return (geo.dir==='v'?x<W/2:y<H/2)?A:B;
   }
   const drawEl=(e,ink)=>{ctx.font=font(e.size,e.w,f);ctx.textAlign=e.align;ctx.fillStyle=rgba(ink,e.alpha);if(e.maxW)fitText(ctx,e.t,e.x,e.y,e.maxW);else ctx.fillText(e.t,e.x,e.y);};
-  if(geo.kind==='split'){
+  if(geo.kind==='split'&&fill){
+    els.forEach(e=>drawEl(e,textInk(fill,inkAt(fill,e.y))));
+  }else if(geo.kind==='split'){
     for(const p of geo.panels){ctx.save();panelPath(ctx,p);ctx.clip();els.forEach(e=>drawEl(e,textInk(p.side,inkAt(p.side,e.y))));ctx.restore();}
   }else if(geo.kind==='blend'){
     for(const e of els){const bx=e.align==='left'?e.x+u*10:e.align==='right'?e.x-u*10:e.x;drawEl(e,textInk(posSide(bx,e.y),bestInkFor(bgAt(bx,e.y))));}
@@ -1036,20 +1052,21 @@ function drawPoster(ctx,W,H,opt={}){
     let dotsLeft=m;
     if(geo.kind==='single'){const p=geo.panels[0];drawFooter(ctx,singleSide,m,fy(p),'left',textInk(singleSide,inkAt(singleSide,fy(p))),u,f,sw);dotsLeft=m+footLabelWidth(ctx,singleSide,u,f);}
     else if(geo.kind==='split'){
-      for(const p of geo.panels){let x=p.x+m;if(geo.k&&geo.dir==='v'&&p===geo.panels[1])x=p.x-geo.k*W+m;drawFooter(ctx,p.side,x,fy(p),'left',textInk(p.side,inkAt(p.side,fy(p))),u,f,sw);
+      for(const p of geo.panels){if(fill&&p.side!==fill)continue;let x=p.x+m;if(geo.k&&geo.dir==='v'&&p===geo.panels[1])x=p.x-geo.k*W+m;drawFooter(ctx,p.side,x,fy(p),'left',textInk(p.side,inkAt(p.side,fy(p))),u,f,sw);
         if(p.y+p.h>=H-1)dotsLeft=Math.max(dotsLeft,x+footLabelWidth(ctx,p.side,u,f));}
     }else{
       const y=H-m*.95-u*1.2;
-      drawFooter(ctx,A,m,y,'left',textInk(posSide(m+u*8,y),bestInkFor(bgAt(m+u*8,y))),u,f,sw);
-      if(!fivePal)drawFooter(ctx,B,W-m,y,'right',textInk(posSide(W-m-u*8,y),bestInkFor(bgAt(W-m-u*8,y))),u,f,sw);
-      else if(S.sideLabels)drawFooter(ctx,B,m+footLabelWidth(ctx,A,u,f),y,'left',textInk(posSide(m+u*20,y),bestInkFor(bgAt(m+u*20,y))),u,f,false);
+      if(!fill||fill===A)drawFooter(ctx,A,m,y,'left',textInk(posSide(m+u*8,y),bestInkFor(bgAt(m+u*8,y))),u,f,sw);
+      const showB=!fill||fill===B;
+      if(showB&&!fivePal)drawFooter(ctx,B,W-m,y,'right',textInk(posSide(W-m-u*8,y),bestInkFor(bgAt(W-m-u*8,y))),u,f,sw);
+      else if(showB&&S.sideLabels)drawFooter(ctx,B,m+footLabelWidth(ctx,A,u,f),y,'left',textInk(posSide(m+u*20,y),bestInkFor(bgAt(m+u*20,y))),u,f,false);
       dotsLeft=m+footLabelWidth(ctx,A,u,f)+(fivePal?footLabelWidth(ctx,B,u,f):0);
     }
     if(fivePal){
       const y=H-m*.95-u*1.2,x=W-m;
       let ink;
       if(geo.kind==='single')ink=textInk(singleSide,inkAt(singleSide,y));
-      else if(geo.kind==='split')ink=textInk(geo.panels[1].side,inkAt(geo.panels[1].side,y));
+      else if(geo.kind==='split'){const sd=fill||geo.panels[1].side;ink=textInk(sd,inkAt(sd,y));}
       else ink=textInk(posSide(x-u*10,y),bestInkFor(bgAt(x-u*10,y)));
       drawDots(ctx,S.five,x,y,'right',ink,u,x-dotsLeft-u*2);
     }
@@ -1061,10 +1078,13 @@ function heroIndexFor(list){
   const i=list.findIndex(s=>(s.labelSrc||s.label)==='閱讀頁'||s.label==='阅读页');
   return i>=0?i:list.length-1;
 }
-function drawCompareHalf(ctx,r,rad,other,u,preview){
-  const img=preview?other.shot.prev:other.shot.src,xd=r.x+r.w*S.compareAt;
+function drawCompareHalf(ctx,r,rad,other,u,preview,at=S.compareAt,noDivider=false){
+  const img=preview?other.shot.prev:other.shot.src,xd=r.x+r.w*at;
   ctx.save();rr(ctx,r.x,r.y,r.w,r.h,rad);ctx.clip();ctx.beginPath();ctx.rect(xd,r.y,r.x+r.w-xd,r.h);ctx.clip();
   ctx.imageSmoothingQuality='high';ctx.drawImage(img,r.x,r.y,r.w,r.h);ctx.restore();
+  if(!noDivider)drawCompareDivider(ctx,r,xd,u,preview);
+}
+function drawCompareDivider(ctx,r,xd,u,preview){
   ctx.save();ctx.shadowColor='rgba(0,0,0,.35)';ctx.shadowBlur=u*1.2;
   ctx.fillStyle='rgba(255,255,255,.95)';ctx.fillRect(xd-u*.18,r.y,u*.36,r.h);ctx.restore();
   if(!preview&&!S.compareHandle)return; // the drag handle only shows on screen unless asked for
@@ -1587,6 +1607,80 @@ if(window.LoviaStudio){
   });
 }
 
+/* ---------------- motion (GIF / video) ---------------- */
+const MOTION_DESC={
+  split:'兩半輪流壓過彼此：日間那半慢慢蓋過夜間，再被夜間蓋回來。',diagonal:'兩半沿著斜線輪流壓過彼此。',rows:'上下兩半輪流壓過彼此。',
+  compare:'中間的分隔線來回掃過，日夜在同一支手機裡切換。',pairs:'每組前後交換，後面那張翻到前面。',alternate:'整張畫報在日夜、夜日兩種順序之間淡入淡出。',
+  'single-hero':'主圖輪流換人，每張截圖輪流當大圖。',
+};
+function motionDesc(){return MOTION_DESC[S.layout]||'整張畫報在日間版和夜間版之間淡入淡出。';}
+async function buildMotion(OW,OH){
+  await ensureFont();
+  const[LW,LH]=dims(),k=OW/LW,lay=S.layout;
+  const A=S.order==='nd'?'night':'day',B=A==='day'?'night':'day';
+  const layer=(o={})=>{const c=document.createElement('canvas');c.width=OW;c.height=OH;const x=c.getContext('2d',{alpha:false});x.setTransform(k,0,0,k,0,0);drawPoster(x,LW,LH,{...o,preview:false});return c;};
+  const has=side=>S.shots[side].length>0, both=has('day')&&has('night');
+  const none=reason=>({none:true,reason,still:layer()});
+  const NEED_BOTH='動態需要日間和夜間都有截圖。';
+  const base={W:OW,H:OH};
+  if(lay==='split'||lay==='diagonal'||lay==='rows'){
+    if(!both)return none(NEED_BOTH);
+    const LA=layer({fill:A}),LB=layer({fill:B});
+    const spec={...base,type:'push',A:LA,B:LB,paletteSources:[LA,LB]};
+    if(lay==='rows'){
+      const band=Math.min(LW,LH)*.06*k;
+      spec.soft={dir:'h',band,pos:s=>(LH/2+s*(LH/2+band/k))*k};
+    }else{
+      const geo=geometry(LW,LH,lay,S.single,A,B),p=geo.panels[0],dir=geo.dir;
+      const pts=p.poly?p.poly.map(q=>[...q]):[[p.x,p.y],[p.x+p.w,p.y],[p.x+p.w,p.y+p.h],[p.x,p.y+p.h]];
+      const reach=(dir==='v'?LW:LH)*(.5+(geo.k||0))+2, sign=(dir==='v'?pts.some(q=>q[0]===0):pts.some(q=>q[1]===0))?1:-1;
+      spec.clipA=(ctx,s)=>{ctx.beginPath();pts.forEach(([x,y],i)=>{
+        if(dir==='v'){if(x>0&&x<LW)x=clamp(x+sign*s*reach,0,LW);}else{if(y>0&&y<LH)y=clamp(y+sign*s*reach,0,LH);}
+        i?ctx.lineTo(x*k,y*k):ctx.moveTo(x*k,y*k);});ctx.closePath();};
+    }
+    return spec;
+  }
+  if(lay==='compare'){
+    const probe=document.createElement('canvas').getContext('2d');
+    const hits=drawPoster(probe,LW,LH,{preview:false,noShots:true});
+    const ph=hits.find(h=>h.compare);if(!ph)return none(NEED_BOTH);
+    const first=layer({compareOnly:'first'}),second=layer({compareOnly:'second'});
+    const u=Math.min(LW,LH)/100;
+    return{...base,type:'wipe',first,second,paletteSources:[first,second],paletteExtra:['#FFFFFF'],phone:{x:ph.x*k,y:ph.y*k,w:ph.w*k,h:ph.h*k},
+      divider:(ctx,x)=>{ctx.save();ctx.setTransform(k,0,0,k,0,0);drawCompareDivider(ctx,{x:ph.x,y:ph.y,w:ph.w,h:ph.h},x/k,u,false);ctx.restore();}};
+  }
+  if(lay==='pairs'){
+    const items=[];const baseL=layer({noShots:true,collect:items});
+    const u=Math.min(LW,LH)/100;
+    const sprite=it=>{const r=it.rect,pad=u*8+r.w*.06,c=document.createElement('canvas');
+      c.width=Math.ceil((r.w+pad*2)*k);c.height=Math.ceil((r.h+pad*2)*k);const x=c.getContext('2d');
+      x.setTransform(k,0,0,k,(pad-r.x)*k,(pad-r.y)*k);drawShot(x,it.shot,r,it.side,u,false);
+      return{img:c,x:(r.x-pad)*k,y:(r.y-pad)*k,w:r.w*k};};
+    const units=new Map(),statics=[];
+    for(const it of items){if(it.unit===undefined){statics.push(sprite(it));continue;}if(!units.has(it.unit))units.set(it.unit,[]);units.get(it.unit).push(it);}
+    const pairs=[];
+    for(const list of units.values()){const front=list.find(i=>i.z===1),back=list.find(i=>i.z===0);if(front&&back)pairs.push({a:sprite(front),b:sprite(back)});else list.forEach(i=>statics.push(sprite(i)));}
+    if(!pairs.length)return none(NEED_BOTH);
+    return{...base,type:'swap',base:baseL,pairs,statics,paletteSources:[layer()]};
+  }
+  if(lay==='single-hero'){
+    const list=S.shots[S.single];if(list.length<2)return none('主圖輪流需要至少兩張截圖。');
+    const keep=S.heroIndex,layers=[];
+    try{for(let i=0;i<list.length;i++){S.heroIndex=i;layers.push(layer());}}finally{S.heroIndex=keep;}
+    return{...base,type:'cycle',layers,paletteSources:layers};
+  }
+  if(lay==='alternate'){
+    if(!both)return none(NEED_BOTH);
+    const l0=layer({order:S.order}),l1=layer({order:S.order==='dn'?'nd':'dn'});
+    return{...base,type:'fade',layers:[l0,l1],paletteSources:[l0,l1]};
+  }
+  // single-sided layouts: the day poster and the night poster fade into each other
+  if(!both)return none(NEED_BOTH);
+  const first=S.single,second=first==='day'?'night':'day';
+  const l0=layer({side:first}),l1=layer({side:second});
+  return{...base,type:'fade',layers:[l0,l1],paletteSources:[l0,l1]};
+}
+
 /* ---------------- saved settings (設置) ---------------- */
 const PRESET_KEYS=['ratio','layout','single','splitDir','tilt','order','compareAt','compareHandle','size','gap','radius','frame',
   'rules','ruleColor','ruleOpacity','bg','tint','grain','customBg','tbTop','tbBottom','tbCustom','bgBlur','bgOpacity','glass',
@@ -1634,6 +1728,8 @@ async function init(){
   await loadSamples();renderLists();syncSel();req();
   readyResolve();
   ensureFont().then(req);
+  if(window.LoviaMotion)LoviaMotion.mount({buttons:[$('#openMotion')],ratio:()=>{const[w,h]=dims();return w/h;},describe:motionDesc,build:buildMotion,
+    filename:()=>safeName(S.title)+'-'+(S.layout||'poster'),save:(blob,name)=>saveFile(blob,name)});
   if(window.LoviaStudio&&LoviaStudio.mountPresets)LoviaStudio.mountPresets({bar:$('#presetBar'),saveButtons:[$('#savePreset')],collect:collectSettings,apply:applySettings,notify:status});
 }
 init();

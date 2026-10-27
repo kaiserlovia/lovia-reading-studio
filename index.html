@@ -7,8 +7,9 @@
   <meta name="description" content="Lovia 阅读主题展示工坊：轻量预览、自由排版、高清导出。">
   <title>Lovia — Reading Gallery Studio</title>
   <link rel="stylesheet" href="./styles.css?v=20261027-v13">
-  <script src="./app.js?v=20261027-v15" defer></script>
-  <script src="./studio-shell.js?v=4" defer></script>
+  <script src="./app.js?v=20261027-v16" defer></script>
+  <script src="./studio-shell.js?v=5" defer></script>
+  <script src="./studio-motion.js?v=1" defer></script>
 </head>
 <body>
   <div class="app-shell">
@@ -276,7 +277,7 @@
           </section>
         </div>
 
-        <div class="editor-footer"><button class="button save-preset" type="button" id="savePreset"><span aria-hidden="true">＋</span> 储存本次设定 <small>下次在「展示图片」一键套用</small></button><button class="button button-dark download-main" type="button" id="downloadButton"><span>↓</span> 下载高清 PNG <small id="downloadResolution">3600 × 2700</small></button><p>所有编辑仅在当前浏览器处理 · 无需上传到服务器</p></div>
+        <div class="editor-footer"><div class="footer-actions"><button class="footer-action" type="button" id="savePreset"><span class="footer-action-mark" aria-hidden="true">＋</span><span>储存本次设定</span></button><button class="footer-action" type="button" id="openMotion"><span class="footer-action-mark" aria-hidden="true">↻</span><span>动态 GIF／视频</span></button></div><button class="button button-dark download-main" type="button" id="downloadButton"><span>↓</span> 下载高清 PNG <small id="downloadResolution">3600 × 2700</small></button><p>所有编辑仅在当前浏览器处理 · 无需上传到服务器</p></div>
       </aside>
     </main>
     <nav class="mobile-actions" aria-label="手机快捷操作">
