@@ -8,13 +8,13 @@
   'use strict';
   const SC = document.documentElement.dataset.srcLang === 'sc';
   const L = SC ? {
-    title: '动态 GIF／视频', close: '关闭', length: '一轮长度', smooth: '流畅度', size: '尺寸', sec: ' 秒', fps: ' 格／秒',
+    title: '动态 GIF／视频', variant: '动态方式', close: '关闭', length: '一轮长度', smooth: '流畅度', size: '尺寸', sec: ' 秒', fps: ' 格／秒',
     gif: '存成 GIF', video: '存成视频', saveAlbum: '存到相册', download: '下载', building: '正在准备动画…',
     gifWork: '正在制作 GIF… %', videoWork: '正在录制视频… %', done: '完成 · %', noVideo: '这个浏览器不支持录制视频，请改存 GIF 或换用 Safari／Chrome。',
     shareHint: '在分享菜单选「存储视频」或「存储图像」就会存进相册。', fail: '制作失败，请把尺寸改小再试一次。',
     note: 'GIF 只有 256 色，渐变可能出现颗粒；视频色彩完整、体积较小。',
   } : {
-    title: '動態 GIF／影片', close: '關閉', length: '一輪長度', smooth: '流暢度', size: '尺寸', sec: ' 秒', fps: ' 格／秒',
+    title: '動態 GIF／影片', variant: '動態方式', close: '關閉', length: '一輪長度', smooth: '流暢度', size: '尺寸', sec: ' 秒', fps: ' 格／秒',
     gif: '存成 GIF', video: '存成影片', saveAlbum: '存到相簿', download: '下載', building: '正在準備動畫…',
     gifWork: '正在製作 GIF… %', videoWork: '正在錄製影片… %', done: '完成 · %', noVideo: '這個瀏覽器不支援錄製影片，請改存 GIF 或換用 Safari／Chrome。',
     shareHint: '在分享選單選「儲存影片」或「儲存影像」就會存進相簿。', fail: '製作失敗，請把尺寸改小再試一次。',
@@ -33,6 +33,16 @@
   const WIPE = [[0, .5], [.06, .5], [.3, .93], [.4, .93], [.7, .07], [.8, .07], [1, .5]];
   const FADE = [[0, 0], [.15, 0], [.4, 1], [.65, 1], [.9, 0], [1, 0]];
   const SWAP = [[0, 0], [.12, 0], [.38, 1], [.62, 1], [.88, 0], [1, 0]];
+  const XFADE = [[0, 0], [.2, 0], [.8, 1], [1, 1]];
+  // a sprite rendered at rect sr (poster units, k px per unit, pad around it) drawn into rect r
+  function drawSprite(ctx, sp, r, k, alpha = 1) {
+    if (alpha <= 0) return;
+    const sc = r.w / sp.sr.w;
+    ctx.globalAlpha = alpha;
+    ctx.drawImage(sp.img, (r.x - sp.pad * sc) * k, (r.y - sp.pad * sc) * k, sp.img.width * sc, sp.img.height * sc);
+    ctx.globalAlpha = 1;
+  }
+  const lerpRect = (a, b, p) => ({ x: a.x + (b.x - a.x) * p, y: a.y + (b.y - a.y) * p, w: a.w + (b.w - a.w) * p, h: a.h + (b.h - a.h) * p });
 
   let tmp = null;
   function scratch(w, h) { if (!tmp) tmp = document.createElement('canvas'); if (tmp.width !== w || tmp.height !== h) { tmp.width = w; tmp.height = h; } return tmp; }
@@ -68,6 +78,31 @@
       const a = local < .6 ? 0 : ease((local - .6) / .4);
       ctx.drawImage(spec.layers[i], 0, 0);
       if (a > 0) { ctx.globalAlpha = a; ctx.drawImage(spec.layers[(i + 1) % n], 0, 0); }
+    } else if (spec.type === 'seq') {
+      // parts play one after another; weights set how long each one lasts
+      const total = spec.parts.reduce((a, p) => a + p.weight, 0);
+      let at = t * total;
+      for (const p of spec.parts) { if (at <= p.weight || p === spec.parts[spec.parts.length - 1]) { ctx.restore(); frame(ctx, p.spec, Math.min(1, at / p.weight)); return; } at -= p.weight; }
+    } else if (spec.type === 'xfade') {
+      const a = keyed(t, XFADE);
+      ctx.drawImage(spec.from, 0, 0);
+      if (a > 0) { ctx.globalAlpha = a; ctx.drawImage(spec.to, 0, 0); }
+    } else if (spec.type === 'tween') {
+      // each screenshot moves from its slot in one step to its slot in the next
+      const n = spec.steps.length, pos = t * n, i = Math.floor(pos) % n, local = pos - Math.floor(pos);
+      const p = local < .5 ? 0 : ease((local - .5) / .5);
+      const from = spec.steps[i], to = spec.steps[(i + 1) % n], k = spec.k;
+      ctx.drawImage(spec.bases ? spec.bases[i] : spec.base, 0, 0);
+      const list = [];
+      for (const a of from) {
+        const b = to.find(x => x.id === a.id); if (!b) continue;
+        const wrap = p > 0 && (spec.wrap === 'fade' ? a.slot === 0 && b.slot === from.length - 1 : a.slot === from.length - 1 && b.slot === 0);
+        if (wrap && spec.wrap === 'fade') { list.push({ z: a.z, draw: () => drawSprite(ctx, spec.sprites[a.id], a.rect, k, 1 - p) }); list.push({ z: b.z, draw: () => drawSprite(ctx, spec.sprites[a.id], b.rect, k, p) }); continue; }
+        const r = lerpRect(a.rect, b.rect, p);
+        if (wrap) r.y += Math.sin(Math.PI * p) * r.h * .07; // the top card dips as it goes under the stack
+        list.push({ z: wrap ? -1 : (p < .5 ? a.z : b.z), draw: () => drawSprite(ctx, spec.sprites[a.id], r, k) });
+      }
+      list.sort((x, y) => x.z - y.z).forEach(x => x.draw());
     } else if (spec.type === 'swap') {
       const s = keyed(t, SWAP), bump = Math.sin(Math.PI * s);
       ctx.drawImage(spec.base, 0, 0);
@@ -244,7 +279,8 @@
   /* ---------- the sheet ---------- */
   const CSS = `
   .mo{position:fixed;inset:0;z-index:2000;display:flex;align-items:flex-end;justify-content:center;background:rgba(10,14,12,.5);padding:env(safe-area-inset-top,0) 0 0}
-  .mo[hidden]{display:none!important}
+  .mo[hidden],.mo-opt[hidden]{display:none!important}
+  .mo-variant{align-items:flex-start}.mo-variant>span{padding-top:8px;white-space:nowrap}
   .mo-card{width:min(720px,100%);max-height:100%;overflow:auto;background:var(--mo-bg,#fff);color:var(--mo-ink,#222);border-radius:var(--mo-radius,14px) var(--mo-radius,14px) 0 0;padding:16px 16px calc(18px + env(safe-area-inset-bottom,0px));font-family:var(--mo-font,inherit);box-shadow:0 -10px 40px rgba(0,0,0,.25);overscroll-behavior:contain}
   @media(min-width:760px){.mo{align-items:center}.mo-card{border-radius:var(--mo-radius,14px);max-height:92vh}}
   .mo-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:6px}
@@ -276,6 +312,7 @@
       <p class="mo-desc"></p>
       <canvas class="mo-stage"></canvas>
       <div class="mo-opts">
+        <div class="mo-opt mo-variant" hidden><span>${L.variant}</span><div class="mo-seg mo-vseg"></div></div>
         <div class="mo-opt"><span>${L.length}</span><div class="mo-seg" data-k="duration"><button type="button" data-v="3">3${L.sec}</button><button type="button" data-v="5">5${L.sec}</button><button type="button" data-v="8">8${L.sec}</button></div></div>
         <div class="mo-opt"><span>${L.smooth}</span><div class="mo-seg" data-k="fps"><button type="button" data-v="12">12${L.fps}</button><button type="button" data-v="20">20${L.fps}</button></div></div>
         <div class="mo-opt"><span>${L.size}</span><div class="mo-seg" data-k="width"><button type="button" data-v="720">720</button><button type="button" data-v="1080">1080</button></div></div>
@@ -296,7 +333,18 @@
       if (seg.dataset.k === 'duration') t0 = performance.now();
     })));
     syncSeg();
-    let spec = null, raf = 0, t0 = 0, busy = false, result = null, openId = 0;
+    let spec = null, raf = 0, t0 = 0, busy = false, result = null, openId = 0, variant = null;
+    function renderVariants() {
+      const list = (o.variants && o.variants()) || null, row = $('.mo-variant'), seg = $('.mo-vseg');
+      row.hidden = !list; seg.textContent = '';
+      if (!list) { variant = null; return; }
+      if (!list.some(v => v.v === variant)) variant = list[0].v;
+      for (const v of list) {
+        const b = document.createElement('button'); b.type = 'button'; b.textContent = v.label; b.setAttribute('aria-pressed', String(v.v === variant));
+        b.addEventListener('click', () => { if (variant === v.v || busy) return; variant = v.v; renderVariants(); open(true); });
+        seg.append(b);
+      }
+    }
     const status = t => { $('.mo-status').textContent = t; };
     const stage = $('.mo-stage');
     function loop() {
@@ -305,14 +353,15 @@
       frame(stage.getContext('2d'), spec, t);
       raf = requestAnimationFrame(loop);
     }
-    async function open() {
+    async function open(keep) {
       const id = ++openId;
+      if (keep !== true) renderVariants();
       el.hidden = false; document.documentElement.style.overflow = 'hidden';
       clearResult(); status(L.building); spec = null;
       const r = o.ratio(), pw = Math.min(900, Math.round((stage.clientWidth || 600) * Math.min(2, window.devicePixelRatio || 1)));
       stage.width = pw; stage.height = Math.round(pw / r);
-      $('.mo-desc').textContent = o.describe();
-      const s = await o.build(stage.width, stage.height).catch(e => { console.error(e); return null; });
+      $('.mo-desc').textContent = o.describe(variant);
+      const s = await o.build(stage.width, stage.height, variant).catch(e => { console.error(e); return null; });
       if (id !== openId || el.hidden) return;
       if (!s || s.none) { status((s && s.reason) || L.fail); setButtons(false); spec = null; if (s && s.still) stage.getContext('2d').drawImage(s.still, 0, 0); return; }
       spec = s; setButtons(true); status(''); t0 = performance.now(); cancelAnimationFrame(raf); loop();
@@ -337,7 +386,7 @@
         const r = o.ratio(); let W = opts.width, H = Math.round(W / r);
         if (kind === 'video') { W -= W % 2; H -= H % 2; }
         status(L.building);
-        const s = await o.build(W, H);
+        const s = await o.build(W, H, variant);
         if (!s || s.none) throw new Error((s && s.reason) || L.fail);
         let blob, ext;
         if (kind === 'gif') { blob = await encodeGif(s, opts, p => status(L.gifWork.replace('%', Math.round(p * 100) + '%'))); ext = 'gif'; }
@@ -364,7 +413,7 @@
       if (o.save) { try { await o.save(result.blob, result.name); return; } catch (e) {} }
       const a = document.createElement('a'); a.href = result.url; a.download = result.name; document.body.append(a); a.click(); a.remove();
     });
-    (o.buttons || []).forEach(b => b && b.addEventListener('click', open));
+    (o.buttons || []).forEach(b => b && b.addEventListener('click', () => open()));
     return { open, close, frame };
   }
 

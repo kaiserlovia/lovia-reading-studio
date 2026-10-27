@@ -525,8 +525,8 @@ button{cursor:pointer}
   </div>
 </div>
 
-<script src="./studio-shell.js?v=5"></script>
-<script src="./studio-motion.js?v=1"></script>
+<script src="./studio-shell.js?v=6"></script>
+<script src="./studio-motion.js?v=2"></script>
 <script>
 (()=>{
 'use strict';
@@ -1012,7 +1012,7 @@ function drawPoster(ctx,W,H,opt={}){
       drawShot(ctx,s,{x,y,w,h},pl.side,u,opt.preview,extra);
     }
     hits.push({shot:s,side:pl.side,x,y,w,h,compare:!!pl.compare});
-    if(capOn&&pl.cap&&s.label){
+    if(capOn&&pl.cap&&s.label&&!opt.noCaptions){
       const ink=textInk(bgAt?posSide(x+w/2,y+h):pl.side,bgAt?bestInkFor(bgAt(x+w/2,y+h)):inkAt(pl.side,y+h));
       const pad=S.frame==='phone'?w*.045:S.frame==='corners'?u*1.2:0;
       ctx.font=font(u*1.85,f.bw,f);ctx.textAlign='center';ctx.fillStyle=rgba(ink,.74);
@@ -1613,8 +1613,44 @@ const MOTION_DESC={
   compare:'中間的分隔線來回掃過，日夜在同一支手機裡切換。',pairs:'每組前後交換，後面那張翻到前面。',alternate:'整張畫報在日夜、夜日兩種順序之間淡入淡出。',
   'single-hero':'主圖輪流換人，每張截圖輪流當大圖。',
 };
-function motionDesc(){return MOTION_DESC[S.layout]||'整張畫報在日間版和夜間版之間淡入淡出。';}
-async function buildMotion(OW,OH){
+const ROTATING={'single-focus':'中間放大的那張輪流換人，旁邊的截圖跟著移位。','single-overlap':'最上面那張滑到最底下，下一張浮上來，一張一張輪流翻到最上層。'};
+function motionDesc(v){
+  if(ROTATING[S.layout]&&v!=='daynight')return ROTATING[S.layout]+(v==='both'?'日間轉完淡入夜間，再轉一輪。':'');
+  return MOTION_DESC[S.layout]||'整張畫報在日間版和夜間版之間淡入淡出。';
+}
+function motionVariants(){
+  if(!ROTATING[S.layout])return null;
+  return[{v:'one',label:'只轉這一組'},{v:'both',label:'日間轉完換夜間'},{v:'daynight',label:'日夜淡入淡出'}];
+}
+// the screenshots of one side, rotated one slot per step; each shot becomes a sprite that moves between slots
+function rotationSpec(OW,OH,side,dir){
+  const[LW,LH]=dims(),k=OW/LW,u=Math.min(LW,LH)/100,keep=S.shots[side],n=keep.length;
+  const f=curFont(),capOn=S.captions&&keep.some(s=>s.label);
+  const steps=[],maxRect={};
+  try{
+    for(let i=0;i<n;i++){
+      const rot=dir==='left'?[...keep.slice(i),...keep.slice(0,i)]:[...keep.slice(n-i),...keep.slice(0,n-i)];
+      S.shots[side]=rot;
+      const items=[];drawPoster(document.createElement('canvas').getContext('2d'),LW,LH,{side,preview:false,noShots:true,noCaptions:true,collect:items});
+      steps.push(items.map(it=>{const slot=rot.indexOf(it.shot);const r=it.rect;
+        if(!maxRect[it.shot.id]||r.w>maxRect[it.shot.id].w)maxRect[it.shot.id]=r;return{id:it.shot.id,rect:r,z:it.z||0,slot};}));
+    }
+  }finally{S.shots[side]=keep;}
+  const base=document.createElement('canvas');base.width=OW;base.height=OH;
+  {const x=base.getContext('2d',{alpha:false});x.setTransform(k,0,0,k,0,0);drawPoster(x,LW,LH,{side,preview:false,noShots:true,noCaptions:true});}
+  const ink=textInk(side,(S.bg==='image'||S.bg==='glass')?S.colors[side].ink:bestInkFor(sideBase(side),S.colors[side].ink));
+  const sprites={};
+  for(const sh of keep){
+    const r=maxRect[sh.id];if(!r)continue;const pad=u*8+r.w*.06;
+    const c=document.createElement('canvas');c.width=Math.ceil((r.w+pad*2)*k);c.height=Math.ceil((r.h+pad*2+(capOn?u*3:0))*k);
+    const x=c.getContext('2d');x.setTransform(k,0,0,k,(pad-r.x)*k,(pad-r.y)*k);drawShot(x,sh,r,side,u,false);
+    if(capOn&&sh.label){const cp=S.frame==='phone'?r.w*.045:S.frame==='corners'?u*1.2:0;
+      x.font=font(u*1.85,f.bw,f);x.textAlign='center';x.textBaseline='alphabetic';x.fillStyle=rgba(ink,.74);x.fillText(sh.label,r.x+r.w/2,r.y+r.h+cp+u*2.9);}
+    sprites[sh.id]={img:c,sr:r,pad};
+  }
+  return{W:OW,H:OH,type:'tween',k,base,sprites,steps,wrap:dir==='left'?'fade':'under',paletteSources:[base,...Object.values(sprites).map(s=>s.img)]};
+}
+async function buildMotion(OW,OH,variant){
   await ensureFont();
   const[LW,LH]=dims(),k=OW/LW,lay=S.layout;
   const A=S.order==='nd'?'night':'day',B=A==='day'?'night':'day';
@@ -1662,6 +1698,18 @@ async function buildMotion(OW,OH){
     for(const list of units.values()){const front=list.find(i=>i.z===1),back=list.find(i=>i.z===0);if(front&&back)pairs.push({a:sprite(front),b:sprite(back)});else list.forEach(i=>statics.push(sprite(i)));}
     if(!pairs.length)return none(NEED_BOTH);
     return{...base,type:'swap',base:baseL,pairs,statics,paletteSources:[layer()]};
+  }
+  if(ROTATING[lay]&&variant!=='daynight'){
+    const dir=lay==='single-focus'?'left':'right';
+    const first=S.single,second=first==='day'?'night':'day';
+    if(S.shots[first].length<2)return none('輪轉需要這一組至少兩張截圖。');
+    const a=rotationSpec(OW,OH,first,dir);
+    if(variant!=='both')return a;
+    if(S.shots[second].length<2)return none('日間轉完換夜間需要兩組都至少兩張截圖。');
+    const b=rotationSpec(OW,OH,second,dir),la=layer({side:first}),lb=layer({side:second});
+    const na=a.steps.length,nb=b.steps.length;
+    return{...base,type:'seq',parts:[{spec:a,weight:na},{spec:{...base,type:'xfade',from:la,to:lb},weight:.7},{spec:b,weight:nb},{spec:{...base,type:'xfade',from:lb,to:la},weight:.7}],
+      paletteSources:[...a.paletteSources,...b.paletteSources]};
   }
   if(lay==='single-hero'){
     const list=S.shots[S.single];if(list.length<2)return none('主圖輪流需要至少兩張截圖。');
@@ -1728,7 +1776,7 @@ async function init(){
   await loadSamples();renderLists();syncSel();req();
   readyResolve();
   ensureFont().then(req);
-  if(window.LoviaMotion)LoviaMotion.mount({buttons:[$('#openMotion')],ratio:()=>{const[w,h]=dims();return w/h;},describe:motionDesc,build:buildMotion,
+  if(window.LoviaMotion)LoviaMotion.mount({buttons:[$('#openMotion')],ratio:()=>{const[w,h]=dims();return w/h;},describe:motionDesc,build:buildMotion,variants:motionVariants,
     filename:()=>safeName(S.title)+'-'+(S.layout||'poster'),save:(blob,name)=>saveFile(blob,name)});
   if(window.LoviaStudio&&LoviaStudio.mountPresets)LoviaStudio.mountPresets({bar:$('#presetBar'),saveButtons:[$('#savePreset')],collect:collectSettings,apply:applySettings,notify:status});
 }
