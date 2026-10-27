@@ -203,8 +203,10 @@
   .ss-seg{display:inline-flex;border:1px solid var(--ss-line,rgba(46,57,49,.28));border-radius:999px;padding:2px;background:var(--ss-bg,rgba(255,255,255,.55))}
   .ss-seg a{display:inline-flex;align-items:center;gap:5px;padding:7px 11px;border-radius:999px;color:inherit;text-decoration:none;white-space:nowrap}
   .ss-seg a[aria-current="page"]{background:var(--ss-active,#2e3931);color:var(--ss-active-ink,#fbfaf6)}
-  .ss-seg a:focus-visible,.ss-lang:focus-visible{outline:2px solid var(--ss-focus,#687c6b);outline-offset:2px}
+  .ss-seg a:focus-visible,.ss-lang:focus-visible,.ss-home:focus-visible{outline:2px solid var(--ss-focus,#687c6b);outline-offset:2px}
   .ss-short{display:none}
+  .ss-home{width:32px;height:32px;flex:none;border-radius:50%;border:1px solid var(--ss-line,rgba(46,57,49,.28));background:var(--ss-bg,rgba(255,255,255,.55));color:inherit;display:inline-flex;align-items:center;justify-content:center}
+  .ss-home svg{width:15px;height:15px}
   .ss-lang{width:32px;height:32px;border-radius:50%;border:1px solid var(--ss-line,rgba(46,57,49,.28));background:var(--ss-bg,rgba(255,255,255,.55));color:inherit;font:600 13px/1 inherit;cursor:pointer;padding:0}
   .studio-switch-row{display:flex;justify-content:center;padding:12px 16px 0}
   html{touch-action:pan-y pinch-zoom}
@@ -219,6 +221,7 @@
       ? { group: '展示风格', lovia: 'Lovia 经典', loviaS: '经典', dn: 'Day Night', dnS: 'Day Night' }
       : { group: '展示風格', lovia: 'Lovia 經典', loviaS: '經典', dn: 'Day Night', dnS: 'Day Night' };
     mount.innerHTML =
+      `<div class="ss"><a class="ss-home" href="../" title="回 Reeden 小工具" aria-label="回 Reeden 小工具"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="1.5"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.5"/></svg></a>` +
       `<div class="ss"><nav class="ss-seg" aria-label="${T.group}">` +
       `<a href="./index.html" data-target="lovia"><span class="ss-full">${T.lovia}</span><span class="ss-short">${T.loviaS}</span></a>` +
       `<a href="./daynight.html" data-target="daynight"><span class="ss-full">${T.dn}</span><span class="ss-short">${T.dnS}</span></a>` +
