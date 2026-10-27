@@ -307,6 +307,7 @@ button{cursor:pointer}
       <div class="group" id="grpCompare" hidden>
         <h3>對切</h3>
         <div class="slider"><label for="compareAt">分隔位置</label><input type="range" id="compareAt" min="10" max="90" value="50"><output for="compareAt" id="compareAtOut">50%</output></div>
+        <label class="toggle"><input type="checkbox" id="compareHandle">存圖時保留中間的拉動圓鈕</label>
         <div class="row"><span class="hint">對切哪一組</span><div class="seg" id="comparePairs"></div></div>
       </div>
       <div class="group" id="grpHero" hidden>
@@ -555,7 +556,7 @@ const BG_DESC={
 const today=new Date();
 const fmtToday=()=>{const d=new Date();return`${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getDate()).padStart(2,'0')}`;};
 const S={
-  ratio:'4:3', layout:'pairs', single:'day', splitDir:'auto', tilt:'alt', order:'dn', compareAt:.5, comparePair:0, heroIndex:-1,
+  ratio:'4:3', layout:'pairs', single:'day', splitDir:'auto', tilt:'alt', order:'dn', compareAt:.5, comparePair:0, compareHandle:false, heroIndex:-1,
   size:1, gap:1, radius:.06, frame:'shadow',
   rules:false, ruleColor:'#000000', ruleOpacity:.4,
   bg:'solid', tint:.7, grain:.30, customBg:'#E9E6DB', tbTop:'#EDE9DE', tbBottom:'#A5B09E', tbCustom:false,
@@ -1044,7 +1045,9 @@ function drawCompareHalf(ctx,r,rad,other,u,preview){
   ctx.save();rr(ctx,r.x,r.y,r.w,r.h,rad);ctx.clip();ctx.beginPath();ctx.rect(xd,r.y,r.x+r.w-xd,r.h);ctx.clip();
   ctx.imageSmoothingQuality='high';ctx.drawImage(img,r.x,r.y,r.w,r.h);ctx.restore();
   ctx.save();ctx.shadowColor='rgba(0,0,0,.35)';ctx.shadowBlur=u*1.2;
-  ctx.fillStyle='rgba(255,255,255,.95)';ctx.fillRect(xd-u*.18,r.y,u*.36,r.h);
+  ctx.fillStyle='rgba(255,255,255,.95)';ctx.fillRect(xd-u*.18,r.y,u*.36,r.h);ctx.restore();
+  if(!preview&&!S.compareHandle)return; // the drag handle only shows on screen unless asked for
+  ctx.save();ctx.shadowColor='rgba(0,0,0,.35)';ctx.shadowBlur=u*1.2;ctx.fillStyle='rgba(255,255,255,.95)';
   const cy=r.y+r.h/2,R=u*1.9;ctx.beginPath();ctx.arc(xd,cy,R,0,Math.PI*2);ctx.fill();ctx.restore();
   ctx.save();ctx.fillStyle='rgba(40,44,52,.75)';const a=R*.42;
   ctx.beginPath();ctx.moveTo(xd-R*.25,cy-a);ctx.lineTo(xd-R*.25-a*.9,cy);ctx.lineTo(xd-R*.25,cy+a);ctx.fill();
@@ -1369,7 +1372,7 @@ const textIds=['title','tagline','author','date','message','labelDay','labelNigh
 function setText(id,v){const el=$('#'+id);if(!el||typeof v!=='string')return;el.value=v;el.dispatchEvent(new Event('input',{bubbles:true}));}
 for(const id of textIds){const el=$('#'+id);if(id!=='tagline'&&id!=='labelDay'&&id!=='labelNight')el.value=S[id];el.addEventListener('input',()=>{S[id]=el.value;if(id==='author'){try{localStorage.setItem('showcase.author',el.value);}catch(e){}}req();});S[id]=el.value;}
 $('#today').addEventListener('click',()=>{setText('date',fmtToday());$('#showDate').checked=true;S.showDate=true;req();});
-for(const id of['showDate','sideLabels','captions','swatches','hexes']){const el=$('#'+id);el.checked=S[id];el.addEventListener('change',()=>{S[id]=el.checked;req();});}
+for(const id of['showDate','sideLabels','captions','swatches','hexes','compareHandle']){const el=$('#'+id);el.checked=S[id];el.addEventListener('change',()=>{S[id]=el.checked;req();});}
 function renderFonts(){
   const box=$('#fonts');box.textContent='';
   const all={...FONTS};if(localFont)all.local=localFont;

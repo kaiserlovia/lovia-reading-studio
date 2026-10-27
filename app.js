@@ -106,7 +106,7 @@
   const backdropBuffer = document.createElement('canvas');
   // Day/night: the live image variables above hold the group being edited; the other group waits here.
   const DN_LAYOUTS=['pairs','split','diagonal','alternate','compare','rows'];
-  let compareAt=.5, comparePair=0, heroIndex=-1;
+  let compareAt=.5, comparePair=0, heroIndex=-1, compareHandle=false;
   let activeGroup='day';
   let dnOrder='dn'; // 'dn': day first (left / in front); 'nd': night first
   const groupStore={night:{images:[null],userObjectURLs:[null],imageOffsets:[{x:0,y:0}],imageScales:[100],selectedImageIndex:0}};
@@ -950,10 +950,14 @@
           ctx.save();ctx.beginPath();ctx.rect(xd,p.y,p.x+p.w-xd,p.h);ctx.clip();drawFittedImage(item.compareSecond.image,p);ctx.restore();
           ctx.save();ctx.shadowColor='rgba(14,24,18,.35)';ctx.shadowBlur=28;
           ctx.fillStyle='#fbfbf8';ctx.fillRect(xd-5,p.y,10,p.h);
+          ctx.restore();
+          if(ctx===previewCtx||compareHandle){ // the drag handle only shows on screen unless asked for
+          ctx.save();ctx.shadowColor='rgba(14,24,18,.35)';ctx.shadowBlur=28;ctx.fillStyle='#fbfbf8';
           const cy=p.y+p.h/2,R=58;ctx.beginPath();ctx.arc(xd,cy,R,0,Math.PI*2);ctx.fill();ctx.restore();
           setStroke(line,2);ctx.beginPath();ctx.arc(xd,cy,R,0,Math.PI*2);ctx.stroke();
           ctx.fillStyle=line;const a=R*.36;
           for(const sx of [-1,1]){ctx.beginPath();ctx.moveTo(xd+sx*R*.22,cy-a);ctx.lineTo(xd+sx*(R*.22+a*.9),cy);ctx.lineTo(xd+sx*R*.22,cy+a);ctx.fill();}
+          }
         }
       } else drawFittedImage(item.image,item.p);
       if(item.group===activeGroup)lastPlacements[item.index]=item.p;
@@ -1415,6 +1419,8 @@
     document.querySelectorAll('[data-group]').forEach(button=>button.addEventListener('click',()=>setActiveGroup(button.dataset.group)));
     refs.imageScale.addEventListener('input',()=>applyImageScale(Number(refs.imageScale.value)));
     const compareRange=document.getElementById('compareAt');
+    const handleBox=document.getElementById('compareHandle');
+    if(handleBox)handleBox.addEventListener('change',()=>{compareHandle=handleBox.checked;scheduleDraw();});
     if(compareRange)compareRange.addEventListener('input',()=>{compareAt=Number(compareRange.value)/100;document.getElementById('compareAtValue').textContent=compareRange.value+'%';scheduleDraw();});
     refs.imageScaleNumber.addEventListener('input',()=>{
       const raw=refs.imageScaleNumber.value.trim();
