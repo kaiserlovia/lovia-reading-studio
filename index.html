@@ -212,10 +212,13 @@
               <button type="button" class="layout-option" data-layout="stagger" aria-pressed="false"><span class="layout-sample layout-stagger"><i></i><i></i><i></i></span><strong>高低错落</strong></button>
               <button type="button" class="layout-option" data-layout="overlap" aria-pressed="false"><span class="layout-sample layout-overlap"><i></i><i></i><i></i></span><strong>交叠层叠</strong></button>
               <button type="button" class="layout-option" data-layout="focus" aria-pressed="false"><span class="layout-sample layout-focus"><i></i><i></i><i></i></span><strong>中央突出</strong></button>
+              <button type="button" class="layout-option" data-layout="hero" aria-pressed="false"><span class="layout-sample layout-hero"><i></i><i></i><i></i></span><strong>主图＋小图</strong></button>
               <button type="button" class="layout-option" data-layout="pairs" aria-pressed="false"><span class="layout-sample layout-pairs"><i></i><i></i><i></i><i></i><i></i><i></i></span><strong>日夜成对</strong></button>
               <button type="button" class="layout-option" data-layout="split" aria-pressed="false"><span class="layout-sample layout-split"><i></i><i></i><i></i><i></i></span><strong>日夜对开</strong></button>
               <button type="button" class="layout-option" data-layout="diagonal" aria-pressed="false"><span class="layout-sample layout-diagonal"><i></i><i></i><i></i><i></i></span><strong>日夜斜切</strong></button>
               <button type="button" class="layout-option" data-layout="alternate" aria-pressed="false"><span class="layout-sample layout-alternate"><i></i><i></i><i></i><i></i><i></i><i></i></span><strong>日夜交错</strong></button>
+              <button type="button" class="layout-option" data-layout="compare" aria-pressed="false"><span class="layout-sample layout-compare"><i></i><i></i></span><strong>日夜对切</strong></button>
+              <button type="button" class="layout-option" data-layout="rows" aria-pressed="false"><span class="layout-sample layout-rows"><i></i><i></i><i></i><i></i><i></i><i></i></span><strong>上日下夜</strong></button>
             </div>
             <div class="direction-panel" id="dnOrderPanel" hidden>
               <span>日夜顺序</span>
@@ -224,7 +227,18 @@
                 <button type="button" class="direction-option" data-dn-order="nd" aria-pressed="false">夜日 · 夜间在前</button>
               </div>
             </div>
-            <p class="section-note">后四种会同时放入日间组和夜间组的截图。在「展示图片」切换到夜间组即可添加夜间截图；拖动和缩放作用于当前选中的那一组。</p>
+            <div class="direction-panel" id="comparePanel" hidden>
+              <span>对切位置</span>
+              <div class="compare-controls">
+                <label class="compare-range"><input type="range" id="compareAt" min="10" max="90" value="50" aria-label="分隔线位置"><output id="compareAtValue">50%</output></label>
+                <div class="direction-options compare-pairs" id="comparePairs"></div>
+              </div>
+            </div>
+            <div class="direction-panel" id="heroPanel" hidden>
+              <span>主图</span>
+              <div class="direction-options compare-pairs" id="heroButtons"></div>
+            </div>
+            <p class="section-note">日夜的几种版型会同时放入日间组和夜间组的截图。在「展示图片」切换到夜间组即可添加夜间截图；拖动和缩放作用于当前选中的那一组。</p>
             <div class="direction-panel" id="directionPanel" hidden>
               <span>倾斜方向</span>
               <div class="direction-options">
