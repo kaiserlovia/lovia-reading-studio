@@ -16,9 +16,10 @@
     '衬襯装裝览覽计計认認设設试試话話说說请請读讀调調败敗贴貼轻輕载載辑輯输輸边邊过過进進适適选選错錯' +
     '键鍵闭閉阅閱阴陰随隨预預题題颜顏风風饰飾饱飽鲜鮮顶頂击擊并並机機横橫画畫盘盤确確约約胧朧师師' +
     '两兩汇匯昼晝标標档檔没沒准準产產码碼积積笔筆签籤红紅纸紙给給缀綴脑腦盖蓋里裡记記详詳这這录錄' +
-    '长長间間电電页頁顺順颗顆么麼齐齊鹜鶩较較寻尋经經级級志誌萤螢着著组組启啟带帶范範钮鈕内內';
+    '长長间間电電页頁顺順颗顆么麼齐齊鹜鶩较較寻尋经經级級志誌萤螢着著组組启啟带帶范範钮鈕内內' +
+    '删刪区區结結连連链鏈侧側订訂项項';
   // whole words that differ beyond single characters
-  const WORDS_S2T = [['屏幕', '螢幕']];
+  const WORDS_S2T = [['屏幕', '螢幕'], ['复制', '複製']];
   const s2t = new Map(), t2s = new Map();
   for (let i = 0; i + 1 < PAIRS.length; i += 2) { s2t.set(PAIRS[i], PAIRS[i + 1]); t2s.set(PAIRS[i + 1], PAIRS[i]); }
 
@@ -236,11 +237,147 @@
     if (PAGE === 'lovia') registerPage(loviaAdapter());
   }
 
+  /* ---------- saved settings (設置): this browser only, plus a shareable link without images ---------- */
+  const PT = SRC === 'sc'
+    ? { name: '设置', saved: '已存成「%」，下次在「我的设置」点一下就能套用。', applied: '已套用「%」，换上新截图就好。', link: '已复制设置链接，贴到其他装置或传给朋友打开就能套用（不含截图和上传的档案）。',
+        linkFail: '无法自动复制，请长按下面的链接复制：', fromLink: '已套用链接里的设置。想留着用，请到导出按「储存本次设定」。', del: '删除', delSure: '确定删除？',
+        overwrite: '用目前设定覆盖', copy: '复制链接', done: '完成', rename: '设置名称', more: '更多选项', head: '我的设置', updated: '已用目前设定更新「%」。', full: '浏览器空间不足，这次没有存成功。', files: '（含上传的底图、封面或字体）' }
+    : { name: '設置', saved: '已存成「%」，下次在「我的設置」點一下就能套用。', applied: '已套用「%」，換上新截圖就好。', link: '已複製設置連結，貼到其他裝置或傳給朋友打開就能套用（不含截圖和上傳的檔案）。',
+        linkFail: '無法自動複製，請長按下面的連結複製：', fromLink: '已套用連結裡的設置。想留著用，請到匯出按「儲存本次設定」。', del: '刪除', delSure: '確定刪除？',
+        overwrite: '用目前設定覆蓋', copy: '複製連結', done: '完成', rename: '設置名稱', more: '更多選項', head: '我的設置', updated: '已用目前設定更新「%」。', full: '瀏覽器空間不足，這次沒有存成功。', files: '（含上傳的底圖、封面或字體）' };
+  const PCSS = `
+  .sp{display:grid;gap:8px;margin:4px 0 14px}
+  .sp[hidden]{display:none!important}
+  .sp-head{font-size:12px;letter-spacing:.04em;opacity:.7}
+  .sp-row{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;padding:2px 1px 4px;touch-action:pan-x pan-y}
+  .sp-row::-webkit-scrollbar{display:none}
+  .sp-chip{display:inline-flex;align-items:stretch;flex:none;border:1px solid var(--sp-line,rgba(46,57,49,.28));border-radius:999px;background:var(--sp-bg,#fff);overflow:hidden}
+  .sp-chip[data-active]{border-color:var(--sp-active,#2e3931);box-shadow:inset 0 0 0 1px var(--sp-active,#2e3931)}
+  .sp-chip button{border:0;background:none;color:inherit;font:inherit;font-size:13px;cursor:pointer}
+  .sp-apply{padding:8px 4px 8px 13px;max-width:11em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .sp-more{padding:8px 11px 8px 7px;opacity:.6;letter-spacing:1px}
+  .sp-edit{display:grid;gap:8px;padding:10px;border:1px solid var(--sp-line,rgba(46,57,49,.28));border-radius:10px;background:var(--sp-bg,#fff)}
+  .sp-edit input{width:100%;box-sizing:border-box;border:1px solid var(--sp-line,rgba(46,57,49,.28));border-radius:8px;padding:8px 10px;font:inherit;font-size:14px;background:transparent;color:inherit}
+  .sp-acts{display:flex;flex-wrap:wrap;gap:6px}
+  .sp-acts button{border:1px solid var(--sp-line,rgba(46,57,49,.28));background:transparent;color:inherit;border-radius:8px;padding:7px 10px;font:inherit;font-size:13px;cursor:pointer}
+  .sp-acts .sp-del[data-sure]{border-color:#b4533f;color:#b4533f}
+  .sp-acts .sp-done{margin-left:auto}
+  .sp-link{width:100%;box-sizing:border-box;font-size:12px!important}`;
+  const presetKey = 'studio.presets.' + PAGE;
+  const readList = () => { try { return JSON.parse(store.get(presetKey) || '[]'); } catch (e) { return []; } };
+  const writeList = list => { try { localStorage.setItem(presetKey, JSON.stringify(list)); return true; } catch (e) { return false; } };
+  function fileDb() {
+    return new Promise((res, rej) => {
+      const r = indexedDB.open('lovia-studio-presets', 1);
+      r.onupgradeneeded = () => r.result.createObjectStore('files');
+      r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error);
+    });
+  }
+  async function fileOp(mode, fn) {
+    const db = await fileDb();
+    try { return await new Promise((res, rej) => { const tx = db.transaction('files', mode); const out = fn(tx.objectStore('files')); tx.oncomplete = () => res(out && out.result); tx.onerror = () => rej(tx.error); }); }
+    finally { db.close(); }
+  }
+  const putFiles = (id, files) => fileOp('readwrite', st => { st.delete(id); if (files && Object.keys(files).length) st.put(files, id); });
+  const getFiles = id => fileOp('readonly', st => st.get(id)).catch(() => null);
+  const dropFiles = id => fileOp('readwrite', st => { st.delete(id); }).catch(() => {});
+  // settings travel in the link as base64url-encoded UTF-8 JSON
+  const encode = obj => { const b = new TextEncoder().encode(JSON.stringify(obj)); let bin = ''; b.forEach(c => { bin += String.fromCharCode(c); }); return btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); };
+  const decode = str => { const bin = atob(str.replace(/-/g, '+').replace(/_/g, '/')); return JSON.parse(new TextDecoder().decode(Uint8Array.from(bin, c => c.charCodeAt(0)))); };
+  const fill = (t, name) => fromSrc(t).replace('%', name);
+
+  function mountPresets(o) {
+    // o: {bar, saveButtons[], collect():{settings, files}, apply(settings, files), notify(msg)}
+    if (!o || !o.bar) return;
+    const style = document.createElement('style'); style.textContent = PCSS; document.head.append(style);
+    const bar = o.bar; bar.classList.add('sp');
+    let activeId = null, editingId = null;
+    const notify = msg => { try { o.notify(msg); } catch (e) {} };
+    function nextName(list) { let n = 1; const names = new Set(list.map(p => p.name)); while (names.has(fromSrc(PT.name) + ' ' + n)) n++; return fromSrc(PT.name) + ' ' + n; }
+    async function save() {
+      const list = readList(); const { settings, files } = await o.collect();
+      const p = { id: 'p' + Date.now().toString(36), name: nextName(list), settings, files: Object.keys(files || {}), at: Date.now() };
+      list.push(p);
+      if (!writeList(list)) { notify(fromSrc(PT.full)); return; }
+      try { await putFiles(p.id, files); } catch (e) { p.files = []; writeList(list); }
+      activeId = p.id; render(); notify(fill(PT.saved, p.name) + (p.files.length ? fromSrc(PT.files) : ''));
+    }
+    async function apply(p) {
+      const files = p.files && p.files.length ? (await getFiles(p.id)) || {} : {};
+      await o.apply(JSON.parse(JSON.stringify(p.settings)), files);
+      activeId = p.id; render(); notify(fill(PT.applied, p.name));
+    }
+    async function overwrite(p) {
+      const list = readList(), it = list.find(x => x.id === p.id); if (!it) return;
+      const { settings, files } = await o.collect();
+      it.settings = settings; it.files = Object.keys(files || {}); it.at = Date.now();
+      if (!writeList(list)) { notify(fromSrc(PT.full)); return; }
+      try { await putFiles(it.id, files); } catch (e) {}
+      activeId = it.id; render(); notify(fill(PT.updated, it.name));
+    }
+    async function copyLink(p, holder) {
+      const url = location.href.split('#')[0] + '#s=' + encode({ v: 1, page: PAGE, name: p.name, settings: p.settings });
+      try { await navigator.clipboard.writeText(url); notify(fromSrc(PT.link)); }
+      catch (e) {
+        notify(fromSrc(PT.linkFail));
+        const inp = document.createElement('input'); inp.className = 'sp-link'; inp.readOnly = true; inp.value = url; inp.setAttribute('data-i18n-skip', '');
+        holder.append(inp); inp.focus(); inp.select();
+      }
+    }
+    function render() {
+      const list = readList();
+      bar.hidden = !list.length; bar.textContent = '';
+      if (!list.length) return;
+      const head = document.createElement('div'); head.className = 'sp-head'; head.textContent = fromSrc(PT.head);
+      const row = document.createElement('div'); row.className = 'sp-row';
+      for (const p of list) {
+        const chip = document.createElement('span'); chip.className = 'sp-chip'; if (p.id === activeId) chip.dataset.active = '';
+        const a = document.createElement('button'); a.type = 'button'; a.className = 'sp-apply'; a.textContent = p.name; a.setAttribute('data-i18n-skip', '');
+        a.addEventListener('click', () => apply(p));
+        const m = document.createElement('button'); m.type = 'button'; m.className = 'sp-more'; m.textContent = '⋯'; m.setAttribute('aria-label', fromSrc(PT.more) + ' · ' + p.name); m.setAttribute('data-i18n-skip', '');
+        m.addEventListener('click', () => { editingId = editingId === p.id ? null : p.id; render(); });
+        chip.append(a, m); row.append(chip);
+      }
+      bar.append(head, row);
+      const p = list.find(x => x.id === editingId);
+      if (p) {
+        const box = document.createElement('div'); box.className = 'sp-edit';
+        const name = document.createElement('input'); name.type = 'text'; name.maxLength = 24; name.value = p.name; name.setAttribute('aria-label', fromSrc(PT.rename)); name.setAttribute('data-i18n-skip', '');
+        const commit = () => { const v = name.value.trim(); if (!v || v === p.name) return; const l = readList(), it = l.find(x => x.id === p.id); if (it) { it.name = v; p.name = v; writeList(l); } };
+        name.addEventListener('change', () => { commit(); render(); });
+        name.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); commit(); editingId = null; render(); } });
+        const acts = document.createElement('div'); acts.className = 'sp-acts';
+        const btn = (txt, cls, fn) => { const b = document.createElement('button'); b.type = 'button'; b.textContent = fromSrc(txt); if (cls) b.className = cls; b.addEventListener('click', fn); acts.append(b); return b; };
+        btn(PT.overwrite, '', () => { commit(); overwrite(p); });
+        btn(PT.copy, '', () => { commit(); copyLink(readList().find(x => x.id === p.id) || p, box); });
+        const del = btn(PT.del, 'sp-del', () => {
+          if (!del.hasAttribute('data-sure')) { del.setAttribute('data-sure', ''); del.textContent = fromSrc(PT.delSure); return; }
+          writeList(readList().filter(x => x.id !== p.id)); dropFiles(p.id); if (activeId === p.id) activeId = null; editingId = null; render();
+        });
+        btn(PT.done, 'sp-done', () => { commit(); editingId = null; render(); });
+        box.append(name, acts); bar.append(box);
+      }
+    }
+    (o.saveButtons || []).forEach(b => b && b.addEventListener('click', save));
+    render();
+    // a shared link: #s=...
+    const m = location.hash.match(/^#s=([A-Za-z0-9_-]+)/);
+    if (m) {
+      try {
+        const d = decode(m[1]);
+        history.replaceState(null, '', location.href.split('#')[0]);
+        if (d && d.settings && (!d.page || d.page === PAGE)) Promise.resolve(o.apply(d.settings, {})).then(() => notify(fromSrc(PT.fromLink)));
+      } catch (e) { console.warn('settings link unreadable', e); }
+    }
+    return { refresh: render };
+  }
+
   window.LoviaStudio = {
     get lang() { return lang; },
     t: fromSrc,
     onLang(fn) { listeners.push(fn); },
     registerPage,
+    mountPresets,
   };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
 })();

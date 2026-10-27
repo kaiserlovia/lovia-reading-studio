@@ -107,6 +107,9 @@
   // Day/night: the live image variables above hold the group being edited; the other group waits here.
   const DN_LAYOUTS=['pairs','split','diagonal','alternate','compare','rows'];
   let compareAt=.5, comparePair=0, heroIndex=-1, compareHandle=false;
+  let textMode='auto', textDay='#2F3A31', textNight='#F1F0E7', textTouched=false; // custom poster text colours
+  let paletteLocked=false; // a saved setting with its own palette keeps it when screenshots change
+  const keptFiles={background:null,cover:null,font:null}; // files behind the uploaded backdrop, cover and font
   let activeGroup='day';
   let dnOrder='dn'; // 'dn': day first (left / in front); 'nd': night first
   const groupStore={night:{images:[null],userObjectURLs:[null],imageOffsets:[{x:0,y:0}],imageScales:[100],selectedImageIndex:0}};
@@ -256,6 +259,7 @@
       await face.load();
       if(request!==fontImportVersion)return;
       document.fonts.add(face);
+      keptFiles.font=file;
       if(importedFontFace)document.fonts.delete(importedFontFace);
       importedFontFace=face;
       importedFontFamily=family;
@@ -894,9 +898,9 @@
       if (image) { drawAdaptiveFrame(p,line,theme); drawFittedImage(image,p); }
     });
     drawTrackedText(refs.name.value || DEFAULT_TEXT.name,179,175,
-      {color:theme.ink,size:Number(refs.titleSize.value),minSize:18,tracking:5,maxWidth:1670,bold:true,kinghwa:true});
+      {color:textInk(theme.ink),size:Number(refs.titleSize.value),minSize:18,tracking:5,maxWidth:1670,bold:true,kinghwa:true});
     drawTrackedText('AUTHOR / '+(refs.author.value || DEFAULT_TEXT.author),3421,175,
-      {color:theme.ink,size:Number(refs.authorSize.value),minSize:18,tracking:8,maxWidth:1430,align:'right'});
+      {color:textInk(theme.ink),size:Number(refs.authorSize.value),minSize:18,tracking:8,maxWidth:1430,align:'right'});
     sortedColors(currentColors).forEach((color,i) => {
       const x=200+67*i,y=CANVAS_H-160;
       ctx.beginPath();ctx.arc(x,y,21,0,Math.PI*2);
@@ -906,12 +910,35 @@
     const message=refs.footerText.value.trim();
     if (message) {
       drawTrackedText(message,3421,CANVAS_H-190,
-        {color:theme.ink,size:Number(refs.messageSize.value),minSize:15,tracking:4,maxWidth:1450,align:'right'});
+        {color:textInk(theme.ink),size:Number(refs.messageSize.value),minSize:15,tracking:4,maxWidth:1450,align:'right'});
     }
     drawTrackedText(refs.date.value || DEFAULT_TEXT.date,3421,CANVAS_H-121,
-      {color:theme.ink,size:Number(refs.dateSize.value),minSize:16,tracking:7,maxWidth:900,align:'right'});
+      {color:textInk(theme.ink),size:Number(refs.dateSize.value),minSize:16,tracking:7,maxWidth:900,align:'right'});
   }
 
+  function textInk(auto,side='day') {
+    if(textMode!=='custom')return auto;
+    return side==='night'?textNight:textDay;
+  }
+  function setTextMode(mode) {
+    textMode=mode==='custom'?'custom':'auto';
+    if(textMode==='custom'&&!textTouched){
+      // start from the colours the poster shows now
+      textDay=displayColors().ink;
+      textNight=nightTone().dark&&luminance(nightTone().dark)<125?'#F1F0E7':'#2F3A31';
+      textTouched=true;
+    }
+    document.querySelectorAll('[data-text-mode]').forEach(b=>{const on=b.dataset.textMode===textMode;b.classList.toggle('selected',on);b.setAttribute('aria-pressed',String(on));});
+    const box=document.getElementById('textColorInputs');if(box)box.hidden=textMode!=='custom';
+    syncTextColorInputs();
+    scheduleDraw();
+  }
+  function syncTextColorInputs() {
+    for(const [id,v] of [['textDayColor',textDay],['textNightColor',textNight]]){
+      const el=document.getElementById(id);if(!el)continue;
+      el.value=v.toLowerCase();if(el.dataset.androidHsv)el.style.backgroundColor=v;
+    }
+  }
   function drawPosterText(ink) {
     drawTrackedText(refs.name.value || DEFAULT_TEXT.name,179,175,
       {color:ink,size:Number(refs.titleSize.value),minSize:18,tracking:5,maxWidth:1670,bold:true,kinghwa:true});
@@ -964,9 +991,9 @@
     }
     if(halves){
       const geo=dayNightGeometry();
-      ctx.save();tracePolygon(geo.day);ctx.clip();drawPosterText(theme.ink);ctx.restore();
-      ctx.save();tracePolygon(geo.night);ctx.clip();drawPosterText(nightInk);ctx.restore();
-    } else drawPosterText(theme.ink);
+      ctx.save();tracePolygon(geo.day);ctx.clip();drawPosterText(textInk(theme.ink));ctx.restore();
+      ctx.save();tracePolygon(geo.night);ctx.clip();drawPosterText(textInk(nightInk,'night'));ctx.restore();
+    } else drawPosterText(textInk(theme.ink));
     sortedColors(currentColors).forEach((color,i) => {
       const x=200+67*i,y=CANVAS_H-160;
       ctx.beginPath();ctx.arc(x,y,21,0,Math.PI*2);
@@ -1108,7 +1135,7 @@
     selectedImageIndex=Math.max(0,Math.min(selectedImageIndex,images.length-1));
     updateSelectedScaleUI();
     updateSizeMessage();refreshAutoColors();
-    currentColors=paletteFromImages(images);syncPaletteInputs();
+    if(!paletteLocked)currentColors=paletteFromImages(images);syncPaletteInputs();
     scheduleDraw();announce('已移除第 '+(index+1)+' 张图片');
   }
 
@@ -1147,7 +1174,7 @@
       updateSelectedScaleUI();
       updateSizeMessage();
       refreshAutoColors();
-      currentColors=paletteFromImages(images);
+      if(!paletteLocked)currentColors=paletteFromImages(images);
       syncPaletteInputs();
       scheduleDraw();
       announce('已放入 '+images.length+' 张图片 · 可直接在画布上拖动调整');
@@ -1173,7 +1200,7 @@
       if (old) URL.revokeObjectURL(old);
       updateSizeMessage();
       refreshAutoColors();
-      currentColors=paletteFromImages(images);
+      if(!paletteLocked)currentColors=paletteFromImages(images);
       syncPaletteInputs();
       scheduleDraw();
       announce('第 '+(index+1)+' 张图片已更新 · '+loaded.image.naturalWidth+' × '+loaded.image.naturalHeight);
@@ -1260,7 +1287,7 @@
     else { try { images=await Promise.all(DEFAULT_IMAGES.map(loadImage)); }
     catch(error) { images=[null]; } }
     userObjectURLs=images.map(()=>null);imageOffsets=images.map(()=>({x:0,y:0}));
-    gradientCustomized=false;
+    gradientCustomized=false;paletteLocked=false;setTextMode('auto');
     imageScales=images.map(()=>100);selectedImageIndex=0;scaleMode='single';
     updateSelectedScaleUI();
     updateSizeMessage();refreshAutoColors();setAutoGradient(false);currentColors=paletteFromImages(images);
@@ -1283,6 +1310,7 @@
   function extractPalette() {
     const source = currentTheme === 'glass' && coverImage ? [coverImage] : images;
     if (!source.some(Boolean)) return announce('请先添加一张图片');
+    paletteLocked = false;
     currentColors = paletteFromImages(source);
     syncPaletteInputs();
     scheduleDraw();
@@ -1291,6 +1319,7 @@
 
   async function replaceBackdropAsset(kind, file) {
     if (!file || !file.type.startsWith('image/')) return announce('请选择有效的图片');
+    keptFiles[kind]=file;
     const url = URL.createObjectURL(file);
     try {
       const image = await loadImage(url);
@@ -1442,6 +1471,10 @@
         refs.imageScaleNumber.blur();
       }
     });
+    document.querySelectorAll('[data-text-mode]').forEach(b=>b.addEventListener('click',()=>setTextMode(b.dataset.textMode)));
+    for(const [id,set] of [['textDayColor',v=>{textDay=v;}],['textNightColor',v=>{textNight=v;}]]){
+      const el=document.getElementById(id);if(el)el.addEventListener('input',()=>{set(el.value.toUpperCase());scheduleDraw();});
+    }
     refs.colors.forEach(input => input.addEventListener('input', () => {
       currentColors[Number(input.dataset.color)] = input.value.toUpperCase();
       syncPaletteInputs();
@@ -1672,6 +1705,78 @@
       }
     }
     document.fonts.load('bold 61px "KingHwaOldSong"').then(scheduleDraw).catch(()=>{});
+    mountPresets();
+  }
+
+  /* ---------- saved settings (设置): kept in this browser, shareable as a link ---------- */
+  function collectSettings() {
+    const hasImages=images.some(Boolean);
+    const auto=hasImages?sortedColors(paletteFromImages(images)):null;
+    const paletteCustom=paletteLocked||!auto||auto.join()!==sortedColors(currentColors).join();
+    const settings={
+      v:1, ratio:CANVAS_H===3600?'1:1':'4:3', theme:currentTheme, border:borderStyle, layout:layoutMode, direction:layoutDirection,
+      order:dnOrder, compareAt, compareHandle, font:selectedFont,
+      sizes:{title:refs.titleSize.value,author:refs.authorSize.value,date:refs.dateSize.value,message:refs.messageSize.value},
+      text:{name:refs.name.value,author:refs.author.value,message:refs.footerText.value},
+      rules:{show:refs.showRules.checked,color:refs.ruleColor.value,opacity:refs.ruleOpacity.value},
+      customColor:refs.customColor.value, blur:refs.blur.value, opacity:refs.backdropOpacity.value, glass:refs.glassStrength.value,
+      gradient:{start:refs.gradientStart.value,end:refs.gradientEnd.value,customized:gradientCustomized},
+      quality:selectedExportQuality, palette:paletteCustom?[...currentColors]:null,
+      textMode, textDay, textNight, textTouched,
+    };
+    const files={};
+    if(currentTheme==='image'&&keptFiles.background)files.background=keptFiles.background;
+    if(currentTheme==='glass'&&keptFiles.cover)files.cover=keptFiles.cover;
+    if(selectedFont==='uploaded'&&keptFiles.font)files.font=keptFiles.font;
+    return {settings,files};
+  }
+  function setControl(el,value,event='input') {
+    if(!el||value===undefined||value===null)return;
+    if(el.type==='checkbox')el.checked=!!value;else el.value=String(value);
+    if(el.dataset.androidHsv)el.style.backgroundColor=String(value);
+    el.dispatchEvent(new Event(event,{bubbles:true}));
+  }
+  async function applySettings(st,files={}) {
+    const asFile=(b,n)=>b instanceof File?b:new File([b],n,{type:b.type||''});
+    if(files.background)await replaceBackdropAsset('background',asFile(files.background,'background.png'));
+    if(files.cover)await replaceBackdropAsset('cover',asFile(files.cover,'cover.png'));
+    if(st.font==='uploaded'&&files.font)await importLocalFont(asFile(files.font,files.font.name||'font.ttf'));
+    else if(st.font in FONT_PRESETS)selectGlobalFont(st.font);
+    if(st.ratio)setCanvasRatio(st.ratio);
+    let theme=st.theme;
+    if(theme==='image'&&!backgroundImage)theme='light';
+    if(theme)selectTheme(theme);
+    if(st.border)selectBorder(st.border);
+    if(st.direction)setLayoutDirection(st.direction);
+    if(st.order)setDayNightOrder(st.order);
+    if(st.layout)setLayout(st.layout);
+    if(st.compareAt!==undefined)setControl(document.getElementById('compareAt'),Math.round(st.compareAt*100));
+    if(st.compareHandle!==undefined)setControl(document.getElementById('compareHandle'),st.compareHandle,'change');
+    const sz=st.sizes||{};
+    setControl(refs.titleSize,sz.title);setControl(refs.authorSize,sz.author);setControl(refs.dateSize,sz.date);setControl(refs.messageSize,sz.message);
+    const tx=st.text||{};
+    setControl(refs.name,tx.name);setControl(refs.author,tx.author);setControl(refs.footerText,tx.message);
+    const ru=st.rules||{};
+    setControl(refs.showRules,ru.show,'change');setControl(refs.ruleColor,ru.color);setControl(refs.ruleOpacity,ru.opacity);
+    setControl(refs.customColor,st.customColor);setControl(refs.blur,st.blur);setControl(refs.backdropOpacity,st.opacity);setControl(refs.glassStrength,st.glass);
+    const gr=st.gradient||{};
+    if(gr.customized){refs.gradientStart.value=gr.start;refs.gradientEnd.value=gr.end;gradientCustomized=true;
+      for(const el of [refs.gradientStart,refs.gradientEnd])if(el.dataset.androidHsv)el.style.backgroundColor=el.value;}
+    else setAutoGradient(false);
+    if(st.quality){selectedExportQuality=st.quality;syncExportQuality();}
+    if(Array.isArray(st.palette)&&st.palette.length===currentColors.length){currentColors=[...st.palette];paletteLocked=true;}
+    else{paletteLocked=false;if(images.some(Boolean))currentColors=paletteFromImages(images);}
+    syncPaletteInputs();
+    for(const el of refs.colors)if(el.dataset.androidHsv)el.style.backgroundColor=el.value;
+    if(st.textDay)textDay=st.textDay;if(st.textNight)textNight=st.textNight;textTouched=!!st.textTouched;
+    setTextMode(st.textMode||'auto');
+    renderLayoutChoices();
+    scheduleDraw();
+  }
+  function mountPresets(tries=0) {
+    if(window.LoviaStudio&&window.LoviaStudio.mountPresets){
+      window.LoviaStudio.mountPresets({bar:document.getElementById('presetBar'),saveButtons:[document.getElementById('savePreset')],collect:collectSettings,apply:applySettings,notify:announce});
+    } else if(tries<50) setTimeout(()=>mountPresets(tries+1),100);
   }
 
   window.LoviaClassicAPI={
