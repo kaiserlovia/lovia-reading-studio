@@ -17,49 +17,77 @@
   const tc = () => { try { return localStorage.getItem('lovia.lang') === 'tc'; } catch (e) { return false; } };
   const word = (sc, t) => tc() ? t : sc;
 
-  // one whole image inside a paper card of pw × ph, margin m
-  function drawInPaper(ctx, img, a, pw, ph, m, paper) {
+  // one whole image inside a paper card of pw × ph, margin m; draw(ctx, rect) lets the studio add its own frame and corners
+  function drawInPaper(ctx, img, a, pw, ph, m, paper, draw) {
     ctx.fillStyle = paper; ctx.fillRect(0, 0, pw, ph);
     let w = pw - 2 * m, h = w / a;
     if (h > ph - 2 * m) { h = ph - 2 * m; w = h * a; }
+    const r = { x: (pw - w) / 2, y: (ph - h) / 2, w, h };
+    if (draw) { draw(ctx, r); return; }
     ctx.imageSmoothingQuality = 'high';
-    ctx.drawImage(img, (pw - w) / 2, (ph - h) / 2, w, h);
+    ctx.drawImage(img, r.x, r.y, r.w, r.h);
   }
 
   /* ---------- fold ---------- */
   const OPEN = .5, SHUT = 1.42, SKEW = .42, MARGIN = .07;
   // size the panels so the opened fold fills the box; every panel has the same size
-  function foldPlan(aspects, box, capH = 0) {
+  // gap: space between panels as a share of a panel's width (0 keeps them joined at the creases)
+  function foldPlan(aspects, box, capH = 0, gap = 0) {
     const n = aspects.length; if (!n) return null;
     const R = (1 - 2 * MARGIN) / Math.min(...aspects) + 2 * MARGIN; // panel height / width
     const c = Math.cos(OPEN), s = Math.sin(OPEN) * SKEW;
-    const pw = Math.min(box.w / (n * c), (box.h - capH) / (R + s));
+    const pw = Math.min(box.w / (n * c + (n - 1) * gap), (box.h - capH) / (R + s));
     const ph = pw * R, d = pw * s;
-    return { n, pw, ph, m: pw * MARGIN, y: box.y + (box.h - capH - ph - d) / 2, cx: box.x + box.w / 2, d };
+    return { n, pw, ph, m: pw * MARGIN, y: box.y + (box.h - capH - ph - d) / 2, cx: box.x + box.w / 2, d, gap: gap * pw };
   }
   // how far the fold is open at time t of a loop: shut, opens, stays open, closes again
   function foldOpenAt(t) {
     if (t < .12) return 0; if (t < .45) return ease((t - .12) / .33); if (t < .8) return 1; return 1 - ease((t - .8) / .2);
   }
-  // shots: [{img, a}]; o: {open, paper, shade, shadow, labels, capFont, capColor, capY}
+  /*
+   * shots: [{img, a}]
+   * o: {open, paper, shade, shadow, labels, capFont, capColor, capY,
+   *     scales[] (each panel's size), offset {x, y} (moves the whole fold), bounds {x, y, w, h} (keeps it on the poster),
+   *     drawImg(ctx, i, rect) (draws screenshot i inside its panel)}
+   */
   function drawFold(ctx, plan, shots, o = {}) {
     if (!plan) return [];
     const open = o.open == null ? 1 : o.open, ang = SHUT + (OPEN - SHUT) * open;
-    const c = Math.cos(ang), d = plan.pw * Math.sin(ang) * SKEW, pw = plan.pw, ph = plan.ph;
-    const total = plan.n * pw * c, x0 = plan.cx - total / 2, y0 = plan.y + (plan.d - d) / 2;
+    const c = Math.cos(ang), sk = Math.sin(ang) * SKEW, skOpen = Math.sin(OPEN) * SKEW, cOpen = Math.cos(OPEN);
+    let ks = shots.map((s, i) => (o.scales && o.scales[i]) || 1);
+    // never let the opened fold run off the poster
+    if (o.bounds) {
+      const wOpen = ks.reduce((t, k) => t + plan.pw * k * cOpen, 0) + plan.gap * (shots.length - 1);
+      const hOpen = Math.max(...ks.map(k => (plan.ph + plan.pw * skOpen) * k));
+      const f = Math.min(1, o.bounds.w / wOpen, o.bounds.h / hOpen);
+      ks = ks.map(k => k * f);
+    }
+    const off = o.offset || { x: 0, y: 0 }, gap = plan.gap * open;
+    const total = ks.reduce((t, k) => t + plan.pw * k * c, 0) + gap * (shots.length - 1);
+    let cx = plan.cx + off.x, yc = plan.y + (plan.ph + plan.d) / 2 + off.y;
+    const halfH = Math.max(...ks.map(k => (plan.ph + plan.pw * skOpen) * k)) / 2;
+    if (o.bounds) { // keep a dragged fold inside the poster too
+      const b = o.bounds, wOpen = ks.reduce((t, k) => t + plan.pw * k * cOpen, 0) + plan.gap * (shots.length - 1);
+      cx = Math.max(b.x + wOpen / 2, Math.min(b.x + b.w - wOpen / 2, cx));
+      yc = Math.max(b.y + halfH, Math.min(b.y + b.h - halfH, yc));
+    }
+    const bottom = yc + halfH;
     // floor shadow
     ctx.save();
-    const sy = plan.y + ph + plan.d + pw * .08, rx = Math.max(total * .62, pw * .6), ry = pw * .16;
-    ctx.translate(plan.cx, sy); ctx.scale(1, ry / rx);
+    const pwMax = plan.pw * Math.max(...ks);
+    const sy = bottom + pwMax * .08, rx = Math.max(total * .62, pwMax * .6), ry = pwMax * .16;
+    ctx.translate(cx, sy); ctx.scale(1, ry / rx);
     const g = ctx.createRadialGradient(0, 0, 0, 0, 0, rx);
     g.addColorStop(0, `rgba(0,0,0,${o.shadow ?? .28})`); g.addColorStop(1, 'rgba(0,0,0,0)');
     ctx.fillStyle = g; ctx.beginPath(); ctx.arc(0, 0, rx, 0, Math.PI * 2); ctx.fill();
     ctx.restore();
     const rects = [];
+    let x = cx - total / 2;
     shots.forEach((s, i) => {
-      const up = i % 2 === 0, x = x0 + i * pw * c, top = up ? y0 : y0 + d, b = (up ? 1 : -1) * d / pw;
+      const k = ks[i], pw = plan.pw * k, ph = plan.ph * k, d = pw * sk;
+      const up = i % 2 === 0, y0 = yc - (ph + d) / 2, top = up ? y0 : y0 + d, b = (up ? 1 : -1) * d / pw;
       ctx.save(); ctx.transform(c, b, 0, 1, x, top);
-      drawInPaper(ctx, s.img, s.a, pw, ph, plan.m, (typeof o.paper === 'function' ? o.paper(i) : o.paper) || '#FBF8F3');
+      drawInPaper(ctx, s.img, s.a, pw, ph, plan.m * k, (typeof o.paper === 'function' ? o.paper(i) : o.paper) || '#FBF8F3', o.drawImg && ((cx2, r) => o.drawImg(cx2, i, r)));
       // light from the left: panels turned left are lit, the others in shade
       const gr = ctx.createLinearGradient(0, 0, pw, 0), sh = o.shade ?? .16;
       if (up) { gr.addColorStop(0, 'rgba(255,255,255,.10)'); gr.addColorStop(1, 'rgba(0,0,0,.05)'); }
@@ -72,8 +100,9 @@
       if (label && open > .6) {
         ctx.save(); ctx.globalAlpha = clamp01((open - .6) / .4) * .78; ctx.fillStyle = o.capColor ? o.capColor(x + pw * c / 2) : '#333';
         ctx.font = o.capFont; ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
-        ctx.fillText(label, x + pw * c / 2, plan.y + ph + plan.d + (o.capY ?? pw * .2)); ctx.restore();
+        ctx.fillText(label, x + pw * c / 2, bottom + (o.capY ?? pw * .2)); ctx.restore();
       }
+      x += pw * c + gap;
     });
     return rects;
   }
@@ -116,6 +145,9 @@
   const TILT = [-.035, .02, -.015, .03, -.025, .015, -.03, .025, -.02, .01];
   /*
    * M: {bg, paint(ctx)?, ink, inks:{title,author,date,message}, title, author, date, message, labels[], shots:[{img,a}], swatches[], fonts:{head,title,author,date,message,labels}, sizes:{…}, tilt}
+   *    optional: size (all photos), scales[] and offsets[{x,y}] (each photo), gap (1 = default spacing),
+   *    drawImg(ctx, i, rect) (draws photo i with the studio's own frame and corners), framePad (how far that frame reaches past the photo, share of its width), rules {color, alpha} (thin border),
+   *    hexes (colour codes under the swatches), note (short line after the 借阅卡 heading), noteSize, grain(ctx) (painted last)
    * t: null for the still poster, 0–1 for a frame of the motion loop
    */
   function drawCard(ctx, W, H, M, t = null) {
@@ -134,12 +166,17 @@
     ctx.fillStyle = rgba(red, .75); ctx.fillRect(150 * u, -10 * u, 2 * u, H + 20 * u); ctx.fillRect(156 * u, -10 * u, 2 * u, H + 20 * u);
     ctx.textBaseline = 'alphabetic'; ctx.textAlign = 'left'; ctx.fillStyle = ink;
     ctx.font = `700 ${40 * u}px ${F.head}`; tracked(ctx, word('借阅卡', '借閱卡'), 210 * u, 118 * u, 14 * u);
+    if (M.note) { ctx.save(); ctx.globalAlpha = .6; fitFont(ctx, M.note, 400, 26 * u * (M.noteSize || 1), F.head, W - 1100 * u); ctx.fillText(M.note, 420 * u, 116 * u); ctx.restore(); }
     // stamp on the right, swatches beside the header
     const sx = W - 280 * u, sy = 250 * u, R = 128 * u;
+    const step = M.hexes ? 104 * u : 48 * u;
     (M.swatches || []).forEach((c, i, all) => {
       const a = at(.5 + i * .012, .03) * fade; if (!a) return;
-      ctx.save(); ctx.globalAlpha = a; ctx.beginPath(); ctx.arc(sx - R - 60 * u - (all.length - 1 - i) * 48 * u, 106 * u, 16 * u, 0, Math.PI * 2);
-      ctx.fillStyle = c; ctx.fill(); ctx.strokeStyle = 'rgba(0,0,0,.2)'; ctx.lineWidth = 1.5 * u; ctx.stroke(); ctx.restore();
+      const x = sx - R - 60 * u - (all.length - 1 - i) * step;
+      ctx.save(); ctx.globalAlpha = a; ctx.beginPath(); ctx.arc(x, 106 * u, 16 * u, 0, Math.PI * 2);
+      ctx.fillStyle = c; ctx.fill(); ctx.strokeStyle = 'rgba(0,0,0,.2)'; ctx.lineWidth = 1.5 * u; ctx.stroke();
+      if (M.hexes) { ctx.globalAlpha = a * .6; ctx.fillStyle = ink; ctx.textAlign = 'center'; ctx.font = `500 ${15 * u}px ui-monospace, Menlo, monospace`; ctx.fillText(c.toUpperCase(), x, 148 * u); }
+      ctx.restore();
     });
     // fields, typed one character at a time
     const fields = [[word('书名', '書名'), M.title, 'title', 46], [word('作者', '作者'), M.author, 'author', 40], [word('日期', '日期'), M.date, 'date', 40]];
@@ -165,18 +202,24 @@
     }
     // photos, clipped on one by one
     const shots = M.shots || [], n = shots.length, msgOn = !!M.message;
-    const slots = photoSlots(shots.map(s => s.a), { x: 210 * u, y: 440 * u, w: W - 330 * u, h: H - 440 * u - (msgOn ? 150 : 80) * u });
+    const slots = photoSlots(shots.map(s => s.a), { x: 210 * u, y: 440 * u, w: W - 330 * u, h: H - 440 * u - (msgOn ? 150 : 80) * u }, .3 * (M.gap ?? 1))
+      .map((r, i) => { // overall size, each photo's own size, and where it was dragged
+        const k = (M.size || 1) * ((M.scales && M.scales[i]) || 1), o = (M.offsets && M.offsets[i]) || { x: 0, y: 0 };
+        const w = r.w * k, h = r.h * k;
+        return { x: r.x + (r.w - w) / 2 + o.x, y: r.y + (r.h - h) / 2 + o.y, w, h };
+      });
     const dur = Math.min(.12, .4 / Math.max(1, n)), span = .34 - dur;
     const rects = [];
     shots.forEach((s, i) => {
       const r = slots[i]; rects.push(r);
       const k = at(.18 + (n > 1 ? i * span / (n - 1) : 0), dur); if (!k || !fade) return;
-      const e = still ? 1 : backOut(k), rot = M.tilt === false ? 0 : TILT[i % TILT.length], b = r.w * .06, lab = r.w * .18;
+      const e = still ? 1 : backOut(k), rot = M.tilt === false ? 0 : TILT[i % TILT.length], b = r.w * (.06 + (M.framePad || 0)), lab = r.w * .18 + b - r.w * .06;
       ctx.save(); ctx.globalAlpha = Math.min(1, k * 3) * fade;
       ctx.translate(r.x + r.w / 2, r.y + r.h / 2 - (1 - e) * 260 * u); ctx.rotate(rot + (1 - e) * rot * 6);
       ctx.save(); ctx.shadowColor = `rgba(0,0,0,${dark ? .55 : .22})`; ctx.shadowBlur = (26 + (1 - e) * 30) * u; ctx.shadowOffsetY = (10 + (1 - e) * 30) * u;
       ctx.fillStyle = dark ? '#ECE6DA' : '#FFFFFF'; ctx.fillRect(-r.w / 2 - b, -r.h / 2 - b, r.w + 2 * b, r.h + b + lab); ctx.restore();
-      ctx.imageSmoothingQuality = 'high'; ctx.drawImage(s.img, -r.w / 2, -r.h / 2, r.w, r.h);
+      if (M.drawImg) M.drawImg(ctx, i, { x: -r.w / 2, y: -r.h / 2, w: r.w, h: r.h });
+      else { ctx.imageSmoothingQuality = 'high'; ctx.drawImage(s.img, -r.w / 2, -r.h / 2, r.w, r.h); }
       const label = M.labels && M.labels[i];
       if (label) {
         ctx.fillStyle = '#3A3530'; ctx.textAlign = 'center';
@@ -194,7 +237,12 @@
       fitFont(ctx, M.message, 400, 40 * u * (sz.message || 1), F.message, W - 330 * u); ctx.fillText(M.message, 210 * u, H - 66 * u);
       ctx.restore();
     }
+    if (M.rules) { // the studio's thin decorative border
+      ctx.strokeStyle = rgba(M.rules.color, M.rules.alpha); ctx.lineWidth = 2 * u;
+      ctx.strokeRect(24 * u, 24 * u - shake, W - 48 * u, H - 48 * u);
+    }
     ctx.restore();
+    if (M.grain) M.grain(ctx);
     return rects;
   }
 

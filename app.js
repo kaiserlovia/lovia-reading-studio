@@ -915,7 +915,7 @@
 
     if (isDayNightLayout()) { drawDayNightPoster(theme,line); return; }
 
-    if (layoutMode === 'fold') drawFoldShots();
+    if (layoutMode === 'fold') drawFoldShots(line,theme);
     else {
       const count = images.length;
       lastPlacements=images.map((image,i)=>imagePlacement(image,i,count));
@@ -943,12 +943,17 @@
       {color:textInk(theme.ink,'day','date'),size:Number(refs.dateSize.value),minSize:16,tracking:7,maxWidth:900,align:'right',key:'date',family:fieldFamily('date')});
   }
 
+  // the frame and image helpers draw on ctx; the motion export hands them its own canvas
+  function withCtx(c,fn){const keep=ctx;ctx=c;try{fn();}finally{ctx=keep;}}
   // 风琴页: the images stand side by side as one folded strip of paper
-  function drawFoldShots() {
+  function drawFoldShots(line,theme) {
     const list=images.map((image,i)=>image?{image,i}:null).filter(Boolean);
     const plan=LoviaExtra.foldPlan(list.map(s=>s.image.naturalWidth/s.image.naturalHeight),{x:170,y:330,w:CANVAS_W-340,h:CANVAS_H-655});
     const shots=list.map(s=>({img:s.image,a:s.image.naturalWidth/s.image.naturalHeight}));
-    const fo={paper:'#FBFBF8',shade:.16,shadow:.28};
+    // each image's size sets its panel; dragging any panel moves the whole fold
+    const offset=list.reduce((o,s)=>{const d=imageOffsets[s.i]||{x:0,y:0};return{x:o.x+d.x,y:o.y+d.y};},{x:0,y:0});
+    const fo={paper:'#FBFBF8',shade:.16,shadow:.28,scales:list.map(s=>(imageScales[s.i]??100)/100),offset,
+      bounds:{x:114,y:315,w:CANVAS_W-228,h:CANVAS_H-580},drawImg:(c,j,r)=>withCtx(c,()=>{drawAdaptiveFrame(r,line,theme);drawFittedImage(list[j].image,r);})};
     if(anim?.foldCapture)Object.assign(anim.foldCapture,{plan,shots,o:fo});
     lastPlacements=images.map(()=>null);
     if(anim?.noShots)return;
@@ -981,7 +986,10 @@
       title:refs.name.value||DEFAULT_TEXT.name,author:refs.author.value||DEFAULT_TEXT.author,date:refs.date.value||DEFAULT_TEXT.date,message:refs.footerText.value.trim(),
       shots:list.map(s=>({img:s.image,a:s.image.naturalWidth/s.image.naturalHeight})),swatches:sortedColors(currentColors),
       fonts:{head:activeFontFamily(),title:own('title'),author:own('author'),date:own('date'),message:fieldFamily('message'),labels:activeFontFamily()},
-      sizes:{title:size(refs.titleSize,61),author:size(refs.authorSize,48),date:size(refs.dateSize,41),message:size(refs.messageSize,33)}},anim?.cardT??null);
+      sizes:{title:size(refs.titleSize,61),author:size(refs.authorSize,48),date:size(refs.dateSize,41),message:size(refs.messageSize,33)},
+      scales:list.map(s=>(imageScales[s.i]??100)/100),offsets:list.map(s=>imageOffsets[s.i]||{x:0,y:0}),
+      drawImg:(c,j,r)=>withCtx(c,()=>{drawAdaptiveFrame(r,rgbaFromHex(refs.ruleColor.value,Number(refs.ruleOpacity.value)/100),theme);drawFittedImage(list[j].image,r);}),
+      rules:refs.showRules.checked?{color:refs.ruleColor.value,alpha:Number(refs.ruleOpacity.value)/100}:null},anim?.cardT??null);
     lastPlacements=images.map(()=>null);
     rects.forEach((r,j)=>{lastPlacements[list[j].i]=r;});
   }
