@@ -103,6 +103,9 @@
         list.push({ z: wrap ? -1 : (p < .5 ? a.z : b.z), draw: () => drawSprite(ctx, spec.sprites[a.id], r, k) });
       }
       list.sort((x, y) => x.z - y.z).forEach(x => x.draw());
+    } else if (spec.type === 'draw') {
+      // layouts that redraw themselves every frame (fold, library card)
+      spec.draw(ctx, t);
     } else if (spec.type === 'swap') {
       const s = keyed(t, SWAP), bump = Math.sin(Math.PI * s);
       ctx.drawImage(spec.base, 0, 0);
