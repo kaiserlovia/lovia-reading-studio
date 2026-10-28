@@ -557,3 +557,12 @@ h2{font:400 23px Georgia,"Noto Serif SC",serif;margin-top:8px}
 .text-reset{margin-left:auto;min-height:32px;padding:5px 12px;border:1px solid #dfe5dc;border-radius:6px;background:#fff;color:#4f7859;font-size:12px;cursor:pointer}
 .text-chip:focus-visible,.text-font:focus-visible,.text-reset:focus-visible{outline:2px solid #628a69;outline-offset:2px}
 .text-edit[hidden]{display:none}
+/* 固定截图: the pin stops the preview from moving screenshots */
+.toolbar-actions{display:flex;align-items:center;gap:16px}
+.pin-button{cursor:pointer}
+.pin-icon{width:13px;height:13px;flex:none;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linejoin:round}
+.pin-button[aria-pressed="true"]{color:#3f7a4c;font-weight:600}
+.pin-button[aria-pressed="true"] .pin-icon{fill:currentColor}
+.mobile-preview-body .dock-actions{display:flex}
+.mobile-preview-body .dock-actions .dock-hint{flex:1;display:flex;align-items:center;justify-content:center;gap:4px;min-height:30px}
+#posterCanvas.is-pinned,.mobile-preview-body canvas.is-pinned{touch-action:pan-x pan-y pinch-zoom;cursor:default}
