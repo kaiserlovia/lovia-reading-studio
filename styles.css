@@ -486,6 +486,13 @@ h2{font:400 23px Georgia,"Noto Serif SC",serif;margin-top:8px}
 .layout-rows i{width:10px;height:17px;top:3px}
 .layout-rows i:nth-child(n+4){top:27px;background:#3f4a43;border-color:#2c352f}
 .layout-rows i:nth-child(3n+1){left:28px}.layout-rows i:nth-child(3n+2){left:42px}.layout-rows i:nth-child(3n){left:56px}
+.layout-fold i{top:9px;width:17px;height:30px;transform-origin:left top}
+.layout-fold i:nth-child(1){left:13px;transform:skewY(14deg)}.layout-fold i:nth-child(2){left:30px;top:13px;transform:skewY(-14deg);background:#c9d5c8}
+.layout-fold i:nth-child(3){left:47px;transform:skewY(14deg)}.layout-fold i:nth-child(4){left:64px;top:13px;transform:skewY(-14deg);background:#c9d5c8}
+.layout-card{background:repeating-linear-gradient(#fbfaf6 0 7px,#cfd9e4 7px 8px);border-radius:3px;box-shadow:inset 2px 0 0 #fbfaf6,inset 3px 0 0 #c9483b}
+.layout-card::after{content:"";position:absolute;right:9px;top:4px;width:11px;height:11px;border:1px solid #c9483b;border-radius:50%}
+.layout-card i{top:17px;width:16px;height:26px;background:#fff;border-color:#c9cfc8}
+.layout-card i:nth-child(1){left:14px;transform:rotate(-5deg)}.layout-card i:nth-child(2){left:39px;transform:rotate(3deg)}.layout-card i:nth-child(3){left:64px;transform:rotate(-2deg)}
 .compare-controls{display:flex;flex-direction:column;align-items:flex-end;gap:8px;min-width:0}
 .compare-range{display:flex;align-items:center;gap:8px;font-size:10px;color:#728574}
 .compare-range input{width:150px;accent-color:#7b9580}

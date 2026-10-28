@@ -768,7 +768,7 @@
   }
 
   function setLayout(key) {
-    if (!['even','stagger','overlap','focus','hero',...DN_LAYOUTS].includes(key)) return;
+    if (!['even','stagger','overlap','focus','hero','fold','card',...DN_LAYOUTS].includes(key)) return;
     layoutMode = key;
     refs.layoutButtons.forEach(button=>{
       const selected=button.dataset.layout===key;
@@ -891,6 +891,7 @@
     const theme = displayColors();
     const line = rgbaFromHex(refs.ruleColor.value, Number(refs.ruleOpacity.value)/100);
     ctx.clearRect(0,0,CANVAS_W,CANVAS_H);
+    if (layoutMode === 'card') { drawCardPoster(theme); return; }
     ctx.fillStyle = theme.bg;
     ctx.fillRect(0,0,CANVAS_W,CANVAS_H);
     if (currentTheme === 'gradient') {
@@ -928,12 +929,15 @@
 
     if (isDayNightLayout()) { drawDayNightPoster(theme,line); return; }
 
-    const count = images.length;
-    lastPlacements=images.map((image,i)=>imagePlacement(image,i,count));
-    images.forEach((image,i) => {
-      const p=lastPlacements[i];
-      if (image&&!anim?.noShots) { drawAdaptiveFrame(p,line,theme); drawFittedImage(image,p); }
-    });
+    if (layoutMode === 'fold') drawFoldShots();
+    else {
+      const count = images.length;
+      lastPlacements=images.map((image,i)=>imagePlacement(image,i,count));
+      images.forEach((image,i) => {
+        const p=lastPlacements[i];
+        if (image&&!anim?.noShots) { drawAdaptiveFrame(p,line,theme); drawFittedImage(image,p); }
+      });
+    }
     drawTrackedText(refs.name.value || DEFAULT_TEXT.name,179,175,
       {color:textInk(theme.ink,'day','title'),size:Number(refs.titleSize.value),minSize:18,tracking:5,maxWidth:1670,bold:true,kinghwa:true,key:'title',family:fieldFamily('title')});
     drawTrackedText('AUTHOR / '+(refs.author.value || DEFAULT_TEXT.author),3421,175,
@@ -951,6 +955,32 @@
     }
     drawTrackedText(refs.date.value || DEFAULT_TEXT.date,3421,CANVAS_H-121,
       {color:textInk(theme.ink,'day','date'),size:Number(refs.dateSize.value),minSize:16,tracking:7,maxWidth:900,align:'right',key:'date',family:fieldFamily('date')});
+  }
+
+  // 风琴页: the images stand side by side as one folded strip of paper
+  function drawFoldShots() {
+    const list=images.map((image,i)=>image?{image,i}:null).filter(Boolean);
+    const plan=LoviaExtra.foldPlan(list.map(s=>s.image.naturalWidth/s.image.naturalHeight),{x:170,y:330,w:CANVAS_W-340,h:CANVAS_H-655});
+    const shots=list.map(s=>({img:s.image,a:s.image.naturalWidth/s.image.naturalHeight}));
+    const fo={paper:'#FBFBF8',shade:.16,shadow:.28};
+    if(anim?.foldCapture)Object.assign(anim.foldCapture,{plan,shots,o:fo});
+    lastPlacements=images.map(()=>null);
+    if(anim?.noShots)return;
+    LoviaExtra.drawFold(ctx,plan,shots,{...fo,open:anim?.foldOpen??1}).forEach((r,j)=>{lastPlacements[list[j].i]=r;});
+  }
+  // 借阅卡: the whole poster becomes a library card in the poster's colours
+  function drawCardPoster(theme) {
+    const list=images.map((image,i)=>image?{image,i}:null).filter(Boolean);
+    const own=k=>{const f=textStyle[k]&&textStyle[k].font;return f&&hasFont(f)?familyOf(f):FONT_PRESETS.mono;};
+    const size=(ref,d)=>Number(ref.value)/d;
+    const rects=LoviaExtra.drawCard(ctx,CANVAS_W,CANVAS_H,{bg:theme.bg,ink:textInk(theme.ink),
+      inks:{title:textInk(theme.ink,'day','title'),author:textInk(theme.ink,'day','author'),date:textInk(theme.ink,'day','date'),message:textInk(theme.ink,'day','message')},
+      title:refs.name.value||DEFAULT_TEXT.name,author:refs.author.value||DEFAULT_TEXT.author,date:refs.date.value||DEFAULT_TEXT.date,message:refs.footerText.value.trim(),
+      shots:list.map(s=>({img:s.image,a:s.image.naturalWidth/s.image.naturalHeight})),swatches:sortedColors(currentColors),
+      fonts:{head:activeFontFamily(),title:own('title'),author:own('author'),date:own('date'),message:fieldFamily('message'),labels:activeFontFamily()},
+      sizes:{title:size(refs.titleSize,61),author:size(refs.authorSize,48),date:size(refs.dateSize,41),message:size(refs.messageSize,33)}},anim?.cardT??null);
+    lastPlacements=images.map(()=>null);
+    rects.forEach((r,j)=>{lastPlacements[list[j].i]=r;});
   }
 
   function textInk(auto,side='day',field) {
@@ -1764,6 +1794,7 @@
     split:'两半轮流压过彼此：日间那半慢慢盖过夜间，再被夜间盖回来。',diagonal:'两半沿着斜线轮流压过彼此。',rows:'上下两半轮流压过彼此。',
     compare:'中间的分隔线来回扫过，日夜在同一个框里切换。',pairs:'每组前后交换，后面那张翻到前面。',alternate:'整张画报在日夜、夜日两种顺序之间淡入淡出。',
     hero:'主图轮流换人，每张图片轮流当大图。',
+    fold:'整组图片从合起来慢慢展开，停一下再收回去。',card:'书名、作者和日期一个字一个字打出来，图片一张张夹上去，最后盖章、写上留言。',
   };
   const ROTATING={focus:'中间放大的那张轮流换人，旁边的图片跟着移位。',overlap:'最上面那张滑到最底下，下一张浮上来，一张一张轮流翻到最上层。'};
   function motionDesc(v){
@@ -1819,6 +1850,15 @@
     const NEED_BOTH='动态需要日间组和夜间组都有图片。在「展示图片」切换到夜间组即可添加。';
     try{
       const none=reason=>({none:true,reason,still:renderLayer(OW,OH)});
+      if(layoutMode==='fold'||layoutMode==='card'){
+        if(!images.some(Boolean))return none('先添加图片。');
+        const still=renderLayer(OW,OH);
+        if(layoutMode==='card')return{...base,type:'draw',paletteSources:[still],paletteExtra:['#C9483B','#FFFFFF'],
+          draw:(c,t)=>{const prior=ctx,priorAnim=anim;try{ctx=c;c.setTransform(k,0,0,k,0,0);anim={cardT:t};drawPoster();}finally{ctx=prior;anim=priorAnim;}}};
+        const cap={},bg=renderLayer(OW,OH,{noShots:true,foldCapture:cap});
+        return{...base,type:'draw',paletteSources:[still,bg],
+          draw:(c,t)=>{c.drawImage(bg,0,0);c.setTransform(k,0,0,k,0,0);LoviaExtra.drawFold(c,cap.plan,cap.shots,{...cap.o,open:LoviaExtra.foldOpenAt(t)});}};
+      }
       if(['split','diagonal','rows'].includes(layoutMode)){
         if(!both)return none(NEED_BOTH);
         const A=dnOrder==='nd'?'night':'day',B=A==='day'?'night':'day';
