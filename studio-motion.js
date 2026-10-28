@@ -44,31 +44,49 @@
   }
   const lerpRect = (a, b, p) => ({ x: a.x + (b.x - a.x) * p, y: a.y + (b.y - a.y) * p, w: a.w + (b.w - a.w) * p, h: a.h + (b.h - a.h) * p });
 
+  // a long timeline (relay) stretches the chosen length: the length then means four moves, like the plain push
+  const secs = (spec, opts) => opts.duration * (spec.moves ? spec.moves / 4 : 1);
   let tmp = null;
   function scratch(w, h) { if (!tmp) tmp = document.createElement('canvas'); if (tmp.width !== w || tmp.height !== h) { tmp.width = w; tmp.height = h; } return tmp; }
+
+  function drawPush(ctx, spec, A, B, s) {
+    const W = spec.W, H = spec.H;
+    ctx.drawImage(B, 0, 0);
+    if (spec.soft) {
+      const c = scratch(W, H), x = c.getContext('2d');
+      x.globalCompositeOperation = 'source-over'; x.clearRect(0, 0, W, H); x.drawImage(A, 0, 0);
+      const p = spec.soft.pos(s), b = spec.soft.band;
+      const g = spec.soft.dir === 'h' ? x.createLinearGradient(0, p - b / 2, 0, p + b / 2) : x.createLinearGradient(p - b / 2, 0, p + b / 2, 0);
+      g.addColorStop(0, 'rgba(0,0,0,1)'); g.addColorStop(1, 'rgba(0,0,0,0)');
+      x.globalCompositeOperation = 'destination-in'; x.fillStyle = g; x.fillRect(0, 0, W, H); x.globalCompositeOperation = 'source-over';
+      ctx.drawImage(c, 0, 0);
+    } else {
+      ctx.save(); spec.clipA(ctx, s); ctx.clip(); ctx.drawImage(A, 0, 0); ctx.restore();
+    }
+  }
+
+  function drawWipe(ctx, spec, first, second, phone, c) {
+    const x = phone.x + phone.w * c;
+    ctx.drawImage(second, 0, 0);
+    ctx.save(); ctx.beginPath(); ctx.rect(0, 0, x, spec.H); ctx.clip(); ctx.drawImage(first, 0, 0); ctx.restore();
+    if (spec.divider) spec.divider(ctx, x, phone);
+  }
 
   function frame(ctx, spec, t) {
     const W = spec.W, H = spec.H;
     ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalAlpha = 1;
     if (spec.type === 'push') {
-      const s = keyed(t, PUSH);
-      ctx.drawImage(spec.B, 0, 0);
-      if (spec.soft) {
-        const c = scratch(W, H), x = c.getContext('2d');
-        x.globalCompositeOperation = 'source-over'; x.clearRect(0, 0, W, H); x.drawImage(spec.A, 0, 0);
-        const p = spec.soft.pos(s), b = spec.soft.band;
-        const g = spec.soft.dir === 'h' ? x.createLinearGradient(0, p - b / 2, 0, p + b / 2) : x.createLinearGradient(p - b / 2, 0, p + b / 2, 0);
-        g.addColorStop(0, 'rgba(0,0,0,1)'); g.addColorStop(1, 'rgba(0,0,0,0)');
-        x.globalCompositeOperation = 'destination-in'; x.fillStyle = g; x.fillRect(0, 0, W, H); x.globalCompositeOperation = 'source-over';
-        ctx.drawImage(c, 0, 0);
-      } else {
-        ctx.save(); spec.clipA(ctx, s); ctx.clip(); ctx.drawImage(spec.A, 0, 0); ctx.restore();
-      }
+      drawPush(ctx, spec, spec.A, spec.B, keyed(t, PUSH));
+    } else if (spec.type === 'relay') {
+      // day and night take turns covering the poster; the hidden side moves on to its next screenshot
+      const st = spec.states, n = st.length, p = t * n, i = Math.floor(p) % n, local = p - Math.floor(p);
+      const m = local < spec.hold ? 0 : ease((local - spec.hold) / (1 - spec.hold));
+      const a = st[i], b = st[(i + 1) % n], at = m > 0 ? b : a;
+      const v = a.s + (b.s - a.s) * m;
+      if (spec.wipe) drawWipe(ctx, spec, spec.pairs[at.a].first, spec.pairs[at.b].second, spec.pairs[at.a].phone, .5 + v / 2);
+      else drawPush(ctx, spec, spec.As[at.a], spec.Bs[at.b], v);
     } else if (spec.type === 'wipe') {
-      const c = keyed(t, WIPE), x = spec.phone.x + spec.phone.w * c;
-      ctx.drawImage(spec.second, 0, 0);
-      ctx.save(); ctx.beginPath(); ctx.rect(0, 0, x, H); ctx.clip(); ctx.drawImage(spec.first, 0, 0); ctx.restore();
-      if (spec.divider) spec.divider(ctx, x);
+      drawWipe(ctx, spec, spec.first, spec.second, spec.phone, keyed(t, WIPE));
     } else if (spec.type === 'fade') {
       const a = keyed(t, FADE);
       ctx.drawImage(spec.layers[0], 0, 0);
@@ -211,7 +229,7 @@
     out.byte(0);
   }
   async function encodeGif(spec, opts, progress) {
-    const { W, H } = spec, n = Math.max(2, Math.round(opts.duration * opts.fps)), delay = Math.round(100 / opts.fps);
+    const { W, H } = spec, n = Math.max(2, Math.round(secs(spec, opts) * opts.fps)), delay = Math.round(100 / opts.fps);
     const P = buildPalette(spec.paletteSources || [], spec.paletteExtra || []);
     const map = makeMapper(P);
     const c = document.createElement('canvas'); c.width = W; c.height = H; const x = c.getContext('2d', { willReadFrequently: true });
@@ -261,7 +279,7 @@
     const rec = new MediaRecorder(stream, { mimeType: type, videoBitsPerSecond: Math.round(spec.W * spec.H * opts.fps * .35) });
     const chunks = []; rec.ondataavailable = e => { if (e.data && e.data.size) chunks.push(e.data); };
     const done = new Promise(r => { rec.onstop = r; });
-    const D = opts.duration * 1000;
+    const D = secs(spec, opts) * 1000;
     rec.start(250);
     const t0 = performance.now();
     await new Promise(resolve => {
@@ -352,7 +370,7 @@
     const stage = $('.mo-stage');
     function loop() {
       if (el.hidden || !spec) return;
-      const t = ((performance.now() - t0) / (opts.duration * 1000)) % 1;
+      const t = ((performance.now() - t0) / (secs(spec, opts) * 1000)) % 1;
       frame(stage.getContext('2d'), spec, t);
       raf = requestAnimationFrame(loop);
     }
