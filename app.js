@@ -841,10 +841,22 @@
     if(!bounds.width||!bounds.height)return {x:-1,y:-1};
     return {x:(event.clientX-bounds.left)*CANVAS_W/bounds.width,y:(event.clientY-bounds.top)*CANVAS_H/bounds.height};
   }
+  // 固定截图: while pinned the preview ignores drags so a stray touch can't move a screenshot
+  let pinned=false;
+  function setPinned(on) {
+    pinned=on;
+    for(const surface of [canvas,miniCanvas])surface.classList.toggle('is-pinned',on);
+    document.querySelectorAll('[data-pin]').forEach(button=>{
+      button.setAttribute('aria-pressed',String(on));
+      button.querySelector('.pin-label').textContent=on?'已固定':'固定截图';
+    });
+    announce(on?'截图已固定':'已取消固定');
+  }
   function bindCanvasDrag() {
+    document.querySelectorAll('[data-pin]').forEach(button=>button.addEventListener('click',()=>setPinned(!pinned)));
     for(const surface of [canvas,miniCanvas]){
       surface.addEventListener('pointerdown',event=>{
-        if(event.button!==0&&event.pointerType==='mouse')return;
+        if(pinned||(event.button!==0&&event.pointerType==='mouse'))return;
         const p=posterPoint(event,surface);
         for(let i=lastPlacements.length-1;i>=0;i--){
           const q=lastPlacements[i];
@@ -876,6 +888,7 @@
         surface.classList.remove('is-dragging');
       });
       surface.addEventListener('dblclick',event=>{
+        if(pinned)return;
         const p=posterPoint(event,surface);
         for(let i=lastPlacements.length-1;i>=0;i--){
           const q=lastPlacements[i];

@@ -6,9 +6,9 @@
   <meta name="theme-color" content="#eeeee9">
   <meta name="description" content="Lovia 阅读主题展示工坊：轻量预览、自由排版、高清导出。">
   <title>Lovia — Reading Gallery Studio</title>
-  <link rel="stylesheet" href="./styles.css?v=20261028-v15">
+  <link rel="stylesheet" href="./styles.css?v=20261028-v16">
   <script src="./studio-extra.js?v=3" defer></script>
-  <script src="./app.js?v=20261028-v21" defer></script>
+  <script src="./app.js?v=20261028-v22" defer></script>
   <script src="./studio-shell.js?v=16" defer></script>
   <script src="./studio-motion.js?v=3" defer></script>
 </head>
@@ -39,7 +39,7 @@
         <div class="preview-card">
           <div class="preview-toolbar">
             <div class="preview-status"><span class="alive-dot"></span><strong>实时预览</strong><span class="toolbar-divider"></span><span id="ratioPreviewLabel">4:3 横版</span><span class="toolbar-divider"></span><span id="resolutionPreviewLabel">3600 × 2700 px</span></div>
-            <button class="icon-text-button" id="largePreview" type="button" title="查看大图"><span class="expand-icon">⤢</span> 放大预览</button>
+            <span class="toolbar-actions"><button class="icon-text-button pin-button" data-pin type="button" aria-pressed="false" title="固定后截图不能在预览里拖动"><svg class="pin-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 3l6 6-2.5.8-3.8 3.8.6 4.4-1.6 1.6-3.7-3.7L5 21l-.7-.7 5.1-5L5.7 11.6 7.3 10l4.4.6 3.8-3.8z"/></svg><span class="pin-label">固定截图</span></button><button class="icon-text-button" id="largePreview" type="button" title="查看大图"><span class="expand-icon">⤢</span> 放大预览</button></span>
           </div>
           <div class="canvas-stage">
             <canvas id="posterCanvas" width="1200" height="900" role="img" aria-label="阅读主题一至五图海报实时预览"></canvas>
@@ -61,7 +61,7 @@
 
         <div class="mobile-preview-dock" id="mobilePreviewDock">
           <button class="mobile-preview-title" id="mobilePreviewToggle" type="button" aria-expanded="true"><span class="dock-live-dot"></span> 实时小预览 <span class="dock-toggle-label">收起 −</span></button>
-          <div class="mobile-preview-body" id="mobilePreviewBody"><canvas id="mobileMiniCanvas" width="440" height="330" role="img" aria-label="跟随编辑实时更新的轻量海报预览"></canvas><button class="dock-hint" id="mobilePreviewExpand" type="button">放大预览 ↗</button></div>
+          <div class="mobile-preview-body" id="mobilePreviewBody"><canvas id="mobileMiniCanvas" width="440" height="330" role="img" aria-label="跟随编辑实时更新的轻量海报预览"></canvas><div class="dock-actions"><button class="dock-hint pin-button" data-pin type="button" aria-pressed="false"><svg class="pin-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 3l6 6-2.5.8-3.8 3.8.6 4.4-1.6 1.6-3.7-3.7L5 21l-.7-.7 5.1-5L5.7 11.6 7.3 10l4.4.6 3.8-3.8z"/></svg><span class="pin-label">固定截图</span></button><button class="dock-hint" id="mobilePreviewExpand" type="button">放大预览 ↗</button></div></div>
         </div>
         <div class="welcome-note">欢迎使用Lovia的模版～</div>
       </section>
