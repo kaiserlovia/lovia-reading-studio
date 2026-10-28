@@ -892,21 +892,7 @@
     const line = rgbaFromHex(refs.ruleColor.value, Number(refs.ruleOpacity.value)/100);
     ctx.clearRect(0,0,CANVAS_W,CANVAS_H);
     if (layoutMode === 'card') { drawCardPoster(theme); return; }
-    ctx.fillStyle = theme.bg;
-    ctx.fillRect(0,0,CANVAS_W,CANVAS_H);
-    if (currentTheme === 'gradient') {
-      const vertical=ctx.createLinearGradient(0,0,0,CANVAS_H);
-      vertical.addColorStop(0,refs.gradientStart.value);
-      vertical.addColorStop(1,refs.gradientEnd.value);
-      ctx.fillStyle=vertical;ctx.fillRect(0,0,CANVAS_W,CANVAS_H);
-    } else if (currentTheme === 'image') {
-      ctx.save();
-      ctx.globalAlpha=Number(refs.backdropOpacity.value)/100;
-      drawFullBleedImage(backgroundImage || images[0], Number(refs.blur.value));
-      ctx.restore();
-    } else if (currentTheme === 'glass') {
-      drawGlassBackground(coverImage || images[0], Number(refs.glassStrength.value), theme.bg);
-    }
+    paintBackground(theme);
 
     if (refs.showRules.checked) {
       ctx.fillStyle = theme.band;
@@ -968,12 +954,29 @@
     if(anim?.noShots)return;
     LoviaExtra.drawFold(ctx,plan,shots,{...fo,open:anim?.foldOpen??1}).forEach((r,j)=>{lastPlacements[list[j].i]=r;});
   }
+  function paintBackground(theme) {
+    ctx.fillStyle = theme.bg;
+    ctx.fillRect(0,0,CANVAS_W,CANVAS_H);
+    if (currentTheme === 'gradient') {
+      const vertical=ctx.createLinearGradient(0,0,0,CANVAS_H);
+      vertical.addColorStop(0,refs.gradientStart.value);
+      vertical.addColorStop(1,refs.gradientEnd.value);
+      ctx.fillStyle=vertical;ctx.fillRect(0,0,CANVAS_W,CANVAS_H);
+    } else if (currentTheme === 'image') {
+      ctx.save();
+      ctx.globalAlpha=Number(refs.backdropOpacity.value)/100;
+      drawFullBleedImage(backgroundImage || images[0], Number(refs.blur.value));
+      ctx.restore();
+    } else if (currentTheme === 'glass') {
+      drawGlassBackground(coverImage || images[0], Number(refs.glassStrength.value), theme.bg);
+    }
+  }
   // 借阅卡: the whole poster becomes a library card in the poster's colours
   function drawCardPoster(theme) {
     const list=images.map((image,i)=>image?{image,i}:null).filter(Boolean);
     const own=k=>{const f=textStyle[k]&&textStyle[k].font;return f&&hasFont(f)?familyOf(f):FONT_PRESETS.mono;};
     const size=(ref,d)=>Number(ref.value)/d;
-    const rects=LoviaExtra.drawCard(ctx,CANVAS_W,CANVAS_H,{bg:theme.bg,ink:textInk(theme.ink),
+    const rects=LoviaExtra.drawCard(ctx,CANVAS_W,CANVAS_H,{bg:theme.bg,paint:currentTheme==='light'||currentTheme==='dark'||currentTheme==='custom'?null:()=>paintBackground(theme),ink:textInk(theme.ink),
       inks:{title:textInk(theme.ink,'day','title'),author:textInk(theme.ink,'day','author'),date:textInk(theme.ink,'day','date'),message:textInk(theme.ink,'day','message')},
       title:refs.name.value||DEFAULT_TEXT.name,author:refs.author.value||DEFAULT_TEXT.author,date:refs.date.value||DEFAULT_TEXT.date,message:refs.footerText.value.trim(),
       shots:list.map(s=>({img:s.image,a:s.image.naturalWidth/s.image.naturalHeight})),swatches:sortedColors(currentColors),

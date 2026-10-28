@@ -115,7 +115,7 @@
   function tracked(ctx, text, x, y, track) { let cx = x; for (const ch of text) { ctx.fillText(ch, cx, y); cx += ctx.measureText(ch).width + track; } }
   const TILT = [-.035, .02, -.015, .03, -.025, .015, -.03, .025, -.02, .01];
   /*
-   * M: {bg, ink, inks:{title,author,date,message}, title, author, date, message, labels[], shots:[{img,a}], swatches[], fonts:{head,title,author,date,message,labels}, sizes:{…}, tilt}
+   * M: {bg, paint(ctx)?, ink, inks:{title,author,date,message}, title, author, date, message, labels[], shots:[{img,a}], swatches[], fonts:{head,title,author,date,message,labels}, sizes:{…}, tilt}
    * t: null for the still poster, 0–1 for a frame of the motion loop
    */
   function drawCard(ctx, W, H, M, t = null) {
@@ -125,7 +125,9 @@
     const ink = M.ink, red = dark ? '#C2564A' : '#C9483B', sz = M.sizes || {}, F = M.fonts;
     const stampIn = at(.58, .08), shake = !still && t > .66 && t < .7 ? Math.sin((t - .66) * 200) * 4 * u : 0;
     ctx.save();
-    ctx.fillStyle = dark ? mix(M.bg, '#000000', .1) : mix(M.bg, '#ffffff', .25); ctx.fillRect(0, 0, W, H);
+    // paint: the studio's own background (gradient, image, glass…); otherwise plain card stock in bg
+    if (M.paint) M.paint(ctx);
+    else { ctx.fillStyle = dark ? mix(M.bg, '#000000', .1) : mix(M.bg, '#ffffff', .25); ctx.fillRect(0, 0, W, H); }
     ctx.translate(0, shake);
     ctx.fillStyle = dark ? 'rgba(159,182,214,.16)' : 'rgba(110,143,184,.32)';
     for (let y = 150 * u; y < H; y += 64 * u) ctx.fillRect(0, y, W, 1.6 * u);
