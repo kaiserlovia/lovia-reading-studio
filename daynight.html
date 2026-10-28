@@ -573,7 +573,7 @@ button{cursor:pointer}
 
 <script src="./studio-shell.js?v=16"></script>
 <script src="./studio-motion.js?v=3"></script>
-<script src="./studio-extra.js?v=2"></script>
+<script src="./studio-extra.js?v=3"></script>
 <script>
 (()=>{
 'use strict';
@@ -906,10 +906,7 @@ function drawPoster(ctx,W,H,opt={}){
   if(fill)paintPanel(ctx,{side:fill,x:0,y:0,w:W,h:H},W,H);
   else if(geo.kind==='blend')bgAt=paintBlend(ctx,geo,W,H);
   else for(const p of geo.panels)paintPanel(ctx,p,W,H);
-  if(S.grain>0){
-    ctx.save();const k=W/1400;ctx.globalCompositeOperation='soft-light';ctx.globalAlpha=S.grain*.55;
-    ctx.scale(k,k);ctx.fillStyle=ctx.createPattern(noise(),'repeat');ctx.fillRect(0,0,W/k,H/k);ctx.restore();
-  }
+  paintGrain(ctx,W,H);
 
   /* text block */
   const ts=u*6.4*S.titleSize, ss=u*2.25, tsz=ss*S.taglineSize;
@@ -1083,9 +1080,12 @@ function drawPoster(ctx,W,H,opt={}){
     const seq=[];const n=Math.max(S.shots.day.length,S.shots.night.length);
     for(let i=0;i<n;i++){if(S.shots[A][i])seq.push([A,S.shots[A][i]]);if(S.shots[B][i])seq.push([B,S.shots[B][i]]);}
     const fL=fieldFont('labels'),capY=foldBox.y+foldBox.h;
-    const plan=LoviaExtra.foldPlan(seq.map(s=>s[1].a),foldBox,capOn?u*4.2:0);
+    const plan=LoviaExtra.foldPlan(seq.map(s=>s[1].a),foldBox,capOn?u*4.2:0,(S.gap-1)*.15);
     const shots=seq.map(([,s])=>({img:opt.preview?s.prev:s.src,a:s.a}));
+    // each screenshot's size sets its panel; dragging any panel moves the whole fold
+    const offset=seq.reduce((o,[,s])=>({x:o.x+s.dx*mn,y:o.y+s.dy*mn}),{x:0,y:0});
     const fo={paper:i=>{const bg=S.colors[seq[i][0]].bg;return mix(bg,'#FFFFFF',relLum(bg)<.2?.12:.55);},shade:.16,shadow:.28,capY:u*3.6,
+      scales:seq.map(([,s])=>s.scale),offset,bounds:{x:m*.5,y:m*.5,w:W-m,h:H-m},drawImg:(c,i,r)=>drawShot(c,seq[i][1],r,seq[i][0],u,opt.preview),
       labels:capOn?seq.map(([,s])=>s.label):null,capFont:font(u*1.85*S.labelSize,fL.bw,fL),
       capColor:x=>textInk(posSide(x,capY),bgAt?bestInkFor(bgAt(x,capY)):inkAt(posSide(x,capY),capY),'labels')};
     if(opt.foldCapture)Object.assign(opt.foldCapture,{plan,shots,o:fo});
@@ -1150,7 +1150,7 @@ function drawPoster(ctx,W,H,opt={}){
 }
 // 借閱卡: the whole poster becomes a library card in this side's colours
 function drawCardPoster(ctx,W,H,side,opt){
-  const c=S.colors[side],list=S.shots[side];
+  const c=S.colors[side],list=S.shots[side],mn=Math.min(W,H);
   TB={top:S.tbTop,bottom:S.tbBottom};
   const base=S.bg==='tb'?mix(TB.top,TB.bottom,.5):sideBase(side);
   const plain=['solid','light','dark','custom'].includes(S.bg);
@@ -1162,8 +1162,17 @@ function drawCardPoster(ctx,W,H,side,opt){
     labels:S.captions?list.map(s=>s.label):[],shots:list.map(s=>({img:opt.preview?s.prev:s.src,a:s.a})),
     swatches:S.swatches?(S.palette==='five'?S.five:[c.bg,c.accent,c.ink]):[],
     fonts:{head:curFont().stack,title:own('title'),author:own('author'),date:own('date'),message:fieldFont('message').stack,labels:fieldFont('labels').stack},
-    sizes:{title:S.titleSize,author:S.authorSize,date:S.dateSize,message:S.messageSize,labels:S.labelSize}},opt.cardT??null);
+    sizes:{title:S.titleSize,author:S.authorSize,date:S.dateSize,message:S.messageSize,labels:S.labelSize},
+    size:S.size,gap:S.gap,scales:list.map(s=>s.scale),offsets:list.map(s=>({x:s.dx*mn,y:s.dy*mn})),
+    drawImg:(cx,i,r)=>drawShot(cx,list[i],r,side,mn/100,opt.preview),framePad:S.frame==='phone'?.045:0,
+    rules:S.rules?{color:S.ruleColor,alpha:S.ruleOpacity}:null,hexes:S.hexes,grain:cx=>paintGrain(cx,W,H),
+    note:[S.tagline.trim(),S.sideLabels?(side==='day'?S.labelDay:S.labelNight).trim():''].filter(Boolean).join('  ·  '),noteSize:S.taglineSize},opt.cardT??null);
   return rects.map((r,i)=>({shot:list[i],side,x:r.x,y:r.y,w:r.w,h:r.h,compare:false}));
+}
+function paintGrain(ctx,W,H){
+  if(S.grain<=0)return;
+  ctx.save();const k=W/1400;ctx.globalCompositeOperation='soft-light';ctx.globalAlpha=S.grain*.55;
+  ctx.scale(k,k);ctx.fillStyle=ctx.createPattern(noise(),'repeat');ctx.fillRect(0,0,W/k,H/k);ctx.restore();
 }
 function heroIndexFor(list){
   if(S.heroIndex>=0&&S.heroIndex<list.length)return S.heroIndex;
