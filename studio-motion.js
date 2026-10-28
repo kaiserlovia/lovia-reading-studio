@@ -65,6 +65,13 @@
     }
   }
 
+  function drawWipe(ctx, spec, first, second, phone, c) {
+    const x = phone.x + phone.w * c;
+    ctx.drawImage(second, 0, 0);
+    ctx.save(); ctx.beginPath(); ctx.rect(0, 0, x, spec.H); ctx.clip(); ctx.drawImage(first, 0, 0); ctx.restore();
+    if (spec.divider) spec.divider(ctx, x, phone);
+  }
+
   function frame(ctx, spec, t) {
     const W = spec.W, H = spec.H;
     ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalAlpha = 1;
@@ -75,12 +82,11 @@
       const st = spec.states, n = st.length, p = t * n, i = Math.floor(p) % n, local = p - Math.floor(p);
       const m = local < spec.hold ? 0 : ease((local - spec.hold) / (1 - spec.hold));
       const a = st[i], b = st[(i + 1) % n], at = m > 0 ? b : a;
-      drawPush(ctx, spec, spec.As[at.a], spec.Bs[at.b], a.s + (b.s - a.s) * m);
+      const v = a.s + (b.s - a.s) * m;
+      if (spec.wipe) drawWipe(ctx, spec, spec.pairs[at.a].first, spec.pairs[at.b].second, spec.pairs[at.a].phone, .5 + v / 2);
+      else drawPush(ctx, spec, spec.As[at.a], spec.Bs[at.b], v);
     } else if (spec.type === 'wipe') {
-      const c = keyed(t, WIPE), x = spec.phone.x + spec.phone.w * c;
-      ctx.drawImage(spec.second, 0, 0);
-      ctx.save(); ctx.beginPath(); ctx.rect(0, 0, x, H); ctx.clip(); ctx.drawImage(spec.first, 0, 0); ctx.restore();
-      if (spec.divider) spec.divider(ctx, x);
+      drawWipe(ctx, spec, spec.first, spec.second, spec.phone, keyed(t, WIPE));
     } else if (spec.type === 'fade') {
       const a = keyed(t, FADE);
       ctx.drawImage(spec.layers[0], 0, 0);
