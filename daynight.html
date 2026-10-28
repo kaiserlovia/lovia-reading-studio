@@ -573,7 +573,7 @@ button{cursor:pointer}
 
 <script src="./studio-shell.js?v=16"></script>
 <script src="./studio-motion.js?v=3"></script>
-<script src="./studio-extra.js?v=1"></script>
+<script src="./studio-extra.js?v=2"></script>
 <script>
 (()=>{
 'use strict';
@@ -1151,9 +1151,13 @@ function drawPoster(ctx,W,H,opt={}){
 // 借閱卡: the whole poster becomes a library card in this side's colours
 function drawCardPoster(ctx,W,H,side,opt){
   const c=S.colors[side],list=S.shots[side];
+  TB={top:S.tbTop,bottom:S.tbBottom};
+  const base=S.bg==='tb'?mix(TB.top,TB.bottom,.5):sideBase(side);
+  const plain=['solid','light','dark','custom'].includes(S.bg);
+  const auto=(S.bg==='image'||S.bg==='glass')?c.ink:bestInkFor(base,c.ink);
   const own=k=>{const f=S.textStyle[k]&&S.textStyle[k].font&&fontByKey(S.textStyle[k].font);return f?f.stack:FONTS.mono.stack;};
-  const ink=k=>textInk(side,c.ink,k);
-  const rects=LoviaExtra.drawCard(ctx,W,H,{bg:c.bg,ink:ink(),inks:{title:ink('title'),author:ink('author'),date:ink('date'),message:ink('message')},
+  const ink=k=>textInk(side,auto,k);
+  const rects=LoviaExtra.drawCard(ctx,W,H,{bg:base,paint:plain?null:cx=>paintPanel(cx,{x:0,y:0,w:W,h:H,side},W,H),ink:ink(),inks:{title:ink('title'),author:ink('author'),date:ink('date'),message:ink('message')},
     title:S.title.trim(),author:S.author.trim(),date:S.showDate?S.date.trim():'',message:S.message.trim(),
     labels:S.captions?list.map(s=>s.label):[],shots:list.map(s=>({img:opt.preview?s.prev:s.src,a:s.a})),
     swatches:S.swatches?(S.palette==='five'?S.five:[c.bg,c.accent,c.ink]):[],
