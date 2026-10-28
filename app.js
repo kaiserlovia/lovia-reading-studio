@@ -1822,10 +1822,12 @@
   };
   const ROTATING={focus:'中间放大的那张轮流换人，旁边的图片跟着移位。',overlap:'最上面那张滑到最底下，下一张浮上来，一张一张轮流翻到最上层。'};
   function motionDesc(v){
+    if(v==='relay')return '接力换图：日间第一张盖过去，夜间第一张再盖回来；被盖住的那一半趁机换下一张，日夜依序轮完所有图片。';
     if(ROTATING[layoutMode]&&v!=='daynight')return ROTATING[layoutMode]+(v==='both'?'日间组转完淡入夜间组，再转一轮。':'');
     return MOTION_DESC[layoutMode]||'整张画报在日间组和夜间组之间淡入淡出。';
   }
   function motionVariants(){
+    if(['split','diagonal','rows','compare'].includes(layoutMode))return [{v:'push',label:'日夜互压'},{v:'relay',label:'接力换图'}];
     if(!ROTATING[layoutMode])return null;
     return [{v:'one',label:'只转这一组'},{v:'both',label:'日间转完换夜间'},{v:'daynight',label:'日夜淡入淡出'}];
   }
@@ -1894,15 +1896,40 @@
           if(dir==='v'){if(x>0&&x<CANVAS_W)x=Math.max(0,Math.min(CANVAS_W,x+sign*s*reach));}
           else if(y>0&&y<CANVAS_H)y=Math.max(0,Math.min(CANVAS_H,y+sign*s*reach));
           i?c.lineTo(x*k,y*k):c.moveTo(x*k,y*k);});c.closePath();};
+        if(variant==='relay'){
+          // one image pair at a time: each side shows its i-th image, swapped while the other side covers it
+          const slots=name=>groupOf(name).images.map((img,i)=>img?i:-1).filter(i=>i>=0);
+          const sa=slots(A),sb=slots(B),n=Math.max(sa.length,sb.length),As=[],Bs=[];
+          const only=(name,keepSlot)=>{const g=groupOf(name),all=g.images,one=all.map((img,j)=>j===keepSlot?img:null);
+            if(name===activeGroup)images=one;else g.images=one;return()=>{if(name===activeGroup)images=all;else g.images=all;};};
+          for(let i=0;i<n;i++){
+            const undoA=only(A,sa[i%sa.length]),undoB=only(B,sb[i%sb.length]);
+            try{As.push(renderLayer(OW,OH,{fill:A}));Bs.push(renderLayer(OW,OH,{fill:B}));}finally{undoA();undoB();}
+          }
+          const states=[{s:0,a:0,b:0},{s:1,a:0,b:0}];
+          for(let i=0;i<n;i++){states.push({s:-1,a:i,b:i});states.push({s:1,a:(i+1)%n,b:i});}
+          return{...base,type:'relay',As,Bs,states,hold:.3,moves:states.length,clipA,paletteSources:[...As,...Bs]};
+        }
         return{...base,type:'push',A:LA,B:LB,clipA,paletteSources:[LA,LB]};
       }
       if(layoutMode==='compare'){
         const items=[];renderLayer(8,8,{noShots:true,collect:items});
         const it=items.find(i=>i.compareSecond);if(!it)return none(NEED_BOTH);
-        const first=renderLayer(OW,OH,{compareOnly:'first'}),second=renderLayer(OW,OH,{compareOnly:'second'});
-        const p=it.p,line=posterLine();
-        return{...base,type:'wipe',first,second,paletteSources:[first,second],paletteExtra:['#FBFBF8'],phone:{x:p.x*k,y:p.y*k,w:p.w*k,h:p.h*k},
-          divider:(c,x)=>{const prior=ctx;try{ctx=c;c.save();c.setTransform(k,0,0,k,0,0);drawCompareDivider(p,x/k,line,compareHandle);c.restore();}finally{ctx=prior;}}};
+        const line=posterLine();
+        const divider=(c,x,ph)=>{const p={x:ph.x/k,y:ph.y/k,w:ph.w/k,h:ph.h/k},prior=ctx;try{ctx=c;c.save();c.setTransform(k,0,0,k,0,0);drawCompareDivider(p,x/k,line,compareHandle);c.restore();}finally{ctx=prior;}};
+        const pairAt=()=>{const list=[];renderLayer(8,8,{noShots:true,collect:list});const p=list.find(i=>i.compareSecond).p;
+          return{first:renderLayer(OW,OH,{compareOnly:'first'}),second:renderLayer(OW,OH,{compareOnly:'second'}),phone:{x:p.x*k,y:p.y*k,w:p.w*k,h:p.h*k}};};
+        if(variant==='relay'){
+          // the divider sweeps all the way across; the side it hides moves on to the next pair
+          const count=name=>groupOf(name).images.filter(Boolean).length,n=Math.max(count('day'),count('night'));
+          const keepPair=comparePair,pairs=[];
+          try{for(let i=0;i<n;i++){comparePair=i;pairs.push(pairAt());}}finally{comparePair=keepPair;}
+          const states=[{s:0,a:0,b:0},{s:1,a:0,b:0}];
+          for(let i=0;i<n;i++){states.push({s:-1,a:i,b:i});states.push({s:1,a:(i+1)%n,b:i});}
+          return{...base,type:'relay',wipe:true,pairs,states,hold:.3,moves:states.length,divider,paletteSources:pairs.flatMap(p=>[p.first,p.second]),paletteExtra:['#FBFBF8']};
+        }
+        const{first,second,phone}=pairAt();
+        return{...base,type:'wipe',first,second,paletteSources:[first,second],paletteExtra:['#FBFBF8'],phone,divider};
       }
       if(layoutMode==='pairs'){
         const items=[];const baseL=renderLayer(OW,OH,{noShots:true,collect:items});
