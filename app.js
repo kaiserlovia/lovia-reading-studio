@@ -798,7 +798,7 @@
       }
     }
     if(heroPanel){
-      heroPanel.hidden=layoutMode!=='hero';
+      heroPanel.hidden=layoutMode!=='hero'&&layoutMode!=='news';
       const box=document.getElementById('heroButtons');box.textContent='';
       const cur=currentHeroIndex();
       images.forEach((img,i)=>{if(!img)return;
