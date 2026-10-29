@@ -159,12 +159,7 @@
           return out;
         };
         const images={day:await grab('day'),night:await grab('night')};
-        // Index by transferred uploads, excluding desktop sample screenshots.
         const artMosaic=api?.artSettings?.();
-        if(artMosaic){artMosaic.images=[];for(const group of ['day','night']){
-          const uploads=(api.artImages?.(group)||[]).filter(it=>it.image.src.startsWith('blob:'));
-          uploads.forEach((it,index)=>artMosaic.images.push({group,index,settings:window.LoviaArtMosaic.get(it.image)}));
-        }}
         return { text: { title: val('themeName'), author: val('authorName'), date: val('dateText'), message: val('footerText') }, images, artMosaic };
       },
       async apply(d) {
@@ -176,7 +171,7 @@
         if (api) {
           if (day.length) await api.loadFiles('day', day);
           if (night.length) await api.loadFiles('night', night);
-          if (d.artMosaic) api.applyArtSettings?.(d.artMosaic);
+          if (d.artMosaic) await api.applyArtSettings?.(d.artMosaic);
           if (day.length && night.length) api.setLayout('pairs');
           return;
         }
@@ -364,15 +359,16 @@
   }
   const settle = () => new Promise(r => setTimeout(r, 600));
   // backgrounds and covers go up no larger than the poster (3600 px), as JPEG when that is smaller
-  async function shrinkImage(file, max = 3600) {
+  async function shrinkImage(file, max = 3600, preserveAlpha = false) {
     try {
       const bmp = await createImageBitmap(file);
       const k = Math.min(1, max / Math.max(bmp.width, bmp.height));
       if (k === 1 && file.size < 2.5e6) return file;
       const c = document.createElement('canvas'); c.width = Math.round(bmp.width * k); c.height = Math.round(bmp.height * k);
       c.getContext('2d').drawImage(bmp, 0, 0, c.width, c.height);
-      const blob = await new Promise(r => c.toBlob(r, 'image/jpeg', 0.9));
-      return blob && blob.size < file.size ? new File([blob], (file.name || 'image').replace(/\.[^.]+$/, '') + '.jpg', { type: 'image/jpeg' }) : file;
+      const mime=preserveAlpha?'image/png':'image/jpeg',ext=preserveAlpha?'.png':'.jpg';
+      const blob = await new Promise(r => c.toBlob(r, mime, 0.9));
+      return blob && blob.size < file.size ? new File([blob], (file.name || 'image').replace(/\.[^.]+$/, '') + ext, { type: mime }) : file;
     } catch (e) { return file; }
   }
   const isFontSlot = k => /^font\d*$/.test(k);
@@ -447,7 +443,7 @@
         const it = readList().find(x => x.id === p.id) || p;
         const files = it.files && it.files.length ? (await getFiles(it.id)) || {} : {};
         const meta = {}; for (const k of Object.keys(files)) meta[k] = { name: files[k].name || '', type: files[k].type || '', size: files[k].size || 0 };
-        const up = {}; for (const k of Object.keys(files)) if (!isFontSlot(k)) up[k] = await shrinkImage(files[k]);
+        const up = {}; for (const k of Object.keys(files)) if (!isFontSlot(k)) up[k] = await shrinkImage(files[k],3600,k==='artWatermark');
         const body = { data: { page: PAGE, name: it.name, settings: it.settings, files: meta }, title: it.name, schema_version: PAGE === 'lovia' ? 'lovia-1' : 'dn-0' };
         let c = it.cloud, fresh = false;
         if (!c || !c.key) { const r = await RC.create('showcase', body); c = { id: r.id, key: r.key, slots: [] }; fresh = true; }

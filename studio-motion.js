@@ -73,6 +73,10 @@
   }
 
   function frame(ctx, spec, t) {
+    frameContent(ctx,spec,t);
+    window.LoviaArtMosaic?.apply(ctx,{preview:ctx.canvas.classList.contains('mo-stage'),thumbnailPreview:false});
+  }
+  function frameContent(ctx, spec, t) {
     const W = spec.W, H = spec.H;
     ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalAlpha = 1;
     if (spec.type === 'push') {
@@ -100,7 +104,7 @@
       // parts play one after another; weights set how long each one lasts
       const total = spec.parts.reduce((a, p) => a + p.weight, 0);
       let at = t * total;
-      for (const p of spec.parts) { if (at <= p.weight || p === spec.parts[spec.parts.length - 1]) { ctx.restore(); frame(ctx, p.spec, Math.min(1, at / p.weight)); return; } at -= p.weight; }
+      for (const p of spec.parts) { if (at <= p.weight || p === spec.parts[spec.parts.length - 1]) { ctx.restore(); frameContent(ctx, p.spec, Math.min(1, at / p.weight)); return; } at -= p.weight; }
     } else if (spec.type === 'xfade') {
       const a = keyed(t, XFADE);
       ctx.drawImage(spec.from, 0, 0);
@@ -230,7 +234,12 @@
   }
   async function encodeGif(spec, opts, progress) {
     const { W, H } = spec, n = Math.max(2, Math.round(secs(spec, opts) * opts.fps)), delay = Math.round(100 / opts.fps);
-    const P = buildPalette(spec.paletteSources || [], spec.paletteExtra || []);
+    const paletteSources=(spec.paletteSources||[]).map(source=>{
+      if(!window.LoviaArtMosaic?.enabled())return source;
+      const c=document.createElement('canvas'),k=Math.min(1,640/Math.max(source.width,source.height));c.width=Math.max(1,Math.round(source.width*k));c.height=Math.max(1,Math.round(source.height*k));
+      const x=c.getContext('2d');x.drawImage(source,0,0,c.width,c.height);window.LoviaArtMosaic.apply(x);return c;
+    });
+    const P = buildPalette(paletteSources, spec.paletteExtra || []);
     const map = makeMapper(P);
     const c = document.createElement('canvas'); c.width = W; c.height = H; const x = c.getContext('2d', { willReadFrequently: true });
     const o = new Bytes();
@@ -384,7 +393,7 @@
       $('.mo-desc').textContent = o.describe(variant);
       const s = await o.build(stage.width, stage.height, variant).catch(e => { console.error(e); return null; });
       if (id !== openId || el.hidden) return;
-      if (!s || s.none) { status((s && s.reason) || L.fail); setButtons(false); spec = null; if (s && s.still) stage.getContext('2d').drawImage(s.still, 0, 0); return; }
+      if (!s || s.none) { status((s && s.reason) || L.fail); setButtons(false); spec = null; if (s && s.still) {const x=stage.getContext('2d');x.drawImage(s.still,0,0);window.LoviaArtMosaic?.apply(x,{preview:true});} return; }
       spec = s; setButtons(true); status(''); t0 = performance.now(); cancelAnimationFrame(raf); loop();
     }
     function close() { el.hidden = true; openId++; cancelAnimationFrame(raf); spec = null; document.documentElement.style.overflow = ''; clearResult(); }
