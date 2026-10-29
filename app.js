@@ -722,7 +722,7 @@
     const pixelExact = p.w === image.naturalWidth && p.h === image.naturalHeight;
     ctx.imageSmoothingEnabled = ctx===previewCtx || !pixelExact;
     ctx.imageSmoothingQuality = 'high';
-    ctx.drawImage(image, p.x, p.y, p.w, p.h);
+    LoviaArtMosaic.draw(ctx,image,p);
     ctx.imageSmoothingEnabled = true;
   }
 
@@ -1203,6 +1203,7 @@
   }
 
   function renderTiles() {
+    LoviaArtMosaic.refresh();
     const grid=refs.uploadGrid;
     grid.replaceChildren();
     images.forEach((image,index)=>{
@@ -1381,6 +1382,7 @@
   }
 
   async function resetAll() {
+    LoviaArtMosaic.reset();
     if(activeGroup!=='day')setActiveGroup('day');
     (groupStore.night?.userObjectURLs||[]).forEach(url=>url&&URL.revokeObjectURL(url));
     groupStore.night={images:[null],userObjectURLs:[null],imageOffsets:[{x:0,y:0}],imageScales:[100],selectedImageIndex:0};
@@ -2019,6 +2021,7 @@
       gradient:{start:refs.gradientStart.value,end:refs.gradientEnd.value,customized:gradientCustomized},
       quality:selectedExportQuality, palette:paletteCustom?[...currentColors]:null,
       textMode, textDay, textNight, textTouched, textStyle:JSON.parse(JSON.stringify(textStyle)),
+      artMosaic:LoviaArtMosaic.serialize(),
     };
     const files={};
     if(currentTheme==='image'&&keptFiles.background)files.background=keptFiles.background;
@@ -2034,6 +2037,7 @@
     el.dispatchEvent(new Event(event,{bubbles:true}));
   }
   async function applySettings(st,files={}) {
+    LoviaArtMosaic.restore(st.artMosaic);
     const asFile=(b,n)=>b instanceof File?b:new File([b],n,{type:b.type||''});
     if(files.background)await replaceBackdropAsset('background',asFile(files.background,'background.png'));
     if(files.cover)await replaceBackdropAsset('cover',asFile(files.cover,'cover.png'));
@@ -2171,6 +2175,9 @@
   }
 
   window.LoviaClassicAPI={
+    artImages(name){return groupOf(name).images.map((image,index)=>({image,index})).filter(it=>it.image);},
+    artSettings(){return LoviaArtMosaic.serialize();},
+    applyArtSettings(data){LoviaArtMosaic.restore(data);},
     imageSources(name){return groupOf(name).images.filter(Boolean).map(img=>img.src);},
     async loadFiles(name,files){
       const back=activeGroup;setActiveGroup(name);
@@ -2180,5 +2187,9 @@
     setLayout(key){setLayout(key);},
   };
 
+  const artPanel=LoviaArtMosaic.mount({before:document.querySelector('.preview-card'),change:scheduleDraw,
+    images:()=>['day','night'].flatMap(group=>groupOf(group).images.map((image,index)=>({image,group,index,label:(group==='day'?'日间':'夜间')+' '+(index+1)})))});
   initialize();
+  // initialize() moves the preview after all controls on phones; keep the card adjacent.
+  document.querySelector('.preview-card').before(artPanel.root);
 })();
