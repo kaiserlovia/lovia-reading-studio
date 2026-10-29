@@ -6,7 +6,7 @@
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>Day Night · Lovia Reading Studio</title>
 <meta name="description" content="Day Night：把閱讀主題的日間與夜間截圖放進同一張畫報，自動取色，高清 PNG 匯出。">
-<link rel="stylesheet" href="./art-mosaic.css?v=1">
+<link rel="stylesheet" href="./art-mosaic.css?v=2">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Huninn&family=Iansui&family=LXGW+WenKai+TC:wght@400;700&family=Noto+Sans+TC:wght@400;700&family=Noto+Serif+TC:wght@500;700&display=swap">
@@ -580,10 +580,10 @@ button{cursor:pointer}
   </div>
 </dialog>
 
-<script src="./studio-shell.js?v=18"></script>
-<script src="./studio-motion.js?v=5"></script>
+<script src="./studio-shell.js?v=19"></script>
+<script src="./studio-motion.js?v=6"></script>
 <script src="./studio-extra.js?v=5"></script>
-<script src="./art-mosaic.js?v=1"></script>
+<script src="./art-mosaic.js?v=2"></script>
 <script>
 (()=>{
 'use strict';
@@ -1220,7 +1220,7 @@ function heroIndexFor(list){
 function drawCompareHalf(ctx,r,rad,other,u,preview,at=S.compareAt,noDivider=false){
   const img=preview?other.shot.prev:other.shot.src,xd=r.x+r.w*at;
   ctx.save();rr(ctx,r.x,r.y,r.w,r.h,rad);ctx.clip();ctx.beginPath();ctx.rect(xd,r.y,r.x+r.w-xd,r.h);ctx.clip();
-  ctx.imageSmoothingQuality='high';LoviaArtMosaic.draw(ctx,other.shot.src,r,img);ctx.restore();
+  ctx.imageSmoothingQuality='high';ctx.drawImage(img,r.x,r.y,r.w,r.h);ctx.restore();
   if(!noDivider)drawCompareDivider(ctx,r,xd,u,preview);
 }
 function drawCompareDivider(ctx,r,xd,u,preview){
@@ -1323,7 +1323,7 @@ function drawShot(ctx,s,r,side,u,preview,extra=null){
     ctx.fillStyle=c.bg;rr(ctx,r.x,r.y,r.w,r.h,rad);ctx.fill();
   }
   ctx.restore();
-  ctx.save();rr(ctx,r.x,r.y,r.w,r.h,rad);ctx.clip();ctx.imageSmoothingQuality='high';LoviaArtMosaic.draw(ctx,s.src,r,img);ctx.restore();
+  ctx.save();rr(ctx,r.x,r.y,r.w,r.h,rad);ctx.clip();ctx.imageSmoothingQuality='high';ctx.drawImage(img,r.x,r.y,r.w,r.h);ctx.restore();
   if(extra)extra(ctx,r,rad);
   if(S.frame==='line'){ctx.save();ctx.lineWidth=u*.2;ctx.strokeStyle=rgba(c.ink,.42);rr(ctx,r.x,r.y,r.w,r.h,rad);ctx.stroke();ctx.restore();}
   if(S.frame==='corners'){
@@ -1350,6 +1350,7 @@ function render(){
   // Diagonal clipping has antialiased edges; start each preview from a clean canvas like export.
   ctx.clearRect(0,0,W,H);
   MARKS=[];lastHits=drawPoster(ctx,W,H,{preview:true});view={W,H};const marks=MARKS;MARKS=null;markText(marks);
+  LoviaArtMosaic.apply(ctx,{preview:true});
   if(!drag)refreshChips();
   $('#stageMeta').textContent=`${W}×${H}`;
 }
@@ -1758,7 +1759,7 @@ let zoom=1,largeURL=null;
 async function openLarge(){
   await ensureFont();
   const[W,H]=dims(),k=Math.min(1,2400/Math.max(W,H)),c=document.createElement('canvas');c.width=Math.round(W*k);c.height=Math.round(H*k);
-  const x=c.getContext('2d',{alpha:false});x.setTransform(k,0,0,k,0,0);drawPoster(x,W,H,{preview:false});
+  const x=c.getContext('2d',{alpha:false});x.setTransform(k,0,0,k,0,0);drawPoster(x,W,H,{preview:false});LoviaArtMosaic.apply(x);
   const blob=await new Promise(r=>c.toBlob(r,'image/jpeg',.9));if(largeURL)URL.revokeObjectURL(largeURL);largeURL=URL.createObjectURL(blob);
   $('#largeImg').src=largeURL;zoom=1;applyZoom();$('#large').showModal();$('#largeClose').focus();
 }
@@ -1777,7 +1778,7 @@ function safeName(s){return(s||'reeden').replace(/[\\/:*?"<>|\s]+/g,'-').slice(0
 async function renderBlob(opts={}){
   await ensureFont();
   const[W,H]=dims(),q=currentQuality(),c=document.createElement('canvas');c.width=q.w;c.height=q.h;
-  const x=c.getContext('2d',{alpha:false});x.setTransform(c.width/W,0,0,c.height/H,0,0);drawPoster(x,W,H,{...opts,preview:false});
+  const x=c.getContext('2d',{alpha:false});x.setTransform(c.width/W,0,0,c.height/H,0,0);drawPoster(x,W,H,{...opts,preview:false});LoviaArtMosaic.apply(x);
   const blob=await new Promise((res,rej)=>c.toBlob(b=>b?res(b):rej(new Error('圖片產生失敗，請改用較小的尺寸再試一次。')),'image/png'));
   c.width=c.height=1;return{blob,w:q.w,h:q.h};
 }
@@ -1875,8 +1876,7 @@ if(window.LoviaStudio){
       const pick=async side=>{const out=[];for(const s of S.shots[side]){if(s.sample)continue;const src=s.src.currentSrc||s.src.src||'';
         if(src.startsWith('blob:')){try{out.push({blob:await(await fetch(src)).blob(),label:s.label});}catch(e){}}}return out;};
       const images={day:await pick('day'),night:await pick('night')};
-      const artMosaic=LoviaArtMosaic.serialize();artMosaic.images=[];
-      for(const group of ['day','night'])S.shots[group].filter(s=>!s.sample).forEach((s,index)=>artMosaic.images.push({group,index,settings:LoviaArtMosaic.get(s.src)}));
+      const artMosaic=LoviaArtMosaic.handoff();
       return{text:{title:S.title,author:S.author,date:S.date,message:S.message},images,artMosaic};
     },
     async apply(d){
@@ -1887,11 +1887,11 @@ if(window.LoviaStudio){
       for(const side of['day','night']){
         const list=(imgs[side]||[]).slice(0,MAX_PER_SIDE);if(!list.length)continue;any=true;
         S.shots[side].forEach(x=>freeImg(x.src));S.shots[side]=[];
-        for(const[i,it]of list.entries()){try{const im=await fileToImage(it.blob);S.shots[side].push(makeShot(im,it.label||DEFAULT_LABELS[i]||'',false));if(it.artMosaic)LoviaArtMosaic.set(im,it.artMosaic);}catch(e){}}
+        for(const[i,it]of list.entries()){try{const im=await fileToImage(it.blob);S.shots[side].push(makeShot(im,it.label||DEFAULT_LABELS[i]||'',false));}catch(e){}}
         autoColors(side);
       }
       if(any)for(const side of['day','night'])if(S.shots[side].every(s=>s.sample))S.shots[side]=[];
-      if(d.artMosaic)LoviaArtMosaic.restore(d.artMosaic);
+      if(d.artMosaic)await LoviaArtMosaic.restore(d.artMosaic);
       refreshDerived();syncColorInputs();renderLists();syncSel();req();
       if(incoming)status(`已帶入 ${incoming} 張截圖。`);
     },
@@ -2060,7 +2060,7 @@ const PRESET_KEYS=['ratio','layout','single','splitDir','tilt','order','compareA
 function collectSettings(){
   const settings={};for(const k of PRESET_KEYS)if(S[k]!==undefined)settings[k]=JSON.parse(JSON.stringify(S[k]));
   settings.artMosaic=LoviaArtMosaic.serialize();
-  const files={};
+  const files={...LoviaArtMosaic.files()};
   if(S.bg==='image'&&keptFiles.bg)files.bg=keptFiles.bg;
   if(S.bg==='glass'&&keptFiles.cover)files.cover=keptFiles.cover;
   const used=new Set([S.font,...Object.values(S.textStyle).map(t=>t.font)]);
@@ -2068,7 +2068,7 @@ function collectSettings(){
   return{settings,files};
 }
 async function applySettings(st,files={}){
-  LoviaArtMosaic.restore(st.artMosaic);
+  await LoviaArtMosaic.restore(st.artMosaic,files);
   // settings saved before per-field styles existed leave every field following the overall style
   S.textStyle={};S.taglineSize=1;S.labelSize=1;
   for(const k of PRESET_KEYS)if(k in st)S[k]=JSON.parse(JSON.stringify(st[k]));
@@ -2099,8 +2099,7 @@ const finalStage=$('.stage-wrap');
 // Preserve the existing tabs and all their handlers, while keeping the mobile final preview below editing.
 const settingsTabs=finalStage.querySelector('.tabs');settingsTabs.classList.add('am-settings-tabs');
 $('.panel').before(settingsTabs);$('.panel').after(finalStage);finalStage.classList.add('am-final-stage');
-LoviaArtMosaic.mount({before:$('#stage'),change:req,
-  images:()=>['day','night'].flatMap(group=>S.shots[group].map((s,index)=>({image:s.src,group,index,label:(group==='day'?'日间':'夜间')+' '+(index+1)+(s.label?' · '+s.label:'')})))});
+LoviaArtMosaic.mount({before:$('#stage'),change:req});
 async function init(){
   syncQuality();syncColorInputs();syncSegs();
   renderFonts();syncLayoutUI();

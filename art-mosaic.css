@@ -29,15 +29,11 @@
 .am-enable input:checked::after{transform:translateX(16px)}
 .am-section{display:grid;gap:10px;min-width:0}
 .art-mosaic h3{font-size:13px;font-weight:600;margin:0;color:var(--am-ink)}
-.am-scope,.am-color-modes,.am-actions,.am-images{display:flex;flex-wrap:wrap;gap:7px}
-.art-mosaic .am-scope button,.art-mosaic .am-color-modes button,.art-mosaic .am-actions button,.art-mosaic .am-images button{min-height:38px;padding:7px 10px;border:1px solid #d7dbec;border-radius:7px;background:var(--am-white);color:var(--am-ink);font-size:12px;line-height:1.4}
+.am-color-modes,.am-actions{display:flex;flex-wrap:wrap;gap:7px}
+.art-mosaic .am-color-modes button,.art-mosaic .am-actions button{min-height:38px;padding:7px 10px;border:1px solid #d7dbec;border-radius:7px;background:var(--am-white);color:var(--am-ink);font-size:12px;line-height:1.4}
 .art-mosaic [aria-pressed="true"]{border-color:var(--am-accent)!important;background:var(--am-soft)!important;color:var(--am-deep)!important}
-.am-image-item{display:flex;align-items:center;gap:4px;min-width:0;max-width:100%}
-.am-image-item button{overflow-wrap:anywhere}
-.am-image-item label{display:grid;place-items:center;min-width:28px;min-height:38px}
-.am-empty,.am-feedback{margin:0;font-size:12px;color:var(--am-muted)}
+.am-feedback{margin:0;font-size:12px;color:var(--am-muted)}
 .am-feedback:empty{display:none}
-.am-per-image{display:flex;align-items:center;gap:8px;font-size:12px;min-height:32px}
 .am-styles{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px}
 .art-mosaic .am-styles button{padding:5px;border:1px solid #d7dbec;border-radius:9px;background:var(--am-white);color:var(--am-ink);min-width:0;overflow:hidden}
 .am-styles canvas{display:block;width:100%;height:auto;aspect-ratio:200/112;border-radius:5px;background:var(--am-soft)}
@@ -58,6 +54,10 @@
 .art-mosaic select{min-width:0;max-width:100%;min-height:38px;border:1px solid #d7dbec;border-radius:7px;padding:5px 9px;color:var(--am-ink);background:var(--am-white)}
 .am-actions button{flex:1 1 auto}
 .am-preset-label select{flex:1}
+.am-note{font-size:12px;line-height:1.6;color:var(--am-muted);margin:0}
+.am-watermark-preview{display:flex;align-items:center;gap:12px;min-width:0;font-size:12px;color:var(--am-muted);overflow-wrap:anywhere}
+.am-watermark-preview img{width:64px;height:64px;object-fit:contain;flex:none;border:1px solid var(--am-line);border-radius:7px;background:repeating-conic-gradient(#e6e8f1 0 25%,#fff 0 50%) 0/12px 12px}
+.art-mosaic [hidden]{display:none!important}
 /* Day Night keeps its original settings tabs; the final preview now follows them on phones. */
 [data-studio-page="daynight"] .stage-wrap.am-final-stage{position:static;grid-column:1;grid-row:1;min-width:0}
 @media(min-width:960px){[data-studio-page="daynight"] .app>.panel{grid-column:2;grid-row:1}}
@@ -67,7 +67,7 @@
   .workspace>.art-mosaic{grid-column:1;margin-bottom:0}
   .art-mosaic .am-heading{min-height:92px;padding:14px 14px 12px;grid-template-columns:36px minmax(0,1fr) auto 14px;gap:8px}
   .am-icon{width:36px;height:36px;border-radius:10px}.am-icon svg{width:24px;height:24px}.am-title{font-size:16px}.am-title small{font-size:8px;margin-left:2px;padding:1px 3px}.am-status{font-size:10px}.am-subtitle{font-size:12px}.am-ribbon{height:6px}.am-body{padding:18px 14px;gap:20px}.am-styles{grid-template-columns:repeat(2,minmax(0,1fr))}.am-styles span{font-size:12px}.am-sliders{grid-template-columns:minmax(0,1fr)}
-  .art-mosaic .am-scope button,.art-mosaic .am-color-modes button,.art-mosaic .am-actions button,.art-mosaic .am-images button{min-height:42px}.am-sliders input[type="range"]{height:34px}
+  .art-mosaic .am-color-modes button,.art-mosaic .am-actions button{min-height:42px}.am-sliders input[type="range"]{height:34px}
 }
 @media(prefers-color-scheme:dark){:root:not([data-theme="light"]) .art-mosaic{--am-soft:#252b4b;--am-line:#59628b;--am-ink:#e6e9fa;--am-muted:#a7aecb;--am-white:#191e30;--am-deep:#b1bcff}}
 :root[data-theme="dark"] .art-mosaic{--am-soft:#252b4b;--am-line:#59628b;--am-ink:#e6e9fa;--am-muted:#a7aecb;--am-white:#191e30;--am-deep:#b1bcff}
