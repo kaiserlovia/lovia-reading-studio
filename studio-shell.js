@@ -158,7 +158,14 @@
           for (const s of sources(name).filter(s => s.startsWith('blob:'))) { try { out.push({ blob: await (await fetch(s)).blob(), label: '' }); } catch (e) {} }
           return out;
         };
-        return { text: { title: val('themeName'), author: val('authorName'), date: val('dateText'), message: val('footerText') }, images: { day: await grab('day'), night: await grab('night') } };
+        const images={day:await grab('day'),night:await grab('night')};
+        // Index by transferred uploads, excluding desktop sample screenshots.
+        const artMosaic=api?.artSettings?.();
+        if(artMosaic){artMosaic.images=[];for(const group of ['day','night']){
+          const uploads=(api.artImages?.(group)||[]).filter(it=>it.image.src.startsWith('blob:'));
+          uploads.forEach((it,index)=>artMosaic.images.push({group,index,settings:window.LoviaArtMosaic.get(it.image)}));
+        }}
+        return { text: { title: val('themeName'), author: val('authorName'), date: val('dateText'), message: val('footerText') }, images, artMosaic };
       },
       async apply(d) {
         await ready;
@@ -169,6 +176,7 @@
         if (api) {
           if (day.length) await api.loadFiles('day', day);
           if (night.length) await api.loadFiles('night', night);
+          if (d.artMosaic) api.applyArtSettings?.(d.artMosaic);
           if (day.length && night.length) api.setLayout('pairs');
           return;
         }
