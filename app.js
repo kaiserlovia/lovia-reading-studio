@@ -768,7 +768,7 @@
   }
 
   function setLayout(key) {
-    if (!['even','stagger','overlap','focus','hero','fold','card',...DN_LAYOUTS].includes(key)) return;
+    if (!['even','stagger','overlap','focus','hero','fold','card','news',...DN_LAYOUTS].includes(key)) return;
     layoutMode = key;
     refs.layoutButtons.forEach(button=>{
       const selected=button.dataset.layout===key;
@@ -905,6 +905,7 @@
     const line = rgbaFromHex(refs.ruleColor.value, Number(refs.ruleOpacity.value)/100);
     ctx.clearRect(0,0,CANVAS_W,CANVAS_H);
     if (layoutMode === 'card') { drawCardPoster(theme); return; }
+    if (layoutMode === 'news') { drawNewsPoster(theme); return; }
     paintBackground(theme);
 
     if (refs.showRules.checked) {
@@ -1005,6 +1006,25 @@
       rules:refs.showRules.checked?{color:refs.ruleColor.value,alpha:Number(refs.ruleOpacity.value)/100}:null},anim?.cardT??null);
     lastPlacements=images.map(()=>null);
     rects.forEach((r,j)=>{lastPlacements[list[j].i]=r;});
+  }
+
+  // 报纸: one large image and the rest beside it on a front page
+  function drawNewsPoster(theme) {
+    const list=images.map((image,i)=>image?{image,i}:null).filter(Boolean);
+    const own=k=>{const f=textStyle[k]&&textStyle[k].font;return f&&hasFont(f)?familyOf(f):null;};
+    const size=(ref,d)=>Number(ref.value)/d,ink=k=>textInk(theme.ink,'day',k);
+    const hero=Math.max(0,list.findIndex(s=>s.i===currentHeroIndex()));
+    const rects=LoviaExtra.drawNews(ctx,CANVAS_W,CANVAS_H,{bg:theme.bg,paint:currentTheme==='light'||currentTheme==='dark'||currentTheme==='custom'?null:()=>paintBackground(theme),
+      ink:ink(),accent:theme.accent,inks:{title:ink('title'),author:ink('author'),date:ink('date'),message:ink('message')},
+      title:refs.name.value||DEFAULT_TEXT.name,author:refs.author.value||DEFAULT_TEXT.author,date:refs.date.value||DEFAULT_TEXT.date,message:refs.footerText.value.trim(),
+      shots:list.map(s=>({img:s.image,a:s.image.naturalWidth/s.image.naturalHeight})),hero,swatches:sortedColors(currentColors),
+      fonts:{head:activeFontFamily(),title:own('title'),author:own('author'),date:own('date'),message:fieldFamily('message'),labels:activeFontFamily()},
+      sizes:{title:size(refs.titleSize,61),author:size(refs.authorSize,48),date:size(refs.dateSize,41),message:size(refs.messageSize,33)},
+      scales:list.map(s=>(imageScales[s.i]??100)/100),offsets:list.map(s=>imageOffsets[s.i]||{x:0,y:0}),
+      drawImg:(c,j,r)=>withCtx(c,()=>{drawAdaptiveFrame(r,rgbaFromHex(refs.ruleColor.value,Number(refs.ruleOpacity.value)/100),theme);drawFittedImage(list[j].image,r);}),
+      rules:refs.showRules.checked?{color:refs.ruleColor.value,alpha:Number(refs.ruleOpacity.value)/100}:null},anim?.newsT??null);
+    lastPlacements=images.map(()=>null);
+    rects.forEach((r,j)=>{if(r)lastPlacements[list[j].i]=r;});
   }
 
   function textInk(auto,side='day',field) {
@@ -1787,6 +1807,7 @@
     bindControls();
     renderTextCards();
     bindCanvasDrag();
+    LoviaExtra.fontsReady.then(scheduleDraw);
     initializePlatformColorPicker();
     syncPaletteInputs();
     if(compactMode){
@@ -1818,7 +1839,7 @@
     split:'两半轮流压过彼此：日间那半慢慢盖过夜间，再被夜间盖回来。',diagonal:'两半沿着斜线轮流压过彼此。',rows:'上下两半轮流压过彼此。',
     compare:'中间的分隔线来回扫过，日夜在同一个框里切换。',pairs:'每组前后交换，后面那张翻到前面。',alternate:'整张画报在日夜、夜日两种顺序之间淡入淡出。',
     hero:'主图轮流换人，每张图片轮流当大图。',
-    fold:'整组图片从合起来慢慢展开，停一下再收回去。',card:'书名、作者和日期一个字一个字打出来，图片一张张夹上去，最后盖章、写上留言。',
+    fold:'整组图片从合起来慢慢展开，停一下再收回去。',card:'书名、作者和日期一个字一个字打出来，图片一张张夹上去，最后盖章、写上留言。',news:'报头先出现，标题一个字一个字打出来，图片一张张印上去，最后登出引言。',
   };
   const ROTATING={focus:'中间放大的那张轮流换人，旁边的图片跟着移位。',overlap:'最上面那张滑到最底下，下一张浮上来，一张一张轮流翻到最上层。'};
   function motionDesc(v){
@@ -1876,9 +1897,11 @@
     const NEED_BOTH='动态需要日间组和夜间组都有图片。在「展示图片」切换到夜间组即可添加。';
     try{
       const none=reason=>({none:true,reason,still:renderLayer(OW,OH)});
-      if(layoutMode==='fold'||layoutMode==='card'){
+      if(layoutMode==='fold'||layoutMode==='card'||layoutMode==='news'){
         if(!images.some(Boolean))return none('先添加图片。');
         const still=renderLayer(OW,OH);
+        if(layoutMode==='news')return{...base,type:'draw',paletteSources:[still],
+          draw:(c,t)=>{const prior=ctx,priorAnim=anim;try{ctx=c;c.setTransform(k,0,0,k,0,0);anim={newsT:t};drawPoster();}finally{ctx=prior;anim=priorAnim;}}};
         if(layoutMode==='card')return{...base,type:'draw',paletteSources:[still],paletteExtra:['#C9483B','#FFFFFF'],
           draw:(c,t)=>{const prior=ctx,priorAnim=anim;try{ctx=c;c.setTransform(k,0,0,k,0,0);anim={cardT:t};drawPoster();}finally{ctx=prior;anim=priorAnim;}}};
         const cap={},bg=renderLayer(OW,OH,{noShots:true,foldCapture:cap});
