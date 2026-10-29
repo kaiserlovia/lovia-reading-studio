@@ -1,5 +1,5 @@
 /*
- * Lovia Reading Studio · fold (风琴页) and library card (借阅卡) layouts, shared by both styles
+ * Lovia Reading Studio · fold (风琴页), library card (借阅卡) and newspaper (报纸) layouts, shared by both styles
  * Each page passes its own screenshots, colours, fonts and text; this file only draws.
  * Both drawings take a time t (0–1) so the motion export can animate them frame by frame.
  */
@@ -246,5 +246,198 @@
     return rects;
   }
 
-  window.LoviaExtra = { foldPlan, foldOpenAt, drawFold, drawCard, mix, rgba };
+
+  /* ---------- newspaper (报纸) ---------- */
+  // the masthead and headline faces load from Google Fonts; pages redraw once they arrive
+  const NEWS_FONTS = 'https://fonts.googleapis.com/css2?family=UnifrakturMaguntia&family=Playfair+Display:ital,wght@0,700;0,900;1,700&display=swap';
+  const MAST = '"UnifrakturMaguntia", "Old English Text MT", serif', SERIF = '"Playfair Display", "Noto Serif TC", Georgia, serif';
+  const fontsReady = (() => {
+    try {
+      const l = document.createElement('link'); l.rel = 'stylesheet'; l.href = NEWS_FONTS; document.head.appendChild(l);
+      const wait = new Promise(r => { l.onload = r; l.onerror = r; setTimeout(r, 4000); });
+      return wait.then(() => Promise.all(['400 40px "UnifrakturMaguntia"', '900 40px "Playfair Display"', '700 40px "Playfair Display"', 'italic 700 40px "Playfair Display"']
+        .map(f => document.fonts.load(f, 'The Reading Times 0123456789')))).catch(() => {});
+    } catch (e) { return Promise.resolve(); }
+  })();
+  // one row or more of equal-height photos inside box; returns slots in input order
+  function rowSlots(aspects, box, gap, capH) {
+    const n = aspects.length; if (!n) return [];
+    let best = null;
+    for (let rows = 1; rows <= Math.min(3, n); rows++) {
+      const per = Math.ceil(n / rows), rowH = box.h / rows;
+      let h = rowH - capH;
+      for (let i = 0; i < n; i += per) { const sum = aspects.slice(i, i + per).reduce((s, a) => s + a, 0), k = Math.min(per, n - i); h = Math.min(h, (box.w - gap * (k - 1)) / sum); }
+      if (h <= 0) continue;
+      const out = [];
+      for (let i = 0, r = 0; i < n; i += per, r++) {
+        const row = aspects.slice(i, i + per), tw = row.reduce((s, a) => s + a * h, 0) + gap * (row.length - 1);
+        let x = box.x + (box.w - tw) / 2; const y = box.y + r * rowH + (rowH - capH - h) / 2;
+        row.forEach((a, j) => { out[i + j] = { x, y, w: a * h, h }; x += a * h + gap; });
+      }
+      const area = h * h * aspects.reduce((s, a) => s + a, 0);
+      if (!best || area > best.area) best = { area, out };
+    }
+    return best ? best.out : [];
+  }
+  function wrapText(ctx, text, maxW, maxLines) {
+    const lines = []; let line = '';
+    for (const ch of text) {
+      if (ctx.measureText(line + ch).width > maxW && line && !'，。、；：！？」）,.!?'.includes(ch)) { lines.push(line); line = ch; } else line += ch;
+    }
+    if (line) lines.push(line);
+    return lines.slice(0, maxLines);
+  }
+  /*
+   * M: {bg, paint(ctx)?, ink, accent, inks:{title,tagline,author,date,message}, title, tagline, author, date, message, labels[], shots:[{img,a}], hero,
+   *     swatches[], hexes, fonts:{head,title,tagline,author,date,message,labels}, sizes:{title,tagline,author,date,message,labels},
+   *     size, gap, scales[], offsets[{x,y}], drawImg(ctx, i, rect), rules {color, alpha}, grain(ctx)}
+   * t: null for the still poster, 0–1 for a frame of the motion loop
+   */
+  function drawNews(ctx, W, H, M, t = null) {
+    const still = t == null, u = Math.min(W, H) / 1350, sz = M.sizes || {}, F = M.fonts || {};
+    const at = (from, len) => still ? 1 : clamp01((t - from) / len);
+    const fade = still || t < .9 ? 1 : 1 - easeOut((t - .9) / .1);
+    const ink = M.ink, inks = M.inks || {}, acc = M.accent || '#A8321F', mx = 80 * u, gapU = 28 * u * (M.gap ?? 1);
+    const inkOf = k => inks[k] || ink;
+    ctx.save();
+    if (M.paint) M.paint(ctx); else { ctx.fillStyle = M.bg; ctx.fillRect(0, 0, W, H); }
+    ctx.textBaseline = 'alphabetic';
+    const line = (x1, y, x2, th, col = ink) => { ctx.fillStyle = col; ctx.fillRect(x1, y, x2 - x1, th); };
+    // masthead
+    ctx.save(); ctx.globalAlpha = at(0, .08) * fade; ctx.fillStyle = ink; ctx.textAlign = 'center';
+    fitFont(ctx, 'The Reading Times', 400, 116 * u, MAST, W - 2 * mx); ctx.fillText('The Reading Times', W / 2, 150 * u);
+    line(mx, 176 * u, W - mx, 6 * u); line(mx, 188 * u, W - mx, 2 * u);
+    ctx.font = `700 ${22 * u}px ${SERIF}`; ctx.textAlign = 'left'; ctx.fillText('THEME EDITION', mx + 10 * u, 222 * u);
+    if (M.date) { ctx.textAlign = 'right'; ctx.fillStyle = inkOf('date'); fitFont(ctx, M.date, 700, 22 * u * (sz.date || 1), F.date || SERIF, W / 2 - mx); ctx.fillText(M.date, W - mx - 10 * u, 222 * u); }
+    line(mx, 240 * u, W - mx, 2 * u);
+    ctx.restore();
+    // headline: title, then the tagline and byline beside it (or under it when there is no room)
+    let headB = 378 * u;
+    {
+      const a = fade, chars = [...(M.title || '')], n = Math.round(chars.length * at(.06, .12));
+      const mid = M.align === 'center';
+      ctx.save(); ctx.globalAlpha = a; ctx.fillStyle = inkOf('title'); ctx.textAlign = mid ? 'center' : 'left';
+      const ts = fitFont(ctx, M.title || '', 900, 92 * u * (sz.title || 1), F.title || SERIF, (W - 2 * mx) * (mid ? .9 : .6));
+      const tw = ctx.measureText(M.title || '').width;
+      if (mid) { ctx.textAlign = 'left'; ctx.fillText(chars.slice(0, n).join(''), (W - tw) / 2, 340 * u); }
+      else ctx.fillText(chars.slice(0, n).join(''), mx + 10 * u, 340 * u);
+      let dx = mx + 10 * u + tw + 40 * u, dy = 318 * u; const room = W - mx - dx;
+      if (mid) { dx = W / 2; dy = 392 * u; if (M.tagline || M.author) headB = 470 * u; }
+      else if (room < 360 * u) { dx = mx + 10 * u; dy = 340 * u + 52 * u; headB = 470 * u; }
+      ctx.textAlign = mid ? 'center' : 'left';
+      const roomW = mid ? W - 2 * mx : W - mx - dx;
+      ctx.globalAlpha = a * at(.16, .06);
+      if (M.tagline) { ctx.fillStyle = inkOf('tagline'); fitFont(ctx, M.tagline, 700, 38 * u * (sz.tagline || 1), F.tagline || SERIF, roomW); ctx.fillText(M.tagline, dx, dy); }
+      if (M.author) { ctx.fillStyle = inkOf('author'); ctx.globalAlpha *= .75; fitFont(ctx, 'BY ' + M.author, 700, 20 * u * (sz.author || 1), F.author || SERIF, roomW); ctx.fillText('BY ' + M.author, dx + (mid ? 0 : 2 * u), dy + (M.tagline ? 34 * u : 0)); }
+      ctx.restore();
+      ctx.save(); ctx.globalAlpha = fade * at(0, .08); line(mx, headB, W - mx, 2 * u); ctx.restore();
+    }
+    // photos: one large (the hero) and the rest in rows beside or under it
+    const shots = M.shots || [], n = shots.length, hero = Math.max(0, Math.min(n - 1, M.hero || 0));
+    const labels = M.labels || [], capH = labels.some(Boolean) ? 52 * u : 0, msg = (M.message || '').trim();
+    const box = { x: mx + 20 * u, y: headB + 42 * u, w: W - 2 * mx - 40 * u, h: H - 90 * u - headB - 42 * u };
+    const slots = [], deco = [];
+    if (n === 1) {
+      const a = shots[0].a, h = Math.min(box.h - capH, box.w / a); slots[0] = { x: box.x + (box.w - a * h) / 2, y: box.y, w: a * h, h };
+      if (msg) deco.push({ quote: { x: box.x, y: box.y + h + capH + 20 * u, w: box.w } });
+    } else if (n > 1) {
+      const land = box.w > box.h * 1.05, others = shots.map((s, i) => i).filter(i => i !== hero), ha = shots[hero].a;
+      const barH = 46 * u, quoteH = msg ? 250 * u : 0;
+      // try a few sizes for the large photo and keep the one that shows the most screenshot overall
+      const plan = f => {
+        const sl = [], dc = [];
+        let area;
+        if (land) {
+          let hh = box.h - capH, hw = hh * ha; if (hw > box.w * f) { hw = box.w * f; hh = hw / ha; }
+          sl[hero] = { x: box.x, y: box.y + (box.h - capH - hh) / 2, w: hw, h: hh };
+          const ax = box.x + hw + 60 * u; dc.push({ vrule: { x: ax - 30 * u, y1: box.y - 20 * u, y2: box.y + box.h } });
+          area = { x: ax, y: box.y, w: box.x + box.w - ax, h: box.h };
+        } else {
+          let hh = (box.h - capH) * f, hw = hh * ha; if (hw > box.w * .75) { hw = box.w * .75; hh = hw / ha; }
+          sl[hero] = { x: box.x + (box.w - hw) / 2, y: box.y, w: hw, h: hh };
+          const ay = box.y + hh + capH + 30 * u; dc.push({ hrule: { x1: box.x, x2: box.x + box.w, y: ay - 15 * u } });
+          area = { x: box.x, y: ay, w: box.w, h: box.y + box.h - ay };
+        }
+        dc.push({ bar: { x: area.x, y: area.y, w: area.w, h: barH } });
+        const rs = rowSlots(others.map(i => shots[i].a), { x: area.x, y: area.y + barH + 36 * u, w: area.w, h: area.h - barH - 36 * u - quoteH }, gapU, capH);
+        others.forEach((i, j) => { sl[i] = rs[j]; });
+        if (msg) dc.push({ quote: { x: area.x, y: area.y + area.h - quoteH + 10 * u, w: area.w } });
+        const big = sl[hero].w * sl[hero].h, small = sl.reduce((t, r, i) => t + (r && i !== hero ? r.w * r.h : 0), 0);
+        // the large photo must stay clearly larger than the others
+        const okHero = others.every(i => !sl[i] || sl[i].h < sl[hero].h * .8);
+        return { sl, dc, score: (okHero && others.every(i => sl[i]) ? 1 : 0) * 1e12 + big + small };
+      };
+      let best = null;
+      for (const f of land ? [.26, .3, .34, .38, .42, .46] : [.38, .44, .5, .56, .62, .68]) { const r = plan(f); if (!best || r.score > best.score) best = r; }
+      best.sl.forEach((r, i) => { slots[i] = r; }); deco.push(...best.dc);
+    }
+    // dividers, section bar and quote
+    ctx.save(); ctx.globalAlpha = fade * at(.2, .06);
+    for (const d of deco) {
+      if (d.vrule) { ctx.fillStyle = ink; ctx.fillRect(d.vrule.x, d.vrule.y1, 2 * u, d.vrule.y2 - d.vrule.y1); }
+      if (d.hrule) line(d.hrule.x1, d.hrule.y, d.hrule.x2, 2 * u);
+      if (d.bar) {
+        const b = d.bar; line(b.x, b.y, b.x + b.w, b.h); ctx.fillStyle = M.bg; ctx.textAlign = 'center';
+        const tx = word('本期页面', '本期頁面') + '　IN THIS ISSUE'; fitFont(ctx, tx, 700, 22 * u, F.head || SERIF, b.w - 20 * u); ctx.fillText(tx, b.x + b.w / 2, b.y + b.h * .68);
+      }
+    }
+    ctx.restore();
+    const qd = deco.find(d => d.quote);
+    if (qd && msg) {
+      const q = qd.quote, k = at(.6, .12) * fade;
+      if (k) {
+        ctx.save(); ctx.globalAlpha = k; line(q.x, q.y, q.x + q.w, 4 * u, acc);
+        ctx.fillStyle = inkOf('message') === ink ? acc : inkOf('message'); ctx.textAlign = 'center';
+        const qs = 54 * u * (sz.message || 1); ctx.font = `900 ${qs}px ${F.message || SERIF}`;
+        let lines = wrapText(ctx, '「' + msg + '」', q.w - 20 * u, 2);
+        if (lines.length > 1) { ctx.font = `900 ${qs * .78}px ${F.message || SERIF}`; lines = wrapText(ctx, '「' + msg + '」', q.w - 20 * u, 2); }
+        const lh = parseFloat(ctx.font.match(/(\d+(\.\d+)?)px/)[1]) * 1.3;
+        ctx.save(); ctx.beginPath(); ctx.rect(q.x, q.y, q.w * (still ? 1 : easeOut(k)), 400 * u); ctx.clip();
+        lines.forEach((l, i) => ctx.fillText(l, q.x + q.w / 2, q.y + 78 * u + i * lh)); ctx.restore();
+        const qb = q.y + 78 * u + (lines.length - 1) * lh + 44 * u; line(q.x, qb, q.x + q.w, 4 * u, acc);
+        const by = [M.author, M.date].filter(Boolean).join('，');
+        if (by) { ctx.fillStyle = ink; ctx.globalAlpha = k * .75; ctx.font = `italic 700 ${26 * u}px ${SERIF}`; ctx.fillText('— ' + by, q.x + q.w / 2, qb + 50 * u); }
+        ctx.restore();
+      }
+    }
+    // the photos, printed one after another
+    const rects = [], order = [hero, ...shots.map((s, i) => i).filter(i => i !== hero)];
+    const dur = .08, span = Math.max(0, .5 - .2 - dur);
+    order.forEach((i, j) => {
+      const sl = slots[i]; if (!sl) return;
+      const kk = (M.size || 1) * ((M.scales && M.scales[i]) || 1), o = (M.offsets && M.offsets[i]) || { x: 0, y: 0 };
+      const w = sl.w * kk, h = sl.h * kk, r = { x: sl.x + (sl.w - w) / 2 + o.x, y: sl.y + (sl.h - h) / 2 + o.y, w, h };
+      rects[i] = r;
+      const k = at(.2 + (order.length > 1 ? j * span / (order.length - 1) : 0), dur) * fade; if (!k) return;
+      const e = still ? 1 : easeOut(k), grow = 1 + (1 - e) * .05;
+      ctx.save(); ctx.globalAlpha = Math.min(1, k * 2);
+      ctx.translate(r.x + r.w / 2, r.y + r.h / 2); ctx.scale(grow, grow); ctx.translate(-r.w / 2, -r.h / 2);
+      const rr0 = { x: 0, y: 0, w: r.w, h: r.h };
+      if (M.drawImg) M.drawImg(ctx, i, rr0);
+      else { const p = 8 * u; ctx.fillStyle = '#fff'; ctx.fillRect(-p, -p, r.w + 2 * p, r.h + 2 * p); ctx.imageSmoothingQuality = 'high'; ctx.drawImage(shots[i].img, 0, 0, r.w, r.h); }
+      const lab = labels[i];
+      if (lab) {
+        ctx.fillStyle = inks.labels || ink; ctx.globalAlpha *= .85; ctx.textAlign = 'center';
+        const txt = (i === hero && n > 1 ? '▲ ' : '') + lab; fitFont(ctx, txt, 400, 24 * u * (sz.labels || 1), F.labels || F.head || SERIF, Math.max(r.w + 40 * u, 120 * u));
+        ctx.fillText(txt, r.w / 2, r.h + 40 * u);
+      }
+      ctx.restore();
+    });
+    // footer: colours on the left, page number on the right
+    ctx.save(); ctx.globalAlpha = fade * at(.5, .06);
+    line(mx, H - 60 * u, W - mx, 2 * u);
+    let sx = mx + 22 * u; const sy = H - 30 * u;
+    (M.swatches || []).forEach(c => {
+      ctx.beginPath(); ctx.arc(sx, sy - 8 * u, 12 * u, 0, Math.PI * 2); ctx.fillStyle = c; ctx.fill(); ctx.strokeStyle = rgba(ink, .35); ctx.lineWidth = 1.5 * u; ctx.stroke(); sx += 34 * u;
+      if (M.hexes) { ctx.fillStyle = ink; ctx.globalAlpha = fade * at(.5, .06) * .7; ctx.font = `500 ${15 * u}px ui-monospace, Menlo, monospace`; ctx.textAlign = 'left'; ctx.fillText(c.toUpperCase(), sx - 14 * u, sy - 2 * u); sx += ctx.measureText(c).width + 14 * u; ctx.globalAlpha = fade * at(.5, .06); }
+    });
+    ctx.fillStyle = ink; ctx.textAlign = 'right'; ctx.font = `700 ${20 * u}px ${SERIF}`; ctx.fillText('A1', W - mx - 10 * u, sy);
+    ctx.restore();
+    if (M.rules) { ctx.strokeStyle = rgba(M.rules.color, M.rules.alpha); ctx.lineWidth = 2 * u; ctx.strokeRect(24 * u, 24 * u, W - 48 * u, H - 48 * u); }
+    ctx.restore();
+    if (M.grain) M.grain(ctx);
+    return rects;
+  }
+
+  window.LoviaExtra = { foldPlan, foldOpenAt, drawFold, drawCard, drawNews, fontsReady, mix, rgba };
 })();

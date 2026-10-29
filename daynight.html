@@ -328,6 +328,7 @@ button{cursor:pointer}
           <button data-layout="compare" aria-pressed="false"><svg viewBox="0 0 64 46"><rect width="32" height="46" fill="#E4E9EC"/><rect x="32" width="32" height="46" fill="#1F2738"/><rect x="22" y="6" width="20" height="34" rx="2.5" fill="#fff" stroke="#9AA3AD" stroke-width=".6"/><rect x="32" y="6" width="10" height="34" fill="#3A4459"/><rect x="31.4" y="6" width="1.2" height="34" fill="#fff"/><circle cx="32" cy="23" r="3" fill="#fff"/></svg>日夜對切</button>
           <button data-layout="rows" aria-pressed="false"><svg viewBox="0 0 64 46"><defs><linearGradient id="gTB" x1="0" x2="0" y1="0" y2="1"><stop offset=".25" stop-color="#E4E9EC"/><stop offset=".75" stop-color="#1F2738"/></linearGradient></defs><rect width="64" height="46" fill="url(#gTB)"/><rect x="14" y="4" width="9" height="17" rx="1.2" fill="#fff" stroke="#9AA3AD" stroke-width=".6"/><rect x="27" y="4" width="9" height="17" rx="1.2" fill="#fff" stroke="#9AA3AD" stroke-width=".6"/><rect x="40" y="4" width="9" height="17" rx="1.2" fill="#fff" stroke="#9AA3AD" stroke-width=".6"/><rect x="14" y="25" width="9" height="17" rx="1.2" fill="#3A4459"/><rect x="27" y="25" width="9" height="17" rx="1.2" fill="#3A4459"/><rect x="40" y="25" width="9" height="17" rx="1.2" fill="#3A4459"/></svg>上日下夜</button>
           <button data-layout="fold" aria-pressed="false"><svg viewBox="0 0 64 46"><rect width="64" height="46" fill="url(#gDN)"/><polygon points="8,11 20,15 20,36 8,32" fill="#F4F6F7" stroke="#9AA3AD" stroke-width=".6"/><polygon points="20,15 32,11 32,32 20,36" fill="#C9CED3" stroke="#9AA3AD" stroke-width=".6"/><polygon points="32,11 44,15 44,36 32,32" fill="#3A4459" stroke="#2A3244" stroke-width=".6"/><polygon points="44,15 56,11 56,32 44,36" fill="#2A3244" stroke="#2A3244" stroke-width=".6"/></svg>風琴頁</button>
+          <button data-layout="news" aria-pressed="false"><svg viewBox="0 0 64 46"><rect width="64" height="46" fill="#EFEAE0"/><rect x="14" y="4" width="36" height="4" rx="1" fill="#1E1C19"/><rect x="5" y="10" width="54" height=".8" fill="#1E1C19"/><rect x="7" y="14" width="13" height="27" fill="#fff" stroke="#9AA3AD" stroke-width=".5"/><rect x="24" y="14" width="34" height="2.5" fill="#1E1C19"/><rect x="25" y="19" width="9" height="16" fill="#fff" stroke="#9AA3AD" stroke-width=".5"/><rect x="36" y="19" width="9" height="16" fill="#3A4459"/><rect x="47" y="19" width="9" height="16" fill="#3A4459"/><rect x="25" y="38" width="31" height="1.2" fill="#A8321F"/></svg>報紙</button>
           <button data-layout="single-hero" aria-pressed="false"><svg viewBox="0 0 64 46"><rect width="64" height="46" fill="#E4E9EC"/><rect x="14" y="5" width="18" height="36" rx="1.5" fill="#fff" stroke="#9AA3AD" stroke-width=".6"/><rect x="37" y="7" width="8" height="15" rx="1" fill="#fff" stroke="#9AA3AD" stroke-width=".6"/><rect x="37" y="25" width="8" height="15" rx="1" fill="#fff" stroke="#9AA3AD" stroke-width=".6"/></svg>主圖＋小圖</button>
           <button data-layout="single-even" aria-pressed="false"><svg viewBox="0 0 64 46"><rect width="64" height="46" fill="#E4E9EC"/><rect x="12" y="13" width="10" height="21" rx="1.2" fill="#fff" stroke="#9AA3AD" stroke-width=".6"/><rect x="27" y="13" width="10" height="21" rx="1.2" fill="#fff" stroke="#9AA3AD" stroke-width=".6"/><rect x="42" y="13" width="10" height="21" rx="1.2" fill="#fff" stroke="#9AA3AD" stroke-width=".6"/></svg>單面等距</button>
           <button data-layout="single-stagger" aria-pressed="false"><svg viewBox="0 0 64 46"><rect width="64" height="46" fill="#E4E9EC"/><rect x="12" y="9" width="10" height="21" rx="1.2" fill="#fff" stroke="#9AA3AD" stroke-width=".6"/><rect x="27" y="16" width="10" height="21" rx="1.2" fill="#fff" stroke="#9AA3AD" stroke-width=".6"/><rect x="42" y="9" width="10" height="21" rx="1.2" fill="#fff" stroke="#9AA3AD" stroke-width=".6"/></svg>單面錯落</button>
@@ -578,9 +579,9 @@ button{cursor:pointer}
   </div>
 </dialog>
 
-<script src="./studio-shell.js?v=16"></script>
+<script src="./studio-shell.js?v=17"></script>
 <script src="./studio-motion.js?v=5"></script>
-<script src="./studio-extra.js?v=3"></script>
+<script src="./studio-extra.js?v=5"></script>
 <script>
 (()=>{
 'use strict';
@@ -902,6 +903,7 @@ function drawPoster(ctx,W,H,opt={}){
   const u=Math.min(W,H)/100, m=u*6;
   const A=(opt.order||S.order)==='nd'?'night':'day',B=A==='day'?'night':'day';
   if(lay==='single-card')return drawCardPoster(ctx,W,H,singleSide,opt);
+  if(lay==='news')return drawNewsPoster(ctx,W,H,A,B,opt);
   const geo=geometry(W,H,lay,singleSide,A,B);
   const flipTB=geo.kind!=='single'&&geo.dir==='h'&&A==='night';
   TB=flipTB?{top:S.tbBottom,bottom:S.tbTop}:{top:S.tbTop,bottom:S.tbBottom};
@@ -1175,6 +1177,28 @@ function drawCardPoster(ctx,W,H,side,opt){
     rules:S.rules?{color:S.ruleColor,alpha:S.ruleOpacity}:null,hexes:S.hexes,grain:cx=>paintGrain(cx,W,H),
     note:[S.tagline.trim(),S.sideLabels?(side==='day'?S.labelDay:S.labelNight).trim():''].filter(Boolean).join('  ·  '),noteSize:S.taglineSize},opt.cardT??null);
   return rects.map((r,i)=>({shot:list[i],side,x:r.x,y:r.y,w:r.w,h:r.h,compare:false}));
+}
+// 報紙: one large screenshot and the rest beside it on a front page; the paper is the first side's background
+function drawNewsPoster(ctx,W,H,A,B,opt){
+  const c=S.colors[A],list=[...S.shots[A].map(s=>[A,s]),...S.shots[B].map(s=>[B,s])],mn=Math.min(W,H);
+  TB={top:S.tbTop,bottom:S.tbBottom};
+  const base=S.bg==='tb'?mix(TB.top,TB.bottom,.5):sideBase(A);
+  const plain=['solid','light','dark','custom'].includes(S.bg);
+  const auto=(S.bg==='image'||S.bg==='glass')?c.ink:bestInkFor(base,c.ink);
+  const own=k=>{const f=S.textStyle[k]&&S.textStyle[k].font&&fontByKey(S.textStyle[k].font);return f?f.stack:null;};
+  const ink=k=>textInk(A,auto,k);
+  const hero=S.shots[A].length?heroIndexFor(S.shots[A]):S.shots[A].length+heroIndexFor(S.shots[B]);
+  const rects=LoviaExtra.drawNews(ctx,W,H,{bg:base,paint:plain?null:cx=>paintPanel(cx,{x:0,y:0,w:W,h:H,side:A},W,H),ink:ink(),accent:c.accent,
+    inks:{title:ink('title'),tagline:ink('tagline'),author:ink('author'),date:ink('date'),message:ink('message'),labels:ink('labels')},
+    title:S.title.trim(),tagline:S.tagline.trim(),author:S.author.trim(),date:S.showDate?S.date.trim():'',message:S.message.trim(),
+    labels:list.map(([sd,s])=>[S.sideLabels?(sd==='day'?S.labelDay:S.labelNight).trim():'',S.captions?s.label:''].filter(Boolean).join(' · ')),align:S.align,shots:list.map(([,s])=>({img:opt.preview?s.prev:s.src,a:s.a})),hero,
+    swatches:S.swatches?(S.palette==='five'?S.five:[A,B].flatMap(sd=>[S.colors[sd].bg,S.colors[sd].accent,S.colors[sd].ink])):[],hexes:S.hexes,
+    fonts:{head:curFont().stack,title:own('title'),tagline:fieldFont('tagline').stack,author:own('author'),date:own('date'),message:fieldFont('message').stack,labels:fieldFont('labels').stack},
+    sizes:{title:S.titleSize,tagline:S.taglineSize,author:S.authorSize,date:S.dateSize,message:S.messageSize,labels:S.labelSize},
+    size:S.size,gap:S.gap,scales:list.map(([,s])=>s.scale),offsets:list.map(([,s])=>({x:s.dx*mn,y:s.dy*mn})),
+    drawImg:(cx,i,r)=>drawShot(cx,list[i][1],r,list[i][0],mn/100,opt.preview),
+    rules:S.rules?{color:S.ruleColor,alpha:S.ruleOpacity}:null,grain:cx=>paintGrain(cx,W,H)},opt.newsT??null);
+  return rects.map((r,i)=>r&&({shot:list[i][1],side:list[i][0],x:r.x,y:r.y,w:r.w,h:r.h,compare:false})).filter(Boolean);
 }
 function paintGrain(ctx,W,H){
   if(S.grain<=0)return;
@@ -1691,6 +1715,7 @@ function markText(marks){
   el.hidden=false;
 }
 document.fonts&&document.fonts.addEventListener&&document.fonts.addEventListener('loadingdone',req);
+LoviaExtra.fontsReady.then(req);
 
 /* ---------------- Android colour picker (as on the Lovia page) ---------------- */
 if(/Android/i.test(navigator.userAgent)){
@@ -1855,7 +1880,7 @@ const MOTION_DESC={
   split:'兩半輪流壓過彼此：日間那半慢慢蓋過夜間，再被夜間蓋回來。',diagonal:'兩半沿著斜線輪流壓過彼此。',rows:'上下兩半輪流壓過彼此。',
   compare:'中間的分隔線來回掃過，日夜在同一支手機裡切換。',pairs:'每組前後交換，後面那張翻到前面。',alternate:'整張畫報在日夜、夜日兩種順序之間淡入淡出。',
   'single-hero':'主圖輪流換人，每張截圖輪流當大圖。',
-  fold:'整組截圖從合起來慢慢展開，停一下再收回去。','single-card':'書名、作者和日期一個字一個字打出來，截圖一張張夾上去，最後蓋章、寫上留言。',
+  fold:'整組截圖從合起來慢慢展開，停一下再收回去。',news:'報頭先出現，標題一個字一個字打出來，截圖一張張印上去，最後登出引言。','single-card':'書名、作者和日期一個字一個字打出來，截圖一張張夾上去，最後蓋章、寫上留言。',
 };
 const ROTATING={'single-focus':'中間放大的那張輪流換人，旁邊的截圖跟著移位。','single-overlap':'最上面那張滑到最底下，下一張浮上來，一張一張輪流翻到最上層。'};
 function motionDesc(v){
@@ -1906,6 +1931,10 @@ async function buildMotion(OW,OH,variant){
   if(lay==='single-card'){
     if(!has(S.single))return none('這一組還沒有截圖。');
     return{...base,type:'draw',draw:(ctx,t)=>{ctx.setTransform(k,0,0,k,0,0);drawPoster(ctx,LW,LH,{preview:false,cardT:t});},paletteSources:[layer()],paletteExtra:['#C9483B','#FFFFFF']};
+  }
+  if(lay==='news'){
+    if(!has('day')&&!has('night'))return none('先加入截圖。');
+    return{...base,type:'draw',draw:(ctx,t)=>{ctx.setTransform(k,0,0,k,0,0);drawPoster(ctx,LW,LH,{preview:false,newsT:t});},paletteSources:[layer()]};
   }
   if(lay==='fold'){
     if(!has('day')&&!has('night'))return none('先加入截圖。');
