@@ -625,7 +625,7 @@ const BG_DESC={
 /* ---------------- state ---------------- */
 const fmtToday=()=>{const d=new Date();return`${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getDate()).padStart(2,'0')}`;};
 const S={
-  ratio:'4:3', layout:'pairs', single:'day', splitDir:'auto', tilt:'alt', order:'dn', compareAt:.5, comparePair:0, compareHandle:false, heroIndex:-1,
+  ratio:'4:3', layout:'pairs', single:'day', splitDir:'auto', tilt:'alt', order:'dn', compareAt:.5, comparePair:0, compareHandle:false, heroIndex:-1, newsHero:-1,
   size:1, gap:1, radius:.06, frame:'shadow',
   rules:false, ruleColor:'#000000', ruleOpacity:.4,
   bg:'solid', tint:.7, grain:.30, customBg:'#E9E6DB', tbTop:'#EDE9DE', tbBottom:'#A5B09E', tbCustom:false,
@@ -1187,7 +1187,7 @@ function drawNewsPoster(ctx,W,H,A,B,opt){
   const auto=(S.bg==='image'||S.bg==='glass')?c.ink:bestInkFor(base,c.ink);
   const own=k=>{const f=S.textStyle[k]&&S.textStyle[k].font&&fontByKey(S.textStyle[k].font);return f?f.stack:null;};
   const ink=k=>textInk(A,auto,k);
-  const hero=S.shots[A].length?heroIndexFor(S.shots[A]):S.shots[A].length+heroIndexFor(S.shots[B]);
+  const hero=newsHeroFor(list,A,B);
   const rects=LoviaExtra.drawNews(ctx,W,H,{bg:base,paint:plain?null:cx=>paintPanel(cx,{x:0,y:0,w:W,h:H,side:A},W,H),ink:ink(),accent:c.accent,
     inks:{title:ink('title'),tagline:ink('tagline'),author:ink('author'),date:ink('date'),message:ink('message'),labels:ink('labels')},
     title:S.title.trim(),tagline:S.tagline.trim(),author:S.author.trim(),date:S.showDate?S.date.trim():'',message:S.message.trim(),
@@ -1204,6 +1204,11 @@ function paintGrain(ctx,W,H){
   if(S.grain<=0)return;
   ctx.save();const k=W/1400;ctx.globalCompositeOperation='soft-light';ctx.globalAlpha=S.grain*.55;
   ctx.scale(k,k);ctx.fillStyle=ctx.createPattern(noise(),'repeat');ctx.fillRect(0,0,W/k,H/k);ctx.restore();
+}
+// 報紙: the large photo can be any shot of either side; default is the reading page of the first side
+function newsHeroFor(list,A,B){
+  if(S.newsHero>=0&&S.newsHero<list.length)return S.newsHero;
+  return S.shots[A].length?heroIndexFor(S.shots[A]):S.shots[A].length+heroIndexFor(S.shots[B]);
 }
 function heroIndexFor(list){
   if(S.heroIndex>=0&&S.heroIndex<list.length)return S.heroIndex;
@@ -1480,7 +1485,7 @@ function syncLayoutUI(){
   $('#grpSingle').hidden=!isSingle(S.layout);
   $('#grpOrder').hidden=isSingle(S.layout);
   $('#grpCompare').hidden=S.layout!=='compare';
-  $('#grpHero').hidden=S.layout!=='single-hero';
+  $('#grpHero').hidden=S.layout!=='single-hero'&&S.layout!=='news';
   renderLayoutChoices();
   $('#exportPair').textContent=isSingle(S.layout)?'日間、夜間各存一張':'日夜、夜日各存一張';
   $('#grpDir').hidden=!(S.layout==='split'||S.layout==='diagonal');
@@ -1518,7 +1523,16 @@ function renderLayoutChoices(){
   for(let i=0;i<n;i++){const b=document.createElement('button');b.type='button';b.textContent=String(i+1);
     const lab=(S.shots.day[i]||S.shots.night[i]||{}).label;if(lab)b.textContent=`${i+1} ${lab}`;
     b.setAttribute('aria-pressed',String(i===S.comparePair));b.addEventListener('click',()=>{S.comparePair=i;renderLayoutChoices();req();});pairs.append(b);}
-  const list=S.shots[S.single]||[];heroes.textContent='';
+  heroes.textContent='';
+  if(S.layout==='news'){
+    const A=S.order==='nd'?'night':'day',B=A==='day'?'night':'day',all=[...S.shots[A].map(s=>[A,s]),...S.shots[B].map(s=>[B,s])];
+    const cur=all.length?newsHeroFor(all,A,B):-1;
+    all.forEach(([sd,sh],i)=>{const b=document.createElement('button');b.type='button';const k=sd==='day'?'日':'夜',j=S.shots[sd].indexOf(sh)+1;
+      b.textContent=sh.label?`${k}${j} ${sh.label}`:`${k}${j}`;
+      b.setAttribute('aria-pressed',String(i===cur));b.addEventListener('click',()=>{S.newsHero=i;renderLayoutChoices();req();});heroes.append(b);});
+    return;
+  }
+  const list=S.shots[S.single]||[];
   const cur=list.length?heroIndexFor(list):-1;
   list.forEach((sh,i)=>{const b=document.createElement('button');b.type='button';b.textContent=sh.label?`${i+1} ${sh.label}`:String(i+1);
     b.setAttribute('aria-pressed',String(i===cur));b.addEventListener('click',()=>{S.heroIndex=i;renderLayoutChoices();req();});heroes.append(b);});
