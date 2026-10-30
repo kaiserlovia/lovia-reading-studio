@@ -4,6 +4,8 @@
  * - hand-off: text and uploaded screenshots follow you to the other page (kept in this browser only)
  * - 繁 / 简 toggle for the interface text (character table covers every character used by both pages)
  * Lovia's own app.js is untouched; this file only observes and fills its inputs.
+ * - the merged page (studio.html, data-studio-page="chi") has no style switch: it takes in the settings
+ *   and cloud works of both old pages and shows the gallery inside its 作品集 drawer.
  */
 (() => {
   'use strict';
@@ -17,14 +19,16 @@
     '键鍵闭閉阅閱阴陰随隨预預题題颜顏风風饰飾饱飽鲜鮮顶頂击擊并並机機横橫画畫盘盤确確约約胧朧师師' +
     '两兩汇匯昼晝标標档檔没沒准準产產码碼积積笔筆签籤红紅纸紙给給缀綴脑腦盖蓋里裡记記详詳这這录錄' +
     '长長间間电電页頁顺順颗顆么麼齐齊鹜鶩较較寻尋经經级級志誌萤螢着著组組启啟带帶范範钮鈕内內' +
-    '删刪区區结結连連链鏈侧側订訂项項压壓备備扫掃畅暢轮輪转轉云雲别別继繼续續栏欄还還独獨夹夾写寫头頭';
+    '删刪区區结結连連链鏈侧側订訂项項压壓备備扫掃畅暢轮輪转轉云雲别別继繼续續栏欄还還独獨夹夾写寫头頭' +
+    '围圍属屬强強挡擋旧舊观觀双雙';
   // whole words that differ beyond single characters
   const WORDS_S2T = [['屏幕', '螢幕'], ['复制', '複製'], ['视频', '影片'], ['相册', '相簿'], ['制作', '製作']];
   const s2t = new Map(), t2s = new Map();
   for (let i = 0; i + 1 < PAIRS.length; i += 2) { s2t.set(PAIRS[i], PAIRS[i + 1]); t2s.set(PAIRS[i + 1], PAIRS[i]); }
 
   const root = document.documentElement;
-  const PAGE = root.dataset.studioPage || 'lovia';          // 'lovia' | 'daynight'
+  const PAGE = root.dataset.studioPage || 'lovia';          // 'lovia' | 'daynight' | 'chi'
+  const MERGED = PAGE === 'chi';                            // Lovia & Chi: one page for both old styles
   const SRC = root.dataset.srcLang || 'sc';                 // language the page is written in
   const store = {
     get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
@@ -217,9 +221,18 @@
   @media(max-width:959px){input:not([type=range]):not([type=checkbox]):not([type=radio]):not([type=color]):not([type=button]):not([type=file]),select,textarea{font-size:16px!important}}
   @media(max-width:580px){.ss-full{display:none}.ss-short{display:inline}.ss-seg a{padding:7px 9px}.ss{gap:6px}}`;
   function mountSwitch() {
+    const style = document.createElement('style'); style.textContent = CSS;
+    if (MERGED) {
+      // no style switch here, only the 繁／简 button
+      const m = document.getElementById('ssMount'); if (!m) return;
+      document.head.append(style);
+      m.innerHTML = '<button class="ss-lang" id="ssLang" type="button" data-i18n-skip></button>';
+      document.getElementById('ssLang').addEventListener('click', () => setLang(lang === 'tc' ? 'sc' : 'tc'));
+      return;
+    }
     const mount = document.getElementById('studioShell');
     if (!mount) return;
-    const style = document.createElement('style'); style.textContent = CSS; document.head.append(style);
+    document.head.append(style);
     const T = SRC === 'sc'
       ? { group: '展示风格', lovia: '经典模板', loviaS: '经典', dn: '日夜对开', dnS: '日夜对开' }
       : { group: '展示風格', lovia: '經典模板', loviaS: '經典', dn: '日夜對開', dnS: '日夜對開' };
@@ -318,6 +331,21 @@
   .sp-acts .sp-rm[data-sure]{border-color:#b4533f;color:#b4533f}
   .sp-tag{font-size:11px;opacity:.6}`;
   const presetKey = 'studio.presets.' + PAGE;
+  // the merged page takes in what was saved on the two old pages (ids kept, so their files in IndexedDB still match)
+  if (MERGED) {
+    try {
+      const seen = new Set(JSON.parse(store.get('studio.presets.chi.seen') || '[]'));
+      const mine = JSON.parse(store.get(presetKey) || '[]');
+      const have = new Set(mine.map(p => p.id));
+      for (const pg of ['lovia', 'daynight']) {
+        let old = []; try { old = JSON.parse(store.get('studio.presets.' + pg) || '[]'); } catch (e) {}
+        for (const p of old) if (p && p.id && !seen.has(p.id) && !have.has(p.id)) { mine.push({ ...p, from: pg }); have.add(p.id); }
+        for (const p of old) if (p && p.id) seen.add(p.id);
+      }
+      localStorage.setItem(presetKey, JSON.stringify(mine));
+      localStorage.setItem('studio.presets.chi.seen', JSON.stringify([...seen]));
+    } catch (e) { console.warn('old settings not moved', e); }
+  }
   const readList = (page = PAGE) => { try { return JSON.parse(store.get('studio.presets.' + page) || '[]'); } catch (e) { return []; } };
   const writeList = list => { try { localStorage.setItem(presetKey, JSON.stringify(list)); return true; } catch (e) { return false; } };
   function fileDb() {
@@ -347,7 +375,13 @@
     sc.onload = () => res(window.ReedenCloud || null); sc.onerror = () => res(null);
     document.head.append(sc);
   }));
-  const PAGE_FILE = { lovia: 'index.html', daynight: 'daynight.html' };
+  const PAGE_FILE = { lovia: 'index.html', daynight: 'daynight.html', chi: 'studio.html' };
+  // the merged page opens works from every page itself
+  const here = pg => pg === PAGE || (MERGED && !!PAGE_FILE[pg]);
+  const fileFor = pg => PAGE_FILE[here(pg) ? PAGE : pg];
+  const styleOf = pg => pg === 'chi' ? 'Lovia & Chi' : fromSrc(pg === 'lovia' ? PT.styleLovia : PT.styleDn);
+  const SCHEMA = { lovia: 'lovia-1', daynight: 'dn-0', chi: 'lc-1' };
+  const ALL_PAGES = ['chi', 'lovia', 'daynight'];
   // a small JPEG of the poster as it looks now, for the gallery
   function snapshot() {
     const cv = document.getElementById(PAGE === 'lovia' ? 'posterCanvas' : 'cv');
@@ -421,7 +455,7 @@
       const t = snapshot(); if (!t) return;
       const l = readList(), it = l.find(x => x.id === id); if (!it) return;
       it.thumb = t; if (!writeList(l)) { it.thumb = null; writeList(l); }
-      if (view === 'mine') renderMine();
+      if (view === 'mine' || MERGED) renderMine();
     }
     async function copyLink(p, holder) {
       const url = location.href.split('#')[0] + '#s=' + encode({ v: 1, page: PAGE, name: p.name, settings: p.settings });
@@ -444,7 +478,7 @@
         const files = it.files && it.files.length ? (await getFiles(it.id)) || {} : {};
         const meta = {}; for (const k of Object.keys(files)) meta[k] = { name: files[k].name || '', type: files[k].type || '', size: files[k].size || 0 };
         const up = {}; for (const k of Object.keys(files)) if (!isFontSlot(k)) up[k] = await shrinkImage(files[k],3600,k==='artWatermark');
-        const body = { data: { page: PAGE, name: it.name, settings: it.settings, files: meta }, title: it.name, schema_version: PAGE === 'lovia' ? 'lovia-1' : 'dn-0' };
+        const body = { data: { page: PAGE, name: it.name, settings: it.settings, files: meta }, title: it.name, schema_version: SCHEMA[PAGE] };
         let c = it.cloud, fresh = false;
         if (!c || !c.key) { const r = await RC.create('showcase', body); c = { id: r.id, key: r.key, slots: [] }; fresh = true; }
         else await RC.update('showcase', c.id, c.key, body);
@@ -466,7 +500,7 @@
       try { notify(fromSrc(PT.loading)); w = await RC.get('showcase', link.id, link.key); }
       catch (e) { notify(RC.message(e)); return; }
       const d = w.data || {};
-      if (d.page && d.page !== PAGE && PAGE_FILE[d.page]) { location.replace(PAGE_FILE[d.page] + '#w=' + link.id + (link.key ? '.' + link.key : '')); return; }
+      if (d.page && !here(d.page) && PAGE_FILE[d.page]) { location.replace(PAGE_FILE[d.page] + '#w=' + link.id + (link.key ? '.' + link.key : '')); return; }
       if (!d.settings) return;
       const files = {};
       for (const f of w.files || []) {
@@ -504,8 +538,11 @@
     const readOnly = () => { try { return JSON.parse(store.get('studio.cloudOnly') || '[]'); } catch (e) { return []; } };
     const writeOnly = l => store.set('studio.cloudOnly', JSON.stringify(l));
     const mineList = () => {
-      const own = ['lovia', 'daynight'].flatMap(pg => readList(pg).filter(p => p.cloud && p.cloud.key).map(p => ({ p, page: pg })));
-      const ids = new Set(own.map(x => x.p.cloud.id));
+      // the merged page already holds copies of the old pages' settings, so it only reads its own list
+      const seenIds = new Set();
+      const own = (MERGED ? [PAGE] : ALL_PAGES).flatMap(pg => readList(pg).filter(p => p.cloud && p.cloud.key).map(p => ({ p, page: pg })))
+        .filter(x => !seenIds.has(x.p.cloud.id) && seenIds.add(x.p.cloud.id));
+      const ids = seenIds;
       const far = readOnly().filter(x => !ids.has(x.id) && PAGE_FILE[x.page]).map(x => ({ p: { id: 'c' + x.id, name: x.name, cloud: { id: x.id, key: x.key, at: x.at } }, page: x.page, far: true }));
       return own.concat(far).sort((a, b) => (b.p.cloud.at || b.p.at || 0) - (a.p.cloud.at || a.p.at || 0));
     };
@@ -515,7 +552,7 @@
       const local = mineList().map(({ p, page }) => ({ id: p.cloud.id, key: p.cloud.key, name: p.name, page, at: p.cloud.at || p.at }));
       return RC.collection.sync('showcase', local, opt).then(all => {
         const gone = new Set(all.removed || []);
-        for (const pg of ['lovia', 'daynight']) {
+        for (const pg of ALL_PAGES) {
           const l = readList(pg); let ch = false;
           for (const x of l) if (x.cloud && gone.has(x.cloud.id)) { delete x.cloud; ch = true; }
           if (ch) store.set('studio.presets.' + pg, JSON.stringify(l));
@@ -528,6 +565,13 @@
     // the gallery tab: every cloud-saved setting from both styles, shown as its poster
     let nav = null, gal = null;
     function mountGallery() {
+      if (MERGED) {
+        // the gallery lives in the 作品集 drawer
+        gal = document.getElementById('libGallery'); if (!gal) return;
+        gal.classList.add('sg'); gal.setAttribute('aria-live', 'polite');
+        const dlg = gal.closest('dialog'); if (dlg) dlg.addEventListener('close', () => { view = 'make'; });
+        return;
+      }
       const main = document.querySelector('main'); if (!main || nav) return;
       nav = document.createElement('nav'); nav.className = 'sv'; nav.setAttribute('role', 'tablist');
       gal = document.createElement('section'); gal.className = 'sg'; gal.setAttribute('aria-live', 'polite');
@@ -542,6 +586,12 @@
       }
     }
     function setView(v) {
+      if (MERGED) {
+        view = v; const dlg = gal && gal.closest('dialog');
+        if (v === 'mine') { renderMine(); if (dlg && !dlg.open) dlg.showModal(); if (gal) gal.scrollIntoView({ block: 'start' }); }
+        else if (dlg && dlg.open) dlg.close();
+        return;
+      }
       view = v; root.classList.toggle('sp-mine', v === 'mine'); renderTabs();
       if (v === 'mine') renderMine(); else window.dispatchEvent(new Event('resize'));
       scrollTo({ top: 0 });
@@ -553,7 +603,7 @@
       const note = document.createElement('p'); note.className = 'sp-note'; note.textContent = fromSrc(items.length ? PT.mineNote : PT.mineEmpty);
       const grid = document.createElement('div'); grid.className = 'sg-grid';
       for (const { p, page, far } of items) {
-        const cur = page === PAGE && p.id === activeId;
+        const cur = here(page) && p.id === activeId;
         const card = document.createElement('div'); card.className = 'sg-card'; if (cur) card.dataset.cur = '';
         const none = () => { const n = document.createElement('div'); n.className = 'sg-none'; n.textContent = fromSrc(PT.noThumb); return n; };
         const src = p.thumb || (RC.fileUrl && RC.fileUrl('showcase', p.cloud.id, 'thumb') + '?t=' + (p.cloud.at || 0));
@@ -561,7 +611,7 @@
         else card.append(none());
         const t = document.createElement('div'); t.className = 'sg-t';
         const n = document.createElement('b'); n.textContent = p.name; n.setAttribute('data-i18n-skip', '');
-        const tag = document.createElement('span'); tag.className = 'sp-tag'; tag.textContent = fromSrc(page === 'lovia' ? PT.styleLovia : PT.styleDn);
+        const tag = document.createElement('span'); tag.className = 'sp-tag'; tag.textContent = styleOf(page);
         const at = p.cloud.at || p.at; const d = at ? new Date(at) : null;
         const when = document.createElement('span'); when.className = 'sp-tag'; when.setAttribute('data-i18n-skip', '');
         if (d) when.textContent = d.getFullYear() + '/' + (d.getMonth() + 1) + '/' + d.getDate();
@@ -570,12 +620,12 @@
         const acts = document.createElement('div'); acts.className = 'sp-acts';
         const b = (txt, fn) => { const x = document.createElement('button'); x.type = 'button'; x.textContent = fromSrc(txt); x.addEventListener('click', fn); acts.append(x); };
         b(cur ? PT.goOn : PT.open, () => {
-          if (page === PAGE && far) { setView('make'); openCloud({ id: p.cloud.id, key: p.cloud.key }); }
-          else if (page === PAGE) { setView('make'); if (!cur) apply(p); }
+          if (here(page) && far) { setView('make'); openCloud({ id: p.cloud.id, key: p.cloud.key }); }
+          else if (here(page)) { setView('make'); if (!cur) apply(p); }
           else location.href = PAGE_FILE[page] + '#w=' + p.cloud.id + '.' + p.cloud.key;
         });
-        b(PT.share, () => copyUrl(RC.links(p.cloud.id).share.replace(/[^/]*#/, PAGE_FILE[page] + '#'), card, PT.shareDone));
-        b(PT.edit, () => copyUrl(RC.links(p.cloud.id, p.cloud.key).edit.replace(/[^/]*#/, PAGE_FILE[page] + '#'), card, PT.editDone));
+        b(PT.share, () => copyUrl(RC.links(p.cloud.id).share.replace(/[^/]*#/, fileFor(page) + '#'), card, PT.shareDone));
+        b(PT.edit, () => copyUrl(RC.links(p.cloud.id, p.cloud.key).edit.replace(/[^/]*#/, fileFor(page) + '#'), card, PT.editDone));
         const rm = document.createElement('button'); rm.type = 'button'; rm.className = 'sp-rm'; rm.textContent = fromSrc(PT.remove);
         rm.addEventListener('click', () => {
           if (!rm.hasAttribute('data-sure')) { rm.setAttribute('data-sure', ''); rm.textContent = fromSrc(PT.removeSure); return; }
@@ -659,12 +709,12 @@
         const im = document.createElement('img'); im.src = RC.fileUrl('showcase', it.id, 'thumb') + '?t=' + (it.at || 0); im.alt = it.name || ''; im.loading = 'lazy'; im.onerror = () => im.replaceWith(none());
         const t = document.createElement('div'); t.className = 'sg-t';
         const n = document.createElement('b'); n.textContent = it.name || fromSrc(PT.name); n.setAttribute('data-i18n-skip', '');
-        const tag = document.createElement('span'); tag.className = 'sp-tag'; tag.textContent = fromSrc(it.page === 'lovia' ? PT.styleLovia : PT.styleDn);
+        const tag = document.createElement('span'); tag.className = 'sp-tag'; tag.textContent = styleOf(it.page);
         t.append(n, tag);
         const a2 = document.createElement('div'); a2.className = 'sp-acts';
         const b = (txt, fn) => { const x = document.createElement('button'); x.type = 'button'; x.textContent = fromSrc(txt); x.addEventListener('click', fn); a2.append(x); };
-        b(PT.oApply, () => { if (it.page === PAGE) { other = null; setView('make'); openCloud({ id: it.id, key: null }); } else location.href = PAGE_FILE[it.page] + '#w=' + it.id; });
-        b(PT.share, () => copyUrl(RC.links(it.id).share.replace(/[^/]*#/, PAGE_FILE[it.page] + '#'), card, PT.shareDone));
+        b(PT.oApply, () => { if (here(it.page)) { other = null; setView('make'); openCloud({ id: it.id, key: null }); } else location.href = PAGE_FILE[it.page] + '#w=' + it.id; });
+        b(PT.share, () => copyUrl(RC.links(it.id).share.replace(/[^/]*#/, fileFor(it.page) + '#'), card, PT.shareDone));
         card.append(im, t, a2); grid.append(card);
       }
       gal.append(head, acts);
@@ -674,13 +724,13 @@
     function render() {
       const list = readList();
       const mine = RC ? mineList() : [];
-      renderTabs(); if (view === 'mine') renderMine();
+      renderTabs(); if (view === 'mine' || MERGED) renderMine();
       bar.hidden = !list.length && !mine.length; bar.textContent = '';
       if (bar.hidden) return;
       const top = document.createElement('div'); top.className = 'sp-top';
       const head = document.createElement('div'); head.className = 'sp-head'; head.textContent = fromSrc(PT.head);
       top.append(head);
-      if (mine.length) {
+      if (mine.length && !MERGED) {
         const mb = document.createElement('button'); mb.type = 'button'; mb.className = 'sp-mine-btn';
         mb.textContent = fromSrc(PT.toMine) + ' · ' + mine.length;
         mb.addEventListener('click', () => setView('mine'));
@@ -747,7 +797,7 @@
       try {
         const d = decode(m[1]);
         history.replaceState(null, '', location.href.split('#')[0]);
-        if (d && d.settings && (!d.page || d.page === PAGE)) Promise.resolve(o.apply(d.settings, {})).then(() => notify(fromSrc(PT.fromLink)));
+        if (d && d.settings && (!d.page || here(d.page))) Promise.resolve(o.apply(d.settings, {})).then(() => notify(fromSrc(PT.fromLink)));
       } catch (e) { console.warn('settings link unreadable', e); }
     }
     return { refresh: render };

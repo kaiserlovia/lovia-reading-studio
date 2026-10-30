@@ -1,0 +1,636 @@
+<!doctype html>
+<html lang="zh-Hant" data-studio-page="chi" data-src-lang="tc">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#F9F8F6">
+<title>Lovia &amp; Chi · Reading Studio</title>
+<meta name="description" content="Lovia & Chi：把閱讀主題的日間與夜間截圖排成一張畫報，自動取色，高清 PNG、GIF 與影片匯出。">
+<link rel="stylesheet" href="./art-mosaic.css?v=3">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<!-- 字型表不擋畫面：先用系統字顯示介面，載完再換；畫報要用字前會等 window.dnFontCss（最多 4 秒）。 -->
+<script>window.dnFontCss=new Promise(function(r){window.dnFontCssDone=r;setTimeout(r,4000);});</script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Huninn&family=Iansui&family=LXGW+WenKai+TC:wght@400;700&family=Noto+Sans+TC:wght@400;700&family=Noto+Serif+TC:wght@500;700&display=swap" media="print" onload="this.media='all';dnFontCssDone()" onerror="dnFontCssDone()">
+<style>
+/* Lovia & Chi: one editor. Palette and type follow the Lovia classic editor: warm white, one ink, hairlines, square corners, serif headings.
+   Desktop: preview on the left (sticky), settings on the right with tabs. Phone: preview pinned to the top with the tabs right under it. */
+:root{
+  --ground:#F9F8F6;--paper:#FFFFFF;--ink:#1C1C1C;--mute:#686765;--rule:rgba(28,28,28,.16);--soft:rgba(28,28,28,.05);--stage:#EFEDE8;
+  --serif:"KingHwaOldSong","Noto Serif TC","Songti TC","Songti SC",Georgia,serif;
+  --sans:-apple-system,BlinkMacSystemFont,"PingFang TC","PingFang SC","Noto Sans TC","Microsoft JhengHei",sans-serif;
+  --mono:ui-monospace,"SF Mono",Menlo,monospace;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--ground);overflow-x:clip}
+body{color:var(--ink);font:15px/1.55 var(--sans);-webkit-font-smoothing:antialiased;padding-top:env(safe-area-inset-top,0px)}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:30;background:var(--ground)}
+[hidden]{display:none!important}
+img{max-width:100%}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--ink);outline-offset:3px}
+.vh{position:absolute!important;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+svg.i{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;flex:none}
+::selection{background:var(--ink);color:var(--ground)}
+
+/* header */
+.hd{display:flex;align-items:center;gap:10px;min-height:60px;padding:8px max(16px,env(safe-area-inset-right,0px)) 8px max(16px,env(safe-area-inset-left,0px));background:var(--ground);border-bottom:1px solid var(--rule)}
+.home{display:inline-flex;align-items:center;gap:6px;color:var(--mute);font-size:12px;text-decoration:none;padding:8px 10px 8px 0;border-right:1px solid var(--rule);white-space:nowrap;min-height:44px}
+.home:hover{color:var(--ink)}
+.brand{font:400 23px Georgia,var(--serif);letter-spacing:-.02em;margin:0 auto 0 4px;white-space:nowrap;min-width:0;overflow:hidden;text-overflow:ellipsis}
+.brand em{font-style:italic;color:var(--mute);margin:0 .1em}
+.brand small{font:11px Georgia,serif;letter-spacing:.08em;color:var(--mute);margin-left:12px}
+.hb{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:40px;padding:8px 12px;border:1px solid transparent;background:none;font-size:13px;white-space:nowrap;color:var(--ink)}
+.hb:hover{text-decoration:underline;text-underline-offset:3px}
+.hb.pri{background:var(--ink);color:var(--ground);letter-spacing:.06em}
+.hb.pri:hover{text-decoration:none}
+#ssMount .ss{display:inline-flex}
+#ssMount .ss-lang{width:36px;height:36px;border-radius:0;border:1px solid var(--rule);background:none;font:600 13px/1 var(--sans);color:var(--ink);cursor:pointer;padding:0}
+@media(max-width:520px){#stageMeta{display:none}.thead{flex-wrap:nowrap;gap:0 6px}.thead .tb{padding:6px 2px}}
+@media(max-width:700px){.brand small,.hd .hide-m{display:none}.brand{font-size:20px}.hd{gap:4px}.hb{padding:8px 8px}}
+
+/* workspace */
+.app{display:block}
+.stage-wrap{position:sticky;top:env(safe-area-inset-top,0px);z-index:8;background:var(--ground);padding:8px max(16px,env(safe-area-inset-right,0px)) 0 max(16px,env(safe-area-inset-left,0px))}
+.thead{display:flex;align-items:center;gap:4px 10px;flex-wrap:wrap;font-size:12px;color:var(--mute);min-height:36px}
+.thead .t{font:400 18px var(--serif);color:var(--ink)}
+.thead .grow{flex:1}
+.tb{display:inline-flex;align-items:center;gap:5px;border:0;background:none;color:var(--ink);font-size:12px;padding:6px 4px;min-height:36px}
+.tb:hover{text-decoration:underline;text-underline-offset:3px}
+.tb[aria-pressed=true]{text-decoration:underline;text-underline-offset:3px}
+.tb[aria-pressed=true] svg{fill:currentColor}
+.stage{position:relative;height:min(42svh,420px,calc((100vw - 32px) / var(--ar,1.333) + 24px));display:grid;place-items:center;background:var(--stage);overflow:hidden}
+#cv{display:block;touch-action:none;box-shadow:0 10px 30px -14px rgba(27,28,33,.45);cursor:grab}
+#cv.dragging{cursor:grabbing}
+#cv.pinned{touch-action:pan-x pan-y pinch-zoom;cursor:default}
+#textMark{position:absolute;pointer-events:none;border:1.5px dashed var(--ink)}
+.tabs{display:flex;overflow-x:auto;scrollbar-width:none;border-bottom:1px solid var(--rule);touch-action:pan-x pan-y;background:var(--ground)}
+.tabs::-webkit-scrollbar{display:none}
+.tabs button{flex:1 0 auto;border:0;background:none;padding:12px 10px 10px;color:var(--mute);border-bottom:2px solid transparent;margin-bottom:-1px;font-size:14px;min-height:44px;white-space:nowrap}
+.tabs button[aria-selected=true]{color:var(--ink);border-bottom-color:var(--ink)}
+.ptabs{display:none}
+.cbar{display:none}
+
+.panel{padding:6px max(16px,env(safe-area-inset-right,0px)) 120px max(16px,env(safe-area-inset-left,0px));min-width:0}
+.pane:not(.is-active){display:none}
+.pane h2{font:400 24px var(--serif);margin:18px 0 2px}
+.lead{color:var(--mute);font-size:13px;margin:0 0 6px;max-width:36em;text-wrap:pretty}
+.g{padding:16px 0;border-bottom:1px solid var(--rule);display:grid;gap:10px}
+.g:last-child{border-bottom:0}
+.g h3{font-size:14px;font-weight:600;margin:0;display:flex;align-items:center;gap:8px}
+.g h3 .x{font-weight:400;font-size:12px;color:var(--mute);margin-left:auto}
+.sub{font-size:13px;color:var(--mute);margin:6px 0 0;display:flex;gap:6px;align-items:center}
+.when{font-size:11px;color:var(--mute);border:1px solid var(--rule);padding:0 6px}
+.hint{margin:0;font-size:12px;color:var(--mute);text-wrap:pretty}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.stack{display:grid;gap:8px}
+
+/* buttons and segmented choices */
+.seg{display:flex;flex-wrap:wrap;gap:6px}
+.seg button,.b{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:7px 12px;border:1px solid var(--rule);background:var(--paper);font-size:13px;min-height:40px;border-radius:0;color:var(--ink);text-decoration:none}
+.seg button:hover,.b:hover{border-color:var(--ink)}
+.seg button[aria-pressed=true]{background:var(--soft);border-color:var(--ink)}
+.b.pri{background:var(--ink);border-color:var(--ink);color:var(--ground);min-height:48px;letter-spacing:.06em}
+.b.sm{padding:5px 10px;font-size:12px;min-height:36px}
+.b:disabled{opacity:.5;cursor:progress}
+.seg-col button{flex-direction:column;align-items:flex-start;gap:0;line-height:1.3}
+.seg-col button small{font-size:11px;color:var(--mute);font-variant-numeric:tabular-nums}
+.big{display:grid;gap:8px}
+.status{font-size:13px;color:var(--ink);min-height:1.5em;margin:0}
+
+/* layout picker */
+.lays{display:grid;grid-template-columns:repeat(auto-fill,minmax(76px,1fr));gap:6px}
+.lays button{display:grid;justify-items:center;gap:4px;border:1px solid var(--rule);background:var(--paper);padding:8px 2px 6px;font-size:12px;min-height:64px}
+.lays button[aria-pressed=true]{border-color:var(--ink);background:var(--soft)}
+.lays svg{display:block;width:56px;height:40px}
+.ratios{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+.ratios button{display:grid;gap:3px;justify-items:center;align-content:end;padding:8px 2px 6px;border:1px solid var(--rule);background:var(--paper);font-size:12px;min-height:86px}
+.ratios button[aria-pressed=true]{border-color:var(--ink);background:var(--soft)}
+.ratios .shape{border:1.5px solid currentColor;opacity:.7}
+.ratios small{font-size:11px;color:var(--mute);font-variant-numeric:tabular-nums}
+
+/* sliders: every slider has a number box beside it */
+.sl{display:grid;grid-template-columns:5.6em minmax(0,1fr) auto;align-items:center;gap:10px;font-size:13px}
+.sl label{color:var(--mute)}
+.sl input[type=range]{width:100%;accent-color:var(--ink);min-height:28px;margin:0}
+.num{display:inline-flex;align-items:center;gap:3px;font-size:12px;color:var(--mute)}
+.num input{width:4.4em;border:1px solid var(--rule);background:var(--paper);padding:5px 6px;font-size:15px;text-align:right;font-variant-numeric:tabular-nums;border-radius:0;color:var(--ink)}
+
+/* toggles */
+.tog{display:flex;align-items:center;gap:10px;padding:4px 0;font-size:14px;cursor:pointer;min-height:40px}
+.tog input{appearance:none;-webkit-appearance:none;margin:0 0 0 auto;width:44px;height:26px;background:var(--rule);position:relative;flex:none;cursor:pointer;border-radius:0}
+.tog input::after{content:"";position:absolute;width:22px;height:22px;background:#fff;top:2px;left:2px;box-shadow:0 1px 2px rgba(0,0,0,.25);transition:left .15s}
+.tog input:checked{background:var(--ink)}
+.tog input:checked::after{left:20px}
+
+/* colours */
+.pair{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.side{border:1px solid var(--rule);background:var(--paper);padding:12px;display:grid;gap:8px;min-width:0}
+.side h4{font:400 16px var(--serif);margin:0;display:flex;gap:8px;align-items:center}
+.plate{display:inline-flex;align-items:center;justify-content:center;min-width:22px;height:20px;padding:0 5px;font-size:11px;font-weight:600;line-height:1;flex:none;border:1px solid var(--ink)}
+.plate.n{background:var(--ink);color:var(--ground)}
+.cr{display:grid;grid-template-columns:auto 2.6em minmax(0,1fr);align-items:center;gap:8px;font-size:13px}
+.cr input[type=color]{width:32px;height:32px;border:1px solid var(--rule);padding:0;background:none;border-radius:0}
+.cr input[type=text]{width:100%;min-width:0;border:0;border-bottom:1px solid var(--rule);background:none;padding:3px 0;font:13px var(--mono);text-transform:uppercase}
+.cline{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;font-size:13px}
+.cline input[type=color]{width:36px;height:32px;border:1px solid var(--rule);padding:0;background:none;border-radius:0}
+.cline .hexv{font:12px var(--mono);color:var(--mute)}
+.warn{display:flex;gap:8px;align-items:flex-start;border:1px solid var(--ink);background:var(--soft);font-size:12px;padding:8px 10px}
+.warn button{border:0;background:none;padding:0;text-decoration:underline;font-size:12px}
+.dots{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.dot{position:relative;width:32px;height:32px;border-radius:50%;flex:none;cursor:pointer}
+.dot input{position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer;border:0;padding:0}
+.dot:focus-within{outline:2px solid var(--ink);outline-offset:3px}
+
+/* screenshots */
+.shots{list-style:none;margin:0;padding:0;display:grid}
+.shots li{display:grid;grid-template-columns:auto minmax(0,1fr);gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid var(--rule)}
+.shots li.sel canvas{outline:2px solid var(--ink);outline-offset:2px}
+.shots canvas{display:block;border:1px solid var(--rule);cursor:pointer}
+.shot-mid{display:grid;gap:3px;justify-items:start;min-width:0}
+.shot-row{display:flex;gap:8px;align-items:center;justify-self:stretch;min-width:0}
+.shot-row input{flex:1;min-width:0;border:0;border-bottom:1px solid var(--ink);background:none;padding:3px 0;font-size:15px}
+.shot-tools{display:flex;gap:4px}
+.icon-btn{width:38px;height:38px;display:grid;place-items:center;border:1px solid var(--rule);background:var(--paper);font-size:15px;line-height:1;padding:0;border-radius:0}
+.icon-btn:disabled{opacity:.35}
+.tag{font-size:11px;color:var(--mute)}
+.add-row{display:flex;flex-wrap:wrap;gap:6px}
+.selbox{border:1px solid var(--ink);background:var(--paper);padding:12px;display:grid;gap:10px}
+.selbox p{margin:0;font-size:14px}
+
+/* text */
+.fontbtn{width:100%;display:flex;align-items:center;gap:12px;border:1px solid var(--rule);background:var(--paper);padding:10px 12px;text-align:left;min-height:52px}
+.fontbtn b{font-size:20px;font-weight:400}
+.fontbtn span{flex:1;color:var(--mute);font-size:13px}
+.fontbtn i{font-style:normal;transition:transform .15s}
+.fontbtn[aria-expanded=true] i{transform:rotate(180deg)}
+.fonts{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:6px}
+.fonts button{border:1px solid var(--rule);background:var(--paper);padding:8px;display:grid;gap:2px;justify-items:start;text-align:left;border-radius:0}
+.fonts button b{font-size:19px;font-weight:400;line-height:1.25}
+.fonts button span{font-size:12px;color:var(--mute)}
+.fonts button[aria-pressed=true]{border-color:var(--ink);background:var(--soft)}
+.trow{display:flex;align-items:center;gap:10px;justify-content:space-between;flex-wrap:wrap;font-size:13px;color:var(--mute)}
+.tcards{display:grid}
+.tcard{display:grid;gap:8px;border-top:1px solid var(--rule);padding:14px 0}
+.tcard .lab{font-size:12px;color:var(--mute);display:flex;justify-content:space-between;align-items:center;gap:6px}
+.tcard input[type=text]{width:100%;font:17px var(--serif);border:0;border-bottom:1px solid var(--ink);background:none;padding:4px 0 6px;min-width:0;border-radius:0}
+.tcard.open{background:linear-gradient(var(--soft),var(--soft)) left top/3px 100% no-repeat;padding-left:10px}
+.date-row{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:6px;align-items:end}
+.tchips{display:flex;flex-wrap:wrap;gap:6px}
+.tchip{display:inline-flex;align-items:center;gap:5px;min-height:34px;border:1px solid var(--rule);border-radius:999px;padding:3px 11px;background:var(--paper);color:var(--mute);font-size:12px;line-height:1.2;max-width:100%}
+.tchip.set{border-color:var(--ink);color:var(--ink)}
+.tchip .td{width:12px;height:12px;border-radius:50%;border:1px solid rgba(0,0,0,.18);flex:none}
+.tedit{display:grid;gap:10px;border:1px solid var(--rule);background:var(--paper);padding:10px}
+.tfonts{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;scrollbar-width:thin}
+.tfont{flex:none;width:78px;display:grid;gap:1px;justify-items:center;border:1px solid var(--rule);padding:7px 4px;background:var(--ground);color:var(--ink);border-radius:0}
+.tfont[aria-pressed=true]{border-color:var(--ink);background:var(--soft)}
+.tfont b{font-size:18px;font-weight:400;line-height:1.25;white-space:nowrap}
+.tfont small{font-size:11px;color:var(--mute);max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tfont.follow b{font-size:13px;line-height:1.75}
+.tfont.add-font{border-style:dashed}
+.tcolors{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;font-size:13px}
+.tcolors label{display:inline-flex;align-items:center;gap:6px}
+.tcolors input[type=color]{width:38px;height:32px;border:1px solid var(--rule);padding:0;background:none;border-radius:0}
+.tcolors .treset{margin-left:auto}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+
+/* dialogs and the gallery drawer */
+.result{position:fixed;inset:0;width:auto;height:auto;max-width:none;max-height:none;margin:0;border:0;padding:max(16px,env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) max(16px,env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));background:transparent;color:inherit;place-items:center;-webkit-user-select:none;user-select:none}
+.result[open]{display:grid}
+.result::backdrop,.drawer::backdrop{background:rgba(27,28,33,.5)}
+.result-card{background:var(--ground);max-width:720px;width:100%;max-height:100%;overflow:auto;padding:18px;display:grid;gap:12px}
+.result-card h2,.drawer h2{margin:0;font:400 22px var(--serif)}
+.result-card p{margin:0;font-size:14px;color:var(--mute)}
+.result-imgs{display:grid;gap:10px}
+.result-imgs img{width:100%;height:auto;border:1px solid var(--rule);-webkit-touch-callout:default;pointer-events:auto}
+.large-card{max-width:min(1100px,100%);height:100%;grid-template-rows:auto minmax(0,1fr)}
+.large-head{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:8px}
+.large-head output{font-size:13px;color:var(--mute);font-variant-numeric:tabular-nums;min-width:3.2em;text-align:right}
+.large-box{touch-action:pan-x pan-y pinch-zoom;overflow:auto;border:1px solid var(--rule);background:var(--stage);min-height:0}
+.large-box img{display:block;max-width:none;height:auto;margin:0 auto}
+.hsv-card{max-width:320px;justify-items:center}
+#hsvSquare{width:240px;height:240px;touch-action:none;cursor:crosshair}
+.drawer{position:fixed;inset:0 0 0 auto;margin:0;height:100%;max-height:none;width:min(600px,100%);max-width:100%;border:0;padding:max(18px,env(safe-area-inset-top,0px)) max(18px,env(safe-area-inset-right,0px)) max(24px,env(safe-area-inset-bottom,0px)) 18px;background:var(--ground);color:inherit;overflow:auto;box-shadow:-18px 0 40px -18px rgba(0,0,0,.35)}
+.drawer[open]{display:grid;align-content:start;gap:12px}
+.dhead{display:flex;align-items:center;gap:8px}
+.dhead .grow{flex:1}
+#libGallery .sg{display:block!important;padding:0;max-width:none}
+#libGallery .sg-grid{grid-template-columns:repeat(auto-fill,minmax(200px,1fr))}
+#libGallery .sg-card,#libGallery .sg-h,#libGallery img,#libGallery .sg-none,#presetBar .sp-chip,#presetBar .sp-edit,#presetBar .sp-acts button,#libGallery .sp-acts button,#libGallery input,#libGallery button{border-radius:0!important}
+#presetBar{--sp-line:var(--rule);--sp-bg:var(--paper);--sp-active:var(--ink)}
+#libGallery{--sp-line:var(--rule);--sp-bg:var(--paper);--sp-active:var(--ink)}
+.mo{--mo-bg:var(--ground);--mo-ink:var(--ink);--mo-line:var(--rule);--mo-muted:var(--mute);--mo-accent:var(--ink);--mo-on-accent:var(--ground);--mo-accent-bg:transparent;--mo-font:var(--sans)}
+
+/* phone: bottom action bar */
+.mbar{position:fixed;left:0;right:0;bottom:0;z-index:20;display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:8px max(16px,env(safe-area-inset-right,0px)) max(8px,env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));background:var(--ground);border-top:1px solid var(--rule)}
+.mbar .b{min-height:46px}
+
+@media (min-width:960px){
+  .hd{position:sticky;top:0;z-index:12;padding-inline:28px}
+  .app{display:grid;grid-template-columns:minmax(0,1fr) 430px;align-items:start}
+  .stage-wrap{top:76px;padding:12px 26px 24px;z-index:2}
+  .stage{height:calc(100svh - 230px);min-height:400px}
+  .stage-wrap .tabs{display:none}
+  .cbar{display:flex;margin-top:14px;border:1px solid var(--ink);background:var(--paper);font-size:11px}
+  .cbar .lab{display:flex;align-items:center;padding:0 9px;font-weight:600;border-right:1px solid var(--ink)}
+  .cbar .lab.n{background:var(--ink);color:var(--ground)}
+  .cbar button{flex:1;display:flex;flex-direction:column;border:0;border-right:1px solid var(--rule);background:none;padding:0;text-align:left;min-width:0}
+  .cbar button:last-child{border-right:0}
+  .cbar i{height:20px;width:100%}
+  .cbar b{font:500 10px var(--mono);padding:2px 4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .panel{border-left:1px solid var(--rule);padding:0 26px 60px;min-height:calc(100svh - 61px)}
+  .ptabs{display:flex;position:sticky;top:61px;z-index:5}
+  .mbar{display:none}
+}
+@media (max-width:959px){input,select,textarea{font-size:16px!important}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<header class="hd">
+  <a class="home" href="../" title="回 Reeden 小工具"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg><span class="hide-m">Reeden 小工具</span><span class="vh">回 Reeden 小工具</span></a>
+  <h1 class="brand">Lovia<em>&amp;</em>Chi<small>READING STUDIO</small></h1>
+  <button class="hb" type="button" id="topLib"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h6v14H4zM14 5h6v14h-6z"/></svg>作品集</button>
+  <span id="ssMount"></span>
+  <button class="hb hide-m" type="button" id="topSave"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h11l3 3v13H5zM8 4v5h7V4M8 20v-6h8v6"/></svg>儲存設置</button>
+  <button class="hb pri hide-m" type="button" id="topExport"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>匯出</button>
+</header>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+  <linearGradient id="gDN" x1="0" x2="1" y1="0" y2="0"><stop offset=".25" stop-color="#E4E9EC"/><stop offset=".75" stop-color="#1F2738"/></linearGradient>
+  <symbol id="i-pin" viewBox="0 0 24 24"><path d="M15 3l6 6-2.5.8-3.8 3.8.6 4.4-1.6 1.6-3.7-3.7L5 21l-.7-.7 5.1-5L5.7 11.6 7.3 10l4.4.6 3.8-3.8z"/></symbol>
+  <symbol id="i-reset" viewBox="0 0 24 24"><path d="M4 12a8 8 0 1 0 2.4-5.7M4 4v4h4"/></symbol>
+  <symbol id="i-zoom" viewBox="0 0 24 24"><path d="M14 4h6v6M10 20H4v-6M20 4l-7 7M4 20l7-7"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+</defs></svg>
+
+<main class="app">
+  <!-- 注意：預覽的位置沿用 Day Night：桌機在左欄、捲動時固定；手機固定在頂端，分頁列就在預覽下方。不可移動。 -->
+  <section class="stage-wrap" aria-label="畫報預覽">
+    <div class="thead">
+      <span class="t">預覽</span><span id="stageMeta"></span><span class="grow"></span>
+      <button class="tb" id="pinShots" type="button" aria-pressed="false" title="固定後截圖不能在預覽裡拖動"><svg class="i"><use href="#i-pin"/></svg><span>固定截圖</span></button>
+      <button class="tb" id="resetPos" type="button" title="所有截圖放回原位、大小回到 100%"><svg class="i"><use href="#i-reset"/></svg>全部復位</button>
+      <button class="tb" id="openLarge" type="button"><svg class="i"><use href="#i-zoom"/></svg>放大</button>
+    </div>
+    <div class="stage" id="stage">
+      <canvas id="cv" role="img" aria-label="畫報預覽，可拖動截圖調整位置，雙擊放回原位"></canvas>
+      <div id="textMark" hidden></div>
+    </div>
+    <div class="cbar" id="cbar" aria-label="目前的日夜色票，點一下到外觀修改"></div>
+    <nav class="tabs" role="tablist" aria-label="設定分頁">
+      <button role="tab" data-pane="pane-shots" aria-selected="true">截圖</button>
+      <button role="tab" data-pane="pane-layout" aria-selected="false">版型</button>
+      <button role="tab" data-pane="pane-detail" aria-selected="false">細節</button>
+      <button role="tab" data-pane="pane-look" aria-selected="false">外觀</button>
+      <button role="tab" data-pane="pane-text" aria-selected="false">文字</button>
+      <button role="tab" data-pane="pane-export" aria-selected="false">匯出</button>
+    </nav>
+  </section>
+
+  <div class="panel">
+    <nav class="tabs ptabs" role="tablist" aria-label="設定分頁">
+      <button role="tab" data-pane="pane-shots" aria-selected="true">截圖</button>
+      <button role="tab" data-pane="pane-layout" aria-selected="false">版型</button>
+      <button role="tab" data-pane="pane-detail" aria-selected="false">細節</button>
+      <button role="tab" data-pane="pane-look" aria-selected="false">外觀</button>
+      <button role="tab" data-pane="pane-text" aria-selected="false">文字</button>
+      <button role="tab" data-pane="pane-export" aria-selected="false">匯出</button>
+    </nav>
+
+    <!-- SHOTS -->
+    <section class="pane is-active" id="pane-shots" role="tabpanel">
+      <h2>截圖</h2>
+      <p class="lead">日間、夜間各放 1 到 5 張，順序就是畫報上的順序。頁面名稱可以印在截圖下方，也用在報紙和借閱卡。點預覽裡的截圖可以拖動，雙擊放回原位。</p>
+      <div class="g side-box" data-side="day">
+        <h3><span class="plate">日</span>日間<span class="x" id="count-day"></span></h3>
+        <ul class="shots" id="list-day"></ul>
+        <div class="add-row">
+          <button type="button" class="b" data-file="file-day"><svg class="i"><use href="#i-plus"/></svg>加入（可多選）</button><input type="file" id="file-day" accept="image/*" multiple hidden>
+          <button type="button" class="b" data-file="batch-day" title="一次選 1–5 張，取代目前的日間截圖">一次換掉全部（1–5 張）</button><input type="file" id="batch-day" accept="image/*" multiple hidden>
+        </div>
+      </div>
+      <div class="g side-box" data-side="night">
+        <h3><span class="plate n">夜</span>夜間<span class="x" id="count-night"></span></h3>
+        <ul class="shots" id="list-night"></ul>
+        <p class="hint" id="pairNote" hidden></p>
+        <div class="add-row">
+          <button type="button" class="b" data-file="file-night"><svg class="i"><use href="#i-plus"/></svg>加入（可多選）</button><input type="file" id="file-night" accept="image/*" multiple hidden>
+          <button type="button" class="b" data-file="batch-night" title="一次選 1–5 張，取代目前的夜間截圖">一次換掉全部（1–5 張）</button><input type="file" id="batch-night" accept="image/*" multiple hidden>
+        </div>
+      </div>
+      <input type="file" id="replaceFile" accept="image/*" hidden>
+      <div class="g">
+        <h3>調整大小</h3>
+        <div class="seg" data-seg="scaleMode"><button data-v="single" aria-pressed="true">只調選中的那張</button><button data-v="all" aria-pressed="false">全部一起</button></div>
+        <div class="selbox" id="selbox" hidden>
+          <p id="selText"></p>
+          <div class="sl"><label for="selScale">大小</label><input type="range" id="selScale" min="20" max="300" step="1" value="100"><span class="num"><input type="number" id="selScaleNum" min="20" max="300" step="1" value="100" aria-label="大小百分比">%</span></div>
+          <div class="row"><button class="b sm" id="selReset">放回原位</button><button class="b sm" id="selDone">完成</button></div>
+        </div>
+        <p class="hint" id="selHint">點選預覽或上面清單裡的截圖，就能調整大小（20–300%）。</p>
+      </div>
+      <div class="g"><div class="row"><button class="b sm" id="clearSamples">移除示範截圖</button></div></div>
+      <datalist id="labelOptions"><option value="首頁"><option value="書架"><option value="閱讀頁"><option value="目錄"><option value="筆記"><option value="書籍詳情"><option value="搜尋"></datalist>
+    </section>
+
+    <!-- LAYOUT -->
+    <section class="pane" id="pane-layout" role="tabpanel">
+      <h2>版型</h2>
+      <p class="lead">點版型，預覽會跟著換。</p>
+      <div class="g">
+        <h3>只放一面</h3>
+        <div class="lays" id="laysSingle">
+<button type="button" data-layout="single-even" aria-pressed="false"><svg viewBox="0 0 64 46"><rect width="64" height="46" fill="#E4E9EC"/><rect x="12" y="13" width="10" height="21" rx="1.2" fill="#fff" stroke="#9AA3AD" stroke-width=".6"/><rect x="27" y="13" width="10" height="21" rx="1.2" fill="#fff" stroke="#9AA3AD" stroke-width=".6"/><rect x="42" y="13" width="10" height="21" rx="1.2" fill="#fff" stroke="#9AA3AD" stroke-width=".6"/></svg>單面等距</button>
+<button type="button" data-layout="single-stagger" aria-pressed="false"><svg viewBox="0 0 64 46"><rect width="64" height="46" fill="#E4E9EC"/><rect x="12" y="9" width="10" height="21" rx="1.2" fill="#fff" stroke="#9AA3AD" stroke-width=".6"/><rect x="27" y="16" width="10" height="21" rx="1.2" fill="#fff" stroke="#9AA3AD" stroke-width=".6"/><rect x="42" y="9" width="10" height="21" rx="1.2" fill="#fff" stroke="#9AA3AD" stroke-width=".6"/></svg>單面錯落</button>
+<button type="button" data-layout="single-overlap" aria-pressed="false"><svg viewBox="0 0 64 46"><rect width="64" height="46" fill="#E4E9EC"/><rect x="14" y="9" width="12" height="24" rx="1.2" fill="#fff" stroke="#9AA3AD" stroke-width=".6"/><rect x="25" y="12" width="12" height="24" rx="1.2" fill="#fff" stroke="#9AA3AD" stroke-width=".6"/><rect x="36" y="15" width="12" height="24" rx="1.2" fill="#fff" stroke="#9AA3AD" stroke-width=".6"/></svg>交疊層疊</button>
+<button type="button" data-layout="single-focus" aria-pressed="false"><svg viewBox="0 0 64 46"><rect width="64" height="46" fill="#E4E9EC"/><rect x="11" y="14" width="9" height="19" rx="1.2" fill="#fff" stroke="#9AA3AD" stroke-width=".6"/><rect x="44" y="14" width="9" height="19" rx="1.2" fill="#fff" stroke="#9AA3AD" stroke-width=".6"/><rect x="25" y="9" width="14" height="28" rx="1.5" fill="#fff" stroke="#9AA3AD" stroke-width=".6"/></svg>中央突出</button>
+<button type="button" data-layout="single-hero" aria-pressed="false"><svg viewBox="0 0 64 46"><rect width="64" height="46" fill="#E4E9EC"/><rect x="14" y="5" width="18" height="36" rx="1.5" fill="#fff" stroke="#9AA3AD" stroke-width=".6"/><rect x="37" y="7" width="8" height="15" rx="1" fill="#fff" stroke="#9AA3AD" stroke-width=".6"/><rect x="37" y="25" width="8" height="15" rx="1" fill="#fff" stroke="#9AA3AD" stroke-width=".6"/></svg>主圖＋小圖</button>
+<button type="button" data-layout="single-card" aria-pressed="false"><svg viewBox="0 0 64 46"><rect width="64" height="46" fill="#F4EFE8"/><g fill="#9FB3CC" opacity=".55"><rect y="9" width="64" height=".5"/><rect y="15" width="64" height=".5"/><rect y="21" width="64" height=".5"/><rect y="27" width="64" height=".5"/><rect y="33" width="64" height=".5"/><rect y="39" width="64" height=".5"/></g><rect x="7" width=".7" height="46" fill="#C9483B"/><rect x="11" y="5" width="16" height="2" fill="#342E2A"/><circle cx="52" cy="10" r="6" fill="none" stroke="#C9483B" stroke-width="1"/><rect x="13" y="19" width="10" height="21" fill="#fff" stroke="#C9CED3" stroke-width=".5" transform="rotate(-4 18 29)"/><rect x="27" y="19" width="10" height="21" fill="#fff" stroke="#C9CED3" stroke-width=".5" transform="rotate(3 32 29)"/><rect x="41" y="19" width="10" height="21" fill="#fff" stroke="#C9CED3" stroke-width=".5" transform="rotate(-2 46 29)"/></svg>借閱卡</button>
+</div>
+        <div id="grpSingle" class="stack" hidden>
+          <div class="sub">放哪一面</div>
+          <div class="seg" data-seg="single"><button data-v="day" aria-pressed="true">日間</button><button data-v="night" aria-pressed="false">夜間</button></div>
+          <p class="hint">單面版型可以在「匯出」一次存下日間、夜間兩張。</p>
+        </div>
+      </div>
+      <div class="g">
+        <h3>日夜同框</h3>
+        <div class="lays" id="laysBoth">
+<button type="button" data-layout="pairs" aria-pressed="false"><svg viewBox="0 0 64 46"><rect width="64" height="46" fill="url(#gDN)"/><rect x="13" y="10" width="10" height="21" rx="1.5" fill="#2A3244"/><rect x="10" y="13" width="10" height="21" rx="1.5" fill="#F4F6F7" stroke="#9AA3AD" stroke-width=".6"/><rect x="30" y="10" width="10" height="21" rx="1.5" fill="#2A3244"/><rect x="27" y="13" width="10" height="21" rx="1.5" fill="#F4F6F7" stroke="#9AA3AD" stroke-width=".6"/><rect x="47" y="10" width="10" height="21" rx="1.5" fill="#2A3244"/><rect x="44" y="13" width="10" height="21" rx="1.5" fill="#F4F6F7" stroke="#9AA3AD" stroke-width=".6"/></svg>成對疊放</button>
+<button type="button" data-layout="split" aria-pressed="false"><svg viewBox="0 0 64 46"><rect width="32" height="46" fill="#E4E9EC"/><rect x="32" width="32" height="46" fill="#1F2738"/><rect x="7" y="13" width="8" height="18" rx="1.2" fill="#fff" stroke="#9AA3AD" stroke-width=".6"/><rect x="18" y="13" width="8" height="18" rx="1.2" fill="#fff" stroke="#9AA3AD" stroke-width=".6"/><rect x="38" y="13" width="8" height="18" rx="1.2" fill="#3A4459"/><rect x="49" y="13" width="8" height="18" rx="1.2" fill="#3A4459"/></svg>對開</button>
+<button type="button" data-layout="diagonal" aria-pressed="false"><svg viewBox="0 0 64 46"><polygon points="0,0 38,0 26,46 0,46" fill="#E4E9EC"/><polygon points="38,0 64,0 64,46 26,46" fill="#1F2738"/><rect x="5" y="13" width="8" height="18" rx="1.2" fill="#fff" stroke="#9AA3AD" stroke-width=".6"/><rect x="15" y="13" width="8" height="18" rx="1.2" fill="#fff" stroke="#9AA3AD" stroke-width=".6"/><rect x="41" y="13" width="8" height="18" rx="1.2" fill="#3A4459"/><rect x="51" y="13" width="8" height="18" rx="1.2" fill="#3A4459"/></svg>斜切</button>
+<button type="button" data-layout="alternate" aria-pressed="false"><svg viewBox="0 0 64 46"><rect width="64" height="46" fill="url(#gDN)"/><rect x="5" y="13" width="8" height="18" rx="1.2" fill="#fff" stroke="#9AA3AD" stroke-width=".6"/><rect x="15" y="13" width="8" height="18" rx="1.2" fill="#2A3244"/><rect x="25" y="13" width="8" height="18" rx="1.2" fill="#fff" stroke="#9AA3AD" stroke-width=".6"/><rect x="35" y="13" width="8" height="18" rx="1.2" fill="#2A3244"/><rect x="45" y="13" width="8" height="18" rx="1.2" fill="#fff"/><rect x="55" y="13" width="8" height="18" rx="1.2" fill="#3A4459"/></svg>日夜交錯</button>
+<button type="button" data-layout="compare" aria-pressed="false"><svg viewBox="0 0 64 46"><rect width="32" height="46" fill="#E4E9EC"/><rect x="32" width="32" height="46" fill="#1F2738"/><rect x="22" y="6" width="20" height="34" rx="2.5" fill="#fff" stroke="#9AA3AD" stroke-width=".6"/><rect x="32" y="6" width="10" height="34" fill="#3A4459"/><rect x="31.4" y="6" width="1.2" height="34" fill="#fff"/><circle cx="32" cy="23" r="3" fill="#fff"/></svg>日夜對切</button>
+<button type="button" data-layout="rows" aria-pressed="false"><svg viewBox="0 0 64 46"><defs><linearGradient id="gTB" x1="0" x2="0" y1="0" y2="1"><stop offset=".25" stop-color="#E4E9EC"/><stop offset=".75" stop-color="#1F2738"/></linearGradient></defs><rect width="64" height="46" fill="url(#gTB)"/><rect x="14" y="4" width="9" height="17" rx="1.2" fill="#fff" stroke="#9AA3AD" stroke-width=".6"/><rect x="27" y="4" width="9" height="17" rx="1.2" fill="#fff" stroke="#9AA3AD" stroke-width=".6"/><rect x="40" y="4" width="9" height="17" rx="1.2" fill="#fff" stroke="#9AA3AD" stroke-width=".6"/><rect x="14" y="25" width="9" height="17" rx="1.2" fill="#3A4459"/><rect x="27" y="25" width="9" height="17" rx="1.2" fill="#3A4459"/><rect x="40" y="25" width="9" height="17" rx="1.2" fill="#3A4459"/></svg>上日下夜</button>
+<button type="button" data-layout="fold" aria-pressed="false"><svg viewBox="0 0 64 46"><rect width="64" height="46" fill="url(#gDN)"/><polygon points="8,11 20,15 20,36 8,32" fill="#F4F6F7" stroke="#9AA3AD" stroke-width=".6"/><polygon points="20,15 32,11 32,32 20,36" fill="#C9CED3" stroke="#9AA3AD" stroke-width=".6"/><polygon points="32,11 44,15 44,36 32,32" fill="#3A4459" stroke="#2A3244" stroke-width=".6"/><polygon points="44,15 56,11 56,32 44,36" fill="#2A3244" stroke="#2A3244" stroke-width=".6"/></svg>風琴頁</button>
+<button type="button" data-layout="news" aria-pressed="false"><svg viewBox="0 0 64 46"><rect width="64" height="46" fill="#EFEAE0"/><rect x="14" y="4" width="36" height="4" rx="1" fill="#1E1C19"/><rect x="5" y="10" width="54" height=".8" fill="#1E1C19"/><rect x="7" y="14" width="13" height="27" fill="#fff" stroke="#9AA3AD" stroke-width=".5"/><rect x="24" y="14" width="34" height="2.5" fill="#1E1C19"/><rect x="25" y="19" width="9" height="16" fill="#fff" stroke="#9AA3AD" stroke-width=".5"/><rect x="36" y="19" width="9" height="16" fill="#3A4459"/><rect x="47" y="19" width="9" height="16" fill="#3A4459"/><rect x="25" y="38" width="31" height="1.2" fill="#A8321F"/></svg>報紙</button>
+</div>
+        <div id="grpSpan" class="stack" hidden>
+          <div class="sub">放哪些截圖</div>
+          <div class="seg" data-seg="span"><button data-v="both" aria-pressed="true">日夜一起</button><button data-v="day" aria-pressed="false">只放日間</button><button data-v="night" aria-pressed="false">只放夜間</button></div>
+        </div>
+      </div>
+      <div class="g">
+        <h3>比例</h3>
+        <div class="ratios" id="ratios">
+          <button data-ratio="4:3" aria-pressed="true"><span class="shape" style="width:40px;height:30px"></span>4:3 橫版<small>3600×2700</small></button>
+          <button data-ratio="1:1" aria-pressed="false"><span class="shape" style="width:34px;height:34px"></span>1:1 方形<small>3000×3000</small></button>
+          <button data-ratio="3:4" aria-pressed="false"><span class="shape" style="width:30px;height:40px"></span>3:4 小紅書<small>2700×3600</small></button>
+          <button data-ratio="9:16" aria-pressed="false"><span class="shape" style="width:25px;height:44px"></span>9:16 長圖<small>2160×3840</small></button>
+        </div>
+      </div>
+      <div class="g" id="grpDetails">
+        <h3>版型細節</h3>
+        <div id="grpOrder" class="stack" hidden>
+          <div class="sub">順序 <span class="when">日夜同框</span></div>
+          <div class="seg" data-seg="order"><button data-v="dn" aria-pressed="true">日夜（日在左、在上或在前）</button><button data-v="nd" aria-pressed="false">夜日</button></div>
+          <p class="hint">「匯出」的各存一張會兩種順序各存一張。</p>
+        </div>
+        <div id="grpDir" class="stack" hidden>
+          <div class="sub">分割方向 <span class="when">對開、斜切</span></div>
+          <div class="seg" data-seg="splitDir"><button data-v="auto" aria-pressed="true">自動</button><button data-v="v" aria-pressed="false">左右</button><button data-v="h" aria-pressed="false">上下</button></div>
+        </div>
+        <div id="grpTilt" class="stack" hidden>
+          <div class="sub">傾斜方向 <span class="when">錯落、交疊</span></div>
+          <div class="seg" data-seg="tilt"><button data-v="alt" aria-pressed="true" id="tiltAlt">一高一低</button><button data-v="left-high" aria-pressed="false">左高右低 ↘</button><button data-v="left-low" aria-pressed="false">左低右高 ↗</button></div>
+        </div>
+        <div id="grpCompare" class="stack" hidden>
+          <div class="sub">對切 <span class="when">日夜對切</span></div>
+          <div class="sl"><label for="compareAt">分隔位置</label><input type="range" id="compareAt" min="10" max="90" value="50"><span class="num"><input type="number" id="compareAtOut" min="10" max="90" aria-label="分隔位置百分比">%</span></div>
+          <label class="tog">存圖時保留中間的拉動圓鈕<input type="checkbox" id="compareHandle"></label>
+          <div class="row"><span class="hint">對切哪一組</span><div class="seg" id="comparePairs"></div></div>
+        </div>
+        <div id="grpHero" class="stack" hidden>
+          <div class="sub">主圖 <span class="when">主圖＋小圖、報紙</span></div>
+          <div class="seg" id="heroButtons"></div>
+        </div>
+        <p class="hint" id="noDetails">這個版型沒有其他細節可以調。</p>
+      </div>
+    </section>
+
+    <!-- DETAIL -->
+    <section class="pane" id="pane-detail" role="tabpanel">
+      <h2>細節</h2>
+      <p class="lead">畫報上要放哪些元素、截圖怎麼排。任何版型都能用。</p>
+      <div class="g">
+        <h3>畫報上要有什麼</h3>
+        <div class="sub">標題排法</div>
+        <div class="seg" data-seg="headline"><button data-v="bar" aria-pressed="true">一行報頭（左上標題、右上作者）</button><button data-v="big" aria-pressed="false">大標＋副標</button></div>
+        <div class="sub">色票</div>
+        <div class="seg" data-seg="palette"><button data-v="five" aria-pressed="true">五色圓點</button><button data-v="three" aria-pressed="false">日夜各三色</button></div>
+        <label class="tog">顯示色票圓點<input type="checkbox" id="swatches"></label>
+        <label class="tog">顯示色碼<input type="checkbox" id="hexes"></label>
+        <label class="tog">卡紙外框與十字定位<input type="checkbox" id="cardFrame"></label>
+        <label class="tog">日夜標籤<input type="checkbox" id="sideLabels"></label>
+        <label class="tog">截圖下方的頁面名稱<input type="checkbox" id="captions"></label>
+        <label class="tog">頂部、底部與邊緣裝飾線<input type="checkbox" id="rules"></label>
+        <div class="cline" id="ruleColorRow"><span>線條顏色</span><input type="color" id="ruleColor" value="#000000" aria-label="線條顏色"><span class="hint">夜間那半在深色上會自動換淺色</span></div>
+        <div class="sl" id="ruleOpRow"><label for="ruleOpacity">線條透明度</label><input type="range" id="ruleOpacity" min="0" max="100" value="100"><span class="num"><input type="number" id="ruleOpacityOut" min="0" max="100" aria-label="線條透明度">%</span></div>
+      </div>
+      <div class="g">
+        <h3>截圖排法</h3>
+        <div class="sl"><label for="size">整體大小</label><input type="range" id="size" min="55" max="115" value="100"><span class="num"><input type="number" id="sizeOut" min="55" max="115" aria-label="整體大小">%</span></div>
+        <div class="sl"><label for="gap">間距</label><input type="range" id="gap" min="0" max="250" value="100"><span class="num"><input type="number" id="gapOut" min="0" max="250" aria-label="間距">%</span></div>
+        <div class="sl"><label for="radius">圓角</label><input type="range" id="radius" min="0" max="16" value="0"><span class="num"><input type="number" id="radiusOut" min="0" max="16" aria-label="圓角"></span></div>
+        <div class="sub">外框</div>
+        <div class="seg" data-seg="frame"><button data-v="none">無框</button><button data-v="line">細線</button><button data-v="shadow">柔影</button><button data-v="phone">手機外框</button><button data-v="corners">四角定位</button></div>
+        <p class="hint">外框會跟著每張截圖貼合，所有效果都不裁切原圖。</p>
+      </div>
+    </section>
+
+    <!-- LOOK -->
+    <section class="pane" id="pane-look" role="tabpanel">
+      <h2>外觀</h2>
+      <p class="lead">放進截圖就會自動取色：底色是截圖裡面積最大的顏色，文字和點綴從對比與彩度挑出。改過的顏色會保留。</p>
+      <div class="g">
+        <h3>日夜色票</h3>
+        <div class="pair">
+          <div class="side" data-colors="day">
+            <h4><span class="plate">日</span>日間</h4>
+            <div class="cr"><input type="color" data-c="bg" aria-label="日間底色"><span>底色</span><input type="text" data-hex="bg" aria-label="日間底色色碼" maxlength="7" spellcheck="false"></div>
+            <div class="cr"><input type="color" data-c="ink" aria-label="日間文字色"><span>文字</span><input type="text" data-hex="ink" aria-label="日間文字色色碼" maxlength="7" spellcheck="false"></div>
+            <div class="cr"><input type="color" data-c="accent" aria-label="日間點綴色"><span>點綴</span><input type="text" data-hex="accent" aria-label="日間點綴色色碼" maxlength="7" spellcheck="false"></div>
+            <div class="warn" data-warn="day" hidden></div>
+            <button class="b sm" data-reextract="day">從日間截圖重新取色</button>
+          </div>
+          <div class="side" data-colors="night">
+            <h4><span class="plate n">夜</span>夜間</h4>
+            <div class="cr"><input type="color" data-c="bg" aria-label="夜間底色"><span>底色</span><input type="text" data-hex="bg" aria-label="夜間底色色碼" maxlength="7" spellcheck="false"></div>
+            <div class="cr"><input type="color" data-c="ink" aria-label="夜間文字色"><span>文字</span><input type="text" data-hex="ink" aria-label="夜間文字色色碼" maxlength="7" spellcheck="false"></div>
+            <div class="cr"><input type="color" data-c="accent" aria-label="夜間點綴色"><span>點綴</span><input type="text" data-hex="accent" aria-label="夜間點綴色色碼" maxlength="7" spellcheck="false"></div>
+            <div class="warn" data-warn="night" hidden></div>
+            <button class="b sm" data-reextract="night">從夜間截圖重新取色</button>
+          </div>
+        </div>
+        <div class="sub">五色圓點（由淺至深，從全部截圖取色，可以手動改）</div>
+        <div class="dots"><span id="five" class="dots"></span><button type="button" class="b sm" id="fiveAuto" style="margin-left:auto">重新取色</button></div>
+      </div>
+      <div class="g">
+        <h3>底圖</h3>
+        <div class="seg" data-seg="bg">
+          <button data-v="solid">純色</button><button data-v="light">淡色取色</button><button data-v="dark">深色取色</button><button data-v="custom">自選顏色</button><button data-v="gradient">斜向漸層</button><button data-v="tb">上下漸層</button><button data-v="blur">模糊截圖</button><button data-v="image">圖片底圖</button><button data-v="glass">封面玻璃</button>
+        </div>
+        <p class="hint" id="bgDesc"></p>
+        <div class="cr" id="customRow" hidden><input type="color" id="customBg" value="#E9E6DB" aria-label="背景顏色"><span>背景</span><input type="text" id="customBgHex" maxlength="7" spellcheck="false" aria-label="背景顏色色碼"></div>
+        <div id="tbRow" class="stack" hidden>
+          <div class="cline"><span>頂部</span><input type="color" id="tbTop" aria-label="頂部顏色"><span class="hexv" id="tbTopHex"></span><span>底部</span><input type="color" id="tbBottom" aria-label="底部顏色"><span class="hexv" id="tbBottomHex"></span></div>
+          <div class="row"><button class="b sm" id="tbAuto">從截圖重新取色</button></div>
+        </div>
+        <div class="sl" id="tintRow" hidden><label for="tint">底色覆蓋</label><input type="range" id="tint" min="20" max="92" value="70"><span class="num"><input type="number" id="tintOut" min="20" max="92" aria-label="底色覆蓋">%</span></div>
+        <div id="imageRow" class="stack" hidden>
+          <div class="row"><button type="button" class="b sm" data-file="bgFile">選擇底圖圖片</button><span class="hint" id="bgFileName">未選擇</span></div><input type="file" id="bgFile" accept="image/*" hidden>
+          <div class="sl"><label for="bgBlur">模糊程度</label><input type="range" id="bgBlur" min="0" max="120" value="40"><span class="num"><input type="number" id="bgBlurOut" min="0" max="120" aria-label="模糊程度">px</span></div>
+          <div class="sl"><label for="bgOpacity">底圖透明度</label><input type="range" id="bgOpacity" min="0" max="100" value="100"><span class="num"><input type="number" id="bgOpacityOut" min="0" max="100" aria-label="底圖透明度">%</span></div>
+        </div>
+        <div id="glassRow" class="stack" hidden>
+          <div class="row"><button type="button" class="b sm" data-file="coverFile">上傳書籍封面</button><span class="hint" id="coverFileName">未選擇，暫用各自第一張截圖</span></div><input type="file" id="coverFile" accept="image/*" hidden>
+          <div class="sl"><label for="glass">朦朧程度</label><input type="range" id="glass" min="20" max="100" value="70"><span class="num"><input type="number" id="glassOut" min="20" max="100" aria-label="朦朧程度">%</span></div>
+        </div>
+        <p class="hint" id="blendNote" hidden>成對疊放、日夜交錯和上日下夜會以日到夜的漸層為底。</p>
+        <div class="sl"><label for="grain">紙紋顆粒</label><input type="range" id="grain" min="0" max="100" value="0"><span class="num"><input type="number" id="grainOut" min="0" max="100" aria-label="紙紋顆粒"></span></div>
+      </div>
+      <div class="g" id="artHost"><span id="artMount"></span></div>
+    </section>
+
+    <!-- TEXT -->
+    <section class="pane" id="pane-text" role="tabpanel">
+      <h2>文字</h2>
+      <div class="g">
+        <h3>整體樣式</h3>
+        <p class="hint">沒有單獨設定的欄位都用這組。</p>
+        <button type="button" class="fontbtn" id="globalFontBtn" aria-expanded="false" aria-controls="globalFontBox"><b id="globalFontSample">Aa 字</b><span>字體　<span id="globalFontName"></span></span><i aria-hidden="true">▾</i></button>
+        <div class="stack" id="globalFontBox" hidden>
+          <div class="fonts" id="fonts"></div>
+          <button type="button" class="b" data-file="fontFile"><svg class="i"><use href="#i-plus"/></svg>匯入我的字體（TTF、OTF、WOFF、WOFF2）</button><input type="file" id="fontFile" accept=".ttf,.otf,.woff,.woff2,font/*" hidden>
+          <p class="hint">匯入的字體只在這台裝置使用，重新整理後需要再匯入。</p>
+        </div>
+        <div class="trow" id="alignRow"><span>對齊</span><div class="seg" data-seg="align"><button data-v="left" aria-pressed="true">置左</button><button data-v="center" aria-pressed="false">置中</button></div></div>
+        <div class="trow"><span>文字顏色</span><div class="seg" data-seg="textMode"><button data-v="auto" aria-pressed="true">自動</button><button data-v="custom" aria-pressed="false">自訂</button></div></div>
+        <div id="textColorRows" class="cline" hidden>
+          <span class="plate">日</span><input type="color" id="textDay" value="#342e2a" aria-label="日間那一側的文字顏色"><span class="hexv" id="textDayHex">#342E2A</span>
+          <span class="plate n">夜</span><input type="color" id="textNight" value="#e7e7eb" aria-label="夜間那一側的文字顏色"><span class="hexv" id="textNightHex">#E7E7EB</span>
+        </div>
+        <p class="hint" id="textColorHint">自動會依底色挑最清楚的顏色。自訂時，落在日間那一側的文字用「日」的顏色，夜間那一側用「夜」的。欄位單獨設了顏色，就用欄位自己的。</p>
+      </div>
+      <div class="tcards">
+        <div class="tcard" data-field="title">
+          <label class="lab" for="title">主題名稱</label><input type="text" id="title" value="Weather" maxlength="40">
+          <div class="tchips"></div>
+          <div class="tedit" hidden><div class="sl"><label for="titleSize">字級</label><input type="range" id="titleSize" min="30" max="200" value="100"><span class="num"><input type="number" id="titleSizeOut" min="30" max="200" aria-label="主題名稱字級">%</span></div></div>
+        </div>
+        <div class="tcard" data-field="tagline">
+          <label class="lab" for="tagline"><span>副標</span><span>可留空</span></label><input type="text" id="tagline" value="一套日間與夜間的閱讀主題" maxlength="60" data-i18n-value>
+          <div class="tchips"></div>
+          <div class="tedit" hidden><div class="sl"><label for="taglineSize">字級</label><input type="range" id="taglineSize" min="30" max="200" value="100"><span class="num"><input type="number" id="taglineSizeOut" min="30" max="200" aria-label="副標字級">%</span></div></div>
+        </div>
+        <div class="tcard" data-field="author">
+          <label class="lab" for="author"><span>作者</span></label><input type="text" id="author" value="Lovia&amp;Chi" maxlength="40" placeholder="例如 @你的小紅書名稱">
+          <label class="tog" id="prefixRow">前面加「AUTHOR /」<input type="checkbox" id="authorPrefix"></label>
+          <div class="tchips"></div>
+          <div class="tedit" hidden><div class="sl"><label for="authorSize">字級</label><input type="range" id="authorSize" min="30" max="200" value="100"><span class="num"><input type="number" id="authorSizeOut" min="30" max="200" aria-label="作者字級">%</span></div></div>
+        </div>
+        <div class="tcard" data-field="date">
+          <label class="lab" for="date">日期</label>
+          <div class="date-row"><input type="text" id="date" maxlength="30"><button class="b sm" id="today" type="button" title="例如 2026.10.30">今天</button><button class="b sm" id="thisMonth" type="button" title="例如 OCT. 2026">本月</button></div>
+          <label class="tog">顯示日期<input type="checkbox" id="showDate"></label>
+          <div class="tchips"></div>
+          <div class="tedit" hidden><div class="sl"><label for="dateSize">字級</label><input type="range" id="dateSize" min="30" max="200" value="100"><span class="num"><input type="number" id="dateSizeOut" min="30" max="200" aria-label="日期字級">%</span></div></div>
+        </div>
+        <div class="tcard" data-field="message">
+          <label class="lab" for="message"><span>想說的話</span><span>可留空</span></label><input type="text" id="message" value="" maxlength="60" placeholder="MADE WITH LOVE">
+          <div class="tchips"></div>
+          <div class="tedit" hidden><div class="sl"><label for="messageSize">字級</label><input type="range" id="messageSize" min="30" max="200" value="100"><span class="num"><input type="number" id="messageSizeOut" min="30" max="200" aria-label="想說的話字級">%</span></div></div>
+        </div>
+        <div class="tcard" data-field="labels">
+          <span class="lab">日夜標籤與頁面名稱（在「細節」打開才會顯示）</span>
+          <div class="two">
+            <input type="text" id="labelDay" value="日間" aria-label="日間標籤文字" maxlength="12" data-i18n-value>
+            <input type="text" id="labelNight" value="夜間" aria-label="夜間標籤文字" maxlength="12" data-i18n-value>
+          </div>
+          <div class="tchips"></div>
+          <div class="tedit" hidden><div class="sl"><label for="labelSize">字級</label><input type="range" id="labelSize" min="30" max="200" value="100"><span class="num"><input type="number" id="labelSizeOut" min="30" max="200" aria-label="標籤字級">%</span></div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- EXPORT -->
+    <section class="pane" id="pane-export" role="tabpanel">
+      <h2>匯出</h2>
+      <div class="g">
+        <h3>尺寸</h3>
+        <div class="seg seg-col" id="qualitySeg"></div>
+        <p class="hint">無損 PNG。iPhone 按下存到相簿會跳出分享選單，選「儲存影像」就會存進相簿。</p>
+      </div>
+      <div class="g big">
+        <button class="b pri" id="exportOne">下載 PNG</button>
+        <button class="b" id="shareOne" hidden>存到相簿</button>
+        <button class="b" id="exportPair">日間、夜間各存一張</button>
+        <button class="b" id="openMotion">動態 GIF／影片</button>
+        <button class="b" id="openLarge2">放大預覽</button>
+        <p class="status" id="status" aria-live="polite"></p>
+      </div>
+      <div class="g">
+        <h3>保存設置</h3>
+        <div class="big"><button class="b" id="savePreset">儲存到這台裝置</button><button class="b" id="openLib">打開作品集（本機與雲端）</button></div>
+        <p class="hint">在作品集裡按設置旁的「⋯」就能存到雲端、複製分享連結。雲端只存設定、底圖和縮圖，字型只記名稱。圖片只在你的瀏覽器裡處理。</p>
+      </div>
+      <div class="g"><div class="row"><button class="b sm" id="resetAll">全部重置</button></div></div>
+    </section>
+  </div>
+</main>
+
+<div class="mbar"><button class="b" type="button" id="mSave">儲存設置</button><button class="b pri" type="button" id="mExport">匯出</button></div>
+
+<dialog class="drawer" id="lib" aria-labelledby="libTitle">
+  <div class="dhead"><h2 id="libTitle">作品集</h2><span class="grow"></span><button class="b sm" id="libClose" type="button">關閉</button></div>
+  <p class="hint">點一個設置就套用到畫面上。以前在經典模板和 Day Night 存的設置也都在這裡。</p>
+  <div class="row"><button class="b pri" type="button" id="libSave">把目前的存成一份</button></div>
+  <div id="presetBar" hidden></div>
+  <div id="libGallery"></div>
+</dialog>
+
+<dialog class="result" id="result" aria-labelledby="resultTitle">
+  <div class="result-card">
+    <h2 id="resultTitle">畫報完成</h2>
+    <p id="resultText">如果沒有自動下載，手機請長按圖片選「儲存到照片」，電腦請按右鍵另存。</p>
+    <div class="result-imgs" id="resultImgs"></div>
+    <button class="b pri" id="resultShare" hidden>全部存到相簿</button>
+    <button class="b" id="resultClose">關閉</button>
+  </div>
+</dialog>
+
+<dialog class="result" id="large" aria-labelledby="largeTitle">
+  <div class="result-card large-card">
+    <div class="large-head">
+      <h2 id="largeTitle">放大預覽</h2>
+      <div class="row">
+        <button class="icon-btn" id="zoomOut" aria-label="縮小">−</button>
+        <button class="b sm" id="zoomFit">適應螢幕</button>
+        <button class="icon-btn" id="zoomIn" aria-label="放大">＋</button>
+        <output id="zoomOutVal">100%</output>
+        <button class="icon-btn" id="largeClose" aria-label="關閉">×</button>
+      </div>
+    </div>
+    <div class="large-box" id="largeBox"><img id="largeImg" alt="畫報放大預覽"></div>
+  </div>
+</dialog>
+
+<dialog class="result" id="hsv" aria-labelledby="hsvTitle">
+  <div class="result-card hsv-card">
+    <h2 id="hsvTitle">HSV 調色盤</h2>
+    <canvas id="hsvSquare" width="240" height="240" aria-label="飽和度與明度"></canvas>
+    <div class="sl"><label for="hsvHue">色相</label><input type="range" id="hsvHue" min="0" max="360" value="0"><output id="hsvHex">#FFFFFF</output></div>
+    <button class="b pri" id="hsvDone">完成</button>
+  </div>
+</dialog>
+
+<script src="./studio-shell.js?v=21"></script>
+<script src="./studio-motion.js?v=6"></script>
+<script src="./studio-extra.js?v=5"></script>
+<script src="./art-mosaic.js?v=2"></script>
+<script src="./studio.js?v=1"></script>
+</body>
+</html>
