@@ -377,7 +377,8 @@
     sc.onload = () => res(window.ReedenCloud || null); sc.onerror = () => res(null);
     document.head.append(sc);
   }));
-  const PAGE_FILE = { lovia: 'index.html', daynight: 'daynight.html', chi: 'studio.html' };
+  // both old styles now live in index.html (Lovia & Chi); daynight.html and studio.html only redirect there
+  const PAGE_FILE = { lovia: 'index.html', daynight: 'index.html', chi: 'index.html' };
   // the merged page opens works from every page itself
   const here = pg => pg === PAGE || (MERGED && !!PAGE_FILE[pg]);
   const fileFor = pg => PAGE_FILE[here(pg) ? PAGE : pg];

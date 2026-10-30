@@ -8,7 +8,7 @@ const files=entries.filter(e=>e.isFile()&&/\.(html|js|css|png|jpe?g)$/i.test(e.n
 for(const file of files.filter(f=>f.name.endsWith('.js'))){
   new vm.Script(await readFile(join(root,file.name),'utf8'),{filename:file.name});
 }
-for(const page of ['index.html','daynight.html']){
+for(const page of ['index.html','daynight.html','studio.html']){
   const html=await readFile(join(root,page),'utf8');
   for(const [i,match]of [...html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/gi)].entries()){
     if(!/\bsrc=/.test(match[1])&&!/\btype=/.test(match[1]))new vm.Script(match[2],{filename:page+':script'+i});
