@@ -48,7 +48,7 @@ svg.i{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.7;stro
 .hb.pri:hover{text-decoration:none}
 #ssMount .ss{display:inline-flex}
 #ssMount .ss-lang{width:36px;height:36px;border-radius:0;border:1px solid var(--rule);background:none;font:600 13px/1 var(--sans);color:var(--ink);cursor:pointer;padding:0}
-@media(max-width:520px){#stageMeta{display:none}.thead{flex-wrap:nowrap;gap:0 6px}.thead .tb{padding:6px 2px}}
+@media(max-width:520px){#stageMeta{display:none}.thead{flex-wrap:nowrap;gap:0 6px}}
 @media(max-width:700px){.brand small,.hd .hide-m{display:none}.brand{font-size:20px}.hd{gap:4px}.hb{padding:8px 8px}}
 
 /* workspace */
@@ -64,8 +64,14 @@ svg.i{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.7;stro
 .m-only,.ls{display:none}
 .tb-pri{background:var(--ink);color:var(--ground);padding:6px 12px;letter-spacing:.06em}
 .tb-pri:hover{text-decoration:none}
-.thead .tb.tb-pri{padding:6px 10px;margin-left:2px}
-@media(max-width:959px){.m-only{display:inline-flex}.thead .t{display:none}.lf{display:none}.ls{display:inline}}
+.thead .tb.tb-pri{padding:6px 14px;margin-left:4px}
+.ttools{display:flex;align-items:center;gap:4px 10px;font-size:12px}
+@media(max-width:959px){.m-only{display:inline-flex}.lf{display:none}.ls{display:inline}
+  /* 手機：預覽整塊（標題列、預覽、工具列）填滿底色 */
+  .stage-wrap{padding:0}
+  .stage-wrap .thead{background:var(--stage);padding:6px max(12px,env(safe-area-inset-right,0px)) 2px max(16px,env(safe-area-inset-left,0px));min-height:46px}
+  .ttools{justify-content:center;gap:18px;background:var(--stage);padding:0 12px 4px}
+  .stage-wrap .tabs{padding:0 max(16px,env(safe-area-inset-right,0px)) 0 max(16px,env(safe-area-inset-left,0px))}}
 .stage{position:relative;height:min(42svh,420px,calc((100vw - 32px) / var(--ar,1.333) + 24px));display:grid;place-items:center;background:var(--stage);overflow:hidden}
 #cv{display:block;touch-action:none;box-shadow:0 10px 30px -14px rgba(27,28,33,.45);cursor:grab}
 #cv.dragging{cursor:grabbing}
@@ -255,7 +261,10 @@ svg.i{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.7;stro
 @media (min-width:960px){
   .hd{position:sticky;top:0;z-index:12;padding-inline:28px}
   .app{display:grid;grid-template-columns:minmax(0,1fr) 430px;align-items:start}
-  .stage-wrap{top:76px;padding:12px 26px 24px;z-index:2}
+  .stage-wrap{top:76px;padding:12px 26px 24px;z-index:2;display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center}
+  .stage-wrap>*{grid-column:1/-1}
+  .stage-wrap>.thead{grid-column:1;grid-row:1}
+  .stage-wrap>.ttools{grid-column:2;grid-row:1}
   .stage{height:calc(100svh - 230px);min-height:400px}
   .stage-wrap .tabs{display:none}
   .cbar{display:flex;margin-top:14px;border:1px solid var(--ink);background:var(--paper);font-size:11px}
@@ -295,16 +304,19 @@ svg.i{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.7;stro
   <section class="stage-wrap" aria-label="畫報預覽">
     <div class="thead">
       <span class="t">預覽</span><span id="stageMeta"></span><span class="grow"></span>
-      <button class="tb" id="pinShots" type="button" aria-pressed="false" title="固定後截圖不能在預覽裡拖動"><svg class="i"><use href="#i-pin"/></svg><span>固定截圖</span></button>
-      <button class="tb" id="resetPos" type="button" title="所有截圖放回原位、大小回到 100%"><svg class="i"><use href="#i-reset"/></svg><span class="lf">全部復位</span><span class="ls">復位</span></button>
-      <button class="tb" id="openLarge" type="button"><svg class="i"><use href="#i-zoom"/></svg>放大</button>
-      <!-- 手機：儲存和匯出放在跟著預覽固定在頂端的這一列，不另外佔底部空間 -->
+      <!-- 手機：儲存和匯出放在跟著預覽固定在頂端的這一列，不另外佔底部空間；桌機在頁首 -->
       <button class="tb m-only" id="stSave" type="button" title="儲存設置"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h11l3 3v13H5zM8 4v5h7V4M8 20v-6h8v6"/></svg>儲存</button>
       <button class="tb tb-pri m-only" id="stExport" type="button">匯出</button>
     </div>
     <div class="stage" id="stage">
       <canvas id="cv" role="img" aria-label="畫報預覽，可拖動截圖調整位置，雙擊放回原位"></canvas>
       <div id="textMark" hidden></div>
+    </div>
+    <!-- 固定截圖／全部復位／放大：桌機排在「預覽」那一列右側，手機放在預覽下緣 -->
+    <div class="ttools">
+      <button class="tb" id="pinShots" type="button" aria-pressed="false" title="固定後截圖不能在預覽裡拖動"><svg class="i"><use href="#i-pin"/></svg><span>固定截圖</span></button>
+      <button class="tb" id="resetPos" type="button" title="所有截圖放回原位、大小回到 100%"><svg class="i"><use href="#i-reset"/></svg><span class="lf">全部復位</span><span class="ls">復位</span></button>
+      <button class="tb" id="openLarge" type="button"><svg class="i"><use href="#i-zoom"/></svg>放大</button>
     </div>
     <div class="cbar" id="cbar" aria-label="目前的日夜色票，點一下到外觀修改"></div>
     <nav class="tabs" role="tablist" aria-label="設定分頁">
