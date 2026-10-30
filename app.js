@@ -901,6 +901,31 @@
     }
   }
 
+  // top band, edge frames, header/footer rules and the four crosses
+  function drawRules(theme,line) {
+    ctx.fillStyle = theme.band;
+    ctx.fillRect(0,0,CANVAS_W,29);
+    ctx.fillStyle = theme.accent;
+    ctx.fillRect(CANVAS_W-365,0,365,29);
+    ctx.fillRect(0,CANVAS_H-29,CANVAS_W,29);
+    rectangle(67,54,CANVAS_W-135,CANVAS_H-109,line,4);
+    rectangle(87,74,CANVAS_W-175,CANVAS_H-149,line,1);
+    const footerRuleY = CANVAS_H-236;
+    rule(166,269,3034,269,line,3);
+    rule(3034,269,3434,269,line,3);
+    rule(166,footerRuleY,3034,footerRuleY,line,3);
+    rule(3034,footerRuleY,3434,footerRuleY,line,3);
+    for (const x of [163,3437]) {
+      cross(x,318,line);
+      cross(x,CANVAS_H-282,line);
+    }
+  }
+  // on a dark night half, dark lines would vanish: they carry on in a light tone
+  function nightLineFor(nightBg) {
+    if(luminance(nightBg)>=125||luminance(refs.ruleColor.value)>=125)return null;
+    return rgbaFromHex('#F1F0E7',Number(refs.ruleOpacity.value)/100);
+  }
+
   function drawPoster() {
     const theme = displayColors();
     const line = rgbaFromHex(refs.ruleColor.value, Number(refs.ruleOpacity.value)/100);
@@ -909,24 +934,7 @@
     if (layoutMode === 'news') { drawNewsPoster(theme); return; }
     paintBackground(theme);
 
-    if (refs.showRules.checked) {
-      ctx.fillStyle = theme.band;
-      ctx.fillRect(0,0,CANVAS_W,29);
-      ctx.fillStyle = theme.accent;
-      ctx.fillRect(CANVAS_W-365,0,365,29);
-      ctx.fillRect(0,CANVAS_H-29,CANVAS_W,29);
-      rectangle(67,54,CANVAS_W-135,CANVAS_H-109,line,4);
-      rectangle(87,74,CANVAS_W-175,CANVAS_H-149,line,1);
-      const footerRuleY = CANVAS_H-236;
-      rule(166,269,3034,269,line,3);
-      rule(3034,269,3434,269,line,3);
-      rule(166,footerRuleY,3034,footerRuleY,line,3);
-      rule(3034,footerRuleY,3434,footerRuleY,line,3);
-      for (const x of [163,3437]) {
-        cross(x,318,line);
-        cross(x,CANVAS_H-282,line);
-      }
-    }
+    if (refs.showRules.checked) drawRules(theme,line);
 
     if (isDayNightLayout()) { drawDayNightPoster(theme,line); return; }
 
@@ -1080,7 +1088,7 @@
   }
   function drawDayNightPoster(theme,line) {
     const halves=['split','diagonal','compare','rows'].includes(layoutMode);
-    let nightInk=theme.ink;
+    let nightInk=theme.ink,nightLine=null;
     if(halves){
       // the night half takes its tone from the night screenshots
       const geo=dayNightGeometry();
@@ -1093,6 +1101,13 @@
         ctx.restore();
       }
       nightInk=luminance(nightBg)<125?'#F1F0E7':'#2F3A31';
+      nightLine=nightLineFor(nightBg);
+      // the night fill covers the rules drawn earlier; repaint them on that half
+      if(refs.showRules.checked&&anim?.fill!=='day'){
+        ctx.save();if(anim?.fill!=='night'){tracePolygon(geo.night);ctx.clip();}
+        drawRules(theme,nightLine||line);
+        ctx.restore();
+      }
     }
     const placed=dayNightPlacements();
     lastPlacements=images.map(()=>null);
@@ -1100,7 +1115,7 @@
       if(anim?.fill&&item.group!==anim.fill)continue;
       if(anim?.collect)anim.collect.push(item);
       if(anim?.noShots)continue;
-      drawAdaptiveFrame(item.p,line,theme);
+      drawAdaptiveFrame(item.p,item.group==='night'&&nightLine&&layoutMode!=='compare'?nightLine:line,theme);
       if(item.compareFirst){
         if(anim?.compareOnly==='second'&&item.compareSecond)drawFittedImage(item.compareSecond.image,item.p);
         else drawFittedImage(item.compareFirst.image,item.p);
@@ -1119,12 +1134,18 @@
       ctx.save();tracePolygon(geo.day);ctx.clip();drawPosterText(textInk(theme.ink));ctx.restore();
       ctx.save();tracePolygon(geo.night);ctx.clip();drawPosterText(textInk(nightInk,'night'),'night');ctx.restore();
     } else drawPosterText(textInk(theme.ink));
-    sortedColors(currentColors).forEach((color,i) => {
+    const dots=stroke=>sortedColors(currentColors).forEach((color,i) => {
       const x=200+67*i,y=CANVAS_H-160;
       ctx.beginPath();ctx.arc(x,y,21,0,Math.PI*2);
       ctx.fillStyle=color;ctx.fill();
-      setStroke(line,2);ctx.stroke();
+      setStroke(stroke,2);ctx.stroke();
     });
+    // dots sitting on the night half get the light outline too
+    if(nightLine&&!anim?.fill){
+      const geo=dayNightGeometry();
+      ctx.save();tracePolygon(geo.day);ctx.clip();dots(line);ctx.restore();
+      ctx.save();tracePolygon(geo.night);ctx.clip();dots(nightLine);ctx.restore();
+    } else dots(anim?.fill==='night'&&nightLine?nightLine:line);
   }
 
   function syncPaletteInputs() {
