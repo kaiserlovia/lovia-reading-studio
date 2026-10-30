@@ -20,7 +20,7 @@
     '两兩汇匯昼晝标標档檔没沒准準产產码碼积積笔筆签籤红紅纸紙给給缀綴脑腦盖蓋里裡记記详詳这這录錄' +
     '长長间間电電页頁顺順颗顆么麼齐齊鹜鶩较較寻尋经經级級志誌萤螢着著组組启啟带帶范範钮鈕内內' +
     '删刪区區结結连連链鏈侧側订訂项項压壓备備扫掃畅暢轮輪转轉云雲别別继繼续續栏欄还還独獨夹夾写寫头頭' +
-    '围圍属屬强強挡擋旧舊观觀双雙';
+    '围圍属屬强強挡擋旧舊观觀双雙万萬响響尔爾径徑术術纵縱织織网網艺藝见見让讓许許银銀阶階雾霧频頻';
   // whole words that differ beyond single characters
   const WORDS_S2T = [['屏幕', '螢幕'], ['复制', '複製'], ['视频', '影片'], ['相册', '相簿'], ['制作', '製作']];
   const s2t = new Map(), t2s = new Map();
@@ -44,7 +44,9 @@
     for (const ch of str) out += map.get(ch) || ch;
     return out;
   }
-  const fromSrc = str => (lang === SRC ? str : convert(str, lang));
+  // always convert to the chosen script: blocks written in the other script (e.g. the 原創藝術打碼 panel,
+  // written in 简体) then follow the switch too; text already in that script is left as it is
+  const fromSrc = str => convert(str, lang);
 
   /* ---------- DOM conversion (keeps the page's original text so switching back is exact) ---------- */
   const textOrig = new WeakMap();
