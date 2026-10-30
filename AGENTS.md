@@ -1,5 +1,7 @@
 # 網站結構（2026-10-30 起）
 
+- 網址：https://reeden-tools.github.io/lovia-chi/（repo 已從 lovia-reading-studio 改名為 lovia-chi）。舊網址 `/lovia-reading-studio/` 由主站 reeden-tools.github.io 裡同名資料夾轉址過來。
+
 - 經典模板和日夜對開已合併成單一網站、單一畫面「Lovia & Chi」：`index.html` + `studio.js`（頁面標記 `data-studio-page="chi"`）。沒有風格切換。
 - `daynight.html` 和 `studio.html` 只做轉址到 `index.html`，會保留 `#w=`、`#s=` 等連結內容。
 - 合併前的檔案（經典 `app.js`／`styles.css`／`editorial-ui.*`、舊 Day Night 頁、`Lovia-template-v*.html`、舊測試）都移到 `archive/`，網站不再使用。
