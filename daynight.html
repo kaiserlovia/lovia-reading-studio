@@ -6,7 +6,7 @@
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>Day Night · Lovia Reading Studio</title>
 <meta name="description" content="Day Night：把閱讀主題的日間與夜間截圖放進同一張畫報，自動取色，高清 PNG 匯出。">
-<link rel="stylesheet" href="./art-mosaic.css?v=2">
+<link rel="stylesheet" href="./art-mosaic.css?v=3">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Huninn&family=Iansui&family=LXGW+WenKai+TC:wght@400;700&family=Noto+Sans+TC:wght@400;700&family=Noto+Serif+TC:wght@500;700&display=swap">
@@ -2095,11 +2095,9 @@ async function applySettings(st,files={}){
 }
 
 /* ---------------- init ---------------- */
-const finalStage=$('.stage-wrap');
-// Preserve the existing tabs and all their handlers, while keeping the mobile final preview below editing.
-const settingsTabs=finalStage.querySelector('.tabs');settingsTabs.classList.add('am-settings-tabs');
-$('.panel').before(settingsTabs);$('.panel').after(finalStage);finalStage.classList.add('am-final-stage');
-LoviaArtMosaic.mount({before:$('#stage'),change:req});
+// 注意：不可移動 Day Night 的預覽位置（.stage-wrap 和裡面的 .tabs 要留在原處，手機上固定在頂端）。
+// 新功能的卡片請放進 .panel，不要把預覽搬到編輯區下方或拆開分頁列。
+LoviaArtMosaic.mount({before:$('.panel').firstElementChild,change:req});
 async function init(){
   syncQuality();syncColorInputs();syncSegs();
   renderFonts();syncLayoutUI();
