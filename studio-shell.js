@@ -109,7 +109,8 @@
     convertValues();
     const btn = document.getElementById('ssLang');
     if (btn) {
-      btn.textContent = lang === 'tc' ? '简' : '繁';
+      if (btn.dataset.pair != null) btn.innerHTML = `<span${lang === 'tc' ? ' class="on"' : ''}>繁</span><span${lang === 'sc' ? ' class="on"' : ''}>简</span>`;
+      else btn.textContent = lang === 'tc' ? '简' : '繁';
       btn.setAttribute('aria-label', lang === 'tc' ? '切換為簡體中文' : '切换为繁体中文');
     }
   }
@@ -228,7 +229,7 @@
       // no style switch here, only the 繁／简 button
       const m = document.getElementById('ssMount'); if (!m) return;
       document.head.append(style);
-      m.innerHTML = '<button class="ss-lang" id="ssLang" type="button" data-i18n-skip></button>';
+      m.innerHTML = '<button class="ss-lang" id="ssLang" type="button" data-i18n-skip data-pair></button>';
       document.getElementById('ssLang').addEventListener('click', () => setLang(lang === 'tc' ? 'sc' : 'tc'));
       return;
     }
