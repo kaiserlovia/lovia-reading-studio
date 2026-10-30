@@ -73,7 +73,7 @@ test('watermark image survives preset save, removal, refresh and original studio
   await fs.mkdir(evidence,{recursive:true});await page.locator('.art-mosaic').screenshot({path:path.join(evidence,'watermark-preset-panel.png'),animations:'disabled'});
   // The existing whole-studio save includes the watermark file as well.
   await page.locator('#savePreset').click();await expect(page.locator('#presetBar .sp-apply')).toHaveCount(1);
-  await page.locator('#am-remove-watermark').click();await page.locator('#presetBar .sp-apply').click();await expect(page.locator('#am-watermark-name')).toHaveText('my-watermark.png');
+  await page.locator('#am-remove-watermark').click();await page.locator('.ed-presets').click();await page.locator('#presetBar .sp-apply').click();await page.locator('.ed-dialog-head button').click();await expect(page.locator('#am-watermark-name')).toHaveText('my-watermark.png');
   await page.reload();await upload(page,false);await page.locator('.am-heading').click();await expect(page.locator('#am-presets option')).toHaveCount(2);await page.locator('#am-presets').selectOption('0');await expect(page.locator('#am-watermark-name')).toHaveText('my-watermark.png');
   expect((await page.evaluate(()=>LoviaArtMosaic.serialize())).settings.opacity).toBe(45);await expect(page.locator('#am-enabled')).toBeChecked();
   const download=page.waitForEvent('download');await page.locator('#downloadButton').click();const png=await fs.readFile(await (await download).path());expect(png.readUInt32BE(16)).toBe(3600);
@@ -121,7 +121,7 @@ test('motion sequences and GIF apply the whole-poster effect once after composit
 for(const daynight of [false,true])test(`${daynight?'Day Night':'Classic'} existing layouts and dragging work with full-poster artwork`,async({page})=>{
   const errors=await open(page,daynight?'/daynight.html':'/index.html');
   await page.evaluate(()=>document.fonts.ready);await frame(page);
-  if(!daynight){await page.locator('[data-group="night"]').click();await page.locator('#batchFileInput').setInputFiles(files);await expect(page.locator('#nightGroupCount')).toHaveText('3 张');await page.locator('[data-group="day"]').click();}
+  if(!daynight){await page.locator('#ed-tab-1').click();await page.locator('[data-group="night"]').click();await page.locator('#batchFileInput').setInputFiles(files);await expect(page.locator('#nightGroupCount')).toHaveText('3 张');await page.locator('[data-group="day"]').click();await page.locator('#ed-tab-3').click();}
   await page.locator('.am-heading').click();await page.locator('#am-enabled').check();await page.locator('[data-art-style="weave"]').click();await page.locator('.am-heading').click();
   const buttons=page.locator(daynight?'#layouts [data-layout]':'[data-layout]'),keys=await buttons.evaluateAll(bs=>bs.filter(b=>!b.hidden&&!b.disabled).map(b=>b.dataset.layout));
   expect(keys.length).toBeGreaterThan(8);

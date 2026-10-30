@@ -1,0 +1,266 @@
+/* Shared editorial design system. Canvas pixels and uploaded media are intentionally not styled. */
+html[data-studio-page][data-studio-page] {
+  --ed-bg:#f9f8f6; --ed-ink:#1c1c1c; --ed-muted:#686765; --ed-line:#1c1c1c29;
+  --ed-soft:#1c1c1c08; --ed-serif:"KingHwaOldSong","Noto Serif TC","Songti SC","SimSun",Georgia,serif;
+  --ed-sans:"PingFang SC","Microsoft YaHei","Noto Sans TC",Arial,sans-serif;
+  --app-bg:var(--ed-bg); --paper:var(--ed-bg); --sheet:var(--ed-bg); --ink:var(--ed-ink);
+  --muted:var(--ed-muted); --line:var(--ed-line); --accent:var(--ed-ink); --accent-light:var(--ed-soft);
+  --brass:var(--ed-ink); --brass-soft:var(--ed-soft); --stage:var(--ed-bg); --focus:var(--ed-ink);
+  --btn-bg:var(--ed-ink); --btn-fg:var(--ed-bg); --shadow:none; --f-display:var(--ed-serif); --f-ui:var(--ed-sans);
+  background:var(--ed-bg); color:var(--ed-ink); scroll-padding-top:100px;
+}
+html[data-studio-page][data-studio-page] body {background:var(--ed-bg);color:var(--ed-ink);font:14px/1.7 var(--ed-sans);padding-bottom:0}
+html[data-studio-page][data-studio-page] :where(button,input,select,textarea,dialog,section,nav,aside,div,span,figure,canvas,img,a,i,small,label,ul,li) {border-radius:0;box-shadow:none}
+html[data-studio-page][data-studio-page] body :where(button,input,select,textarea,dialog,section,nav,aside,div,span,figure,canvas,img,a,i,small,label,ul,li),html[data-studio-page][data-studio-page] body ::before,html[data-studio-page][data-studio-page] body ::after {border-radius:0!important;box-shadow:none!important}
+html[data-studio-page][data-studio-page] :where(button,input,select,textarea) {accent-color:var(--ed-ink)}
+html[data-studio-page][data-studio-page] :where(h1,h2,h3) {font-family:var(--ed-serif);font-weight:400;color:var(--ed-ink)}
+html[data-studio-page][data-studio-page] :where(button,a) {transition:color .5s,background-color .5s,border-color .5s;text-underline-offset:6px}
+html[data-studio-page][data-studio-page] button:active {transform:none}
+html[data-studio-page][data-studio-page] :where(button,a,input,select,textarea,summary):focus-visible {outline:1px solid var(--ed-ink);outline-offset:4px;box-shadow:none}
+html[data-studio-page][data-studio-page] :where(button,select) {color:var(--ed-ink);border-color:var(--ed-line);background-color:transparent}
+html[data-studio-page][data-studio-page] :where(button:hover,a:hover) {text-decoration:underline;text-decoration-thickness:1px}
+html[data-studio-page][data-studio-page] :where(input:not([type]),input[type=text],input[type=number],input[type=date],input[type=password],input[type=url],textarea) {
+  color:var(--ed-ink);background:transparent;border:0;border-bottom:1px solid var(--ed-line);font-family:var(--ed-serif);box-shadow:none;
+}
+html[data-studio-page][data-studio-page] :where(input,select,textarea):focus {border-color:var(--ed-ink);box-shadow:none}
+html[data-studio-page][data-studio-page] :where(.button-dark,.btn:not(.ghost),.ed-export) {background:var(--ed-ink);color:var(--ed-bg);border:1px solid var(--ed-ink)}
+html[data-studio-page][data-studio-page] :where(.button-dark:hover,.btn:not(.ghost):hover,.ed-export:hover) {background:var(--ed-bg);color:var(--ed-ink);box-shadow:none}
+html[data-studio-page][data-studio-page] :where(.field-label,.field-hint,.section-note,.hint,.range-label,.range-label output,.finish-label,.font-import-status,.image-scale-tip,.image-size-message,.muted-note,.num,.slider,.slider output,.palette-heading,.font-upload-format,.font-preset-name,.text-font small,.text-colors,.text-chips,.preview-caption,.status,.foot,.site-footer) {color:var(--ed-muted);font-size:12px;line-height:1.7}
+html[data-studio-page][data-studio-page] :where(.field-label,.field,.range-label,.finish-label) {color:var(--ed-muted)}
+html[data-studio-page][data-studio-page] :where(.selected,[aria-pressed=true]) {border-color:var(--ed-ink);background-color:var(--ed-soft);color:var(--ed-ink);box-shadow:none}
+html[data-studio-page][data-studio-page] :where(.font-preset,.text-font,.tfont,.fonts button,.layouts button,.style-option,.layout-option,.border-option,.ratios button,.chip,.seg button) {border:1px solid var(--ed-line);background-color:transparent;color:var(--ed-ink);box-shadow:none}
+html[data-studio-page][data-studio-page] :where(.font-preset.selected,.font-preset:hover,.text-font[aria-pressed=true],.fonts button[aria-pressed=true],.tfont[aria-pressed=true],.layouts button[aria-pressed=true],.ratios button[aria-pressed=true],.style-option.selected,.layout-option.selected,.border-option.selected) {border-color:var(--ed-ink);background:var(--ed-soft);box-shadow:none}
+html[data-studio-page][data-studio-page] :where(.layout-sample,.style-sample,.border-sample,.layouts svg) {filter:grayscale(1)}
+html[data-studio-page][data-studio-page] :where(.text-card,.global-font-panel,.font-controls,.image-scale-panel,.drag-guide,.side,.selbox,.tglobal,.text-edit,.editor-footer,.export-quality-panel,.direction-panel) {border-color:var(--ed-line);background:transparent;box-shadow:none}
+html[data-studio-page][data-studio-page] :where(.asset-picker,.font-upload-button,.batch-upload-button,.single-upload-button,.upload-tile-add,.footer-action,.text-chip,.text-reset,.text-font,.reset-button,.date-field button,.direction-option,.scale-mode-switch button,.ratio-option,.add,.selbox button) {color:var(--ed-ink);background:transparent;border-color:var(--ed-line)}
+html[data-studio-page][data-studio-page] :where(.upload-tile:hover,.upload-tile.selected-image,.upload-tile.dragover) {transform:none;border-color:var(--ed-ink);box-shadow:none}
+html[data-studio-page][data-studio-page] :where(.text-card.open,.text-chip.set,.direction-option.selected,.scale-mode-switch button.active,.ratio-option.selected) {background:var(--ed-soft);border-color:var(--ed-ink);color:var(--ed-ink);box-shadow:none}
+html[data-studio-page][data-studio-page] :where(.switch-track,.am-enable input) {border-radius:0;background:#b7b6b3}
+html[data-studio-page][data-studio-page] :where(.switch-track::after,.am-enable input::after) {border-radius:0;background:var(--ed-bg)}
+html[data-studio-page][data-studio-page] :where(.switch input:checked+.switch-track,.am-enable input:checked) {background:var(--ed-ink)}
+html[data-studio-page][data-studio-page] .app-shell {max-width:1800px}
+html[data-studio-page][data-studio-page] .ed-topbar {display:grid;grid-template-columns:minmax(220px,1fr) auto minmax(220px,1fr);gap:28px;align-items:center;min-height:78px;height:auto;padding:14px 40px;margin:0 0 0;background:var(--ed-bg);border:0;border-bottom:1px solid var(--ed-line);position:relative;z-index:10;backdrop-filter:none}
+html[data-studio-page][data-studio-page] .brand {gap:0;flex:none}
+html[data-studio-page][data-studio-page] :where(.brand-monogram,.brand-mark) {display:none}
+html[data-studio-page][data-studio-page] :where(.brand-wordmark,.brand-word) {display:flex;gap:16px;align-items:baseline;overflow:visible;font:400 14px/1.3 Georgia,var(--ed-serif);letter-spacing:.05em;color:var(--ed-ink)}
+.ed-brand-name {font-size:25px;letter-spacing:-.04em}
+.ed-brand-slash {color:var(--ed-muted)}
+.ed-brand-studio {font-size:12px;letter-spacing:.06em}
+html[data-studio-page][data-studio-page] #studioShell {margin:0;justify-self:center}
+html[data-studio-page][data-studio-page] .topbar-actions {display:flex;gap:20px;align-items:center;justify-self:end}
+html[data-studio-page][data-studio-page] :where(.top-export,.ed-export) {height:42px;min-height:42px;padding:10px 20px;font:12px/1.6 var(--ed-sans);letter-spacing:.1em;white-space:nowrap;cursor:pointer}
+html[data-studio-page][data-studio-page] .top-export .download-svg {display:none}
+html[data-studio-page][data-studio-page] .ed-link {padding:8px 0;border:0;background:transparent;color:var(--ed-ink);font:12px/1.7 var(--ed-sans);letter-spacing:.08em;white-space:nowrap}
+html[data-studio-page][data-studio-page] .ss {gap:14px;color:var(--ed-ink);--ss-ink:var(--ed-ink);--ss-line:var(--ed-line);--ss-bg:var(--ed-bg);--ss-active:var(--ed-bg);--ss-active-ink:var(--ed-ink);--ss-focus:var(--ed-ink)}
+html[data-studio-page][data-studio-page] .ss-seg {border:0;padding:0;gap:24px;background:transparent;align-items:center}
+html[data-studio-page][data-studio-page] .ss-seg a {padding:10px 0;background:transparent;color:var(--ed-muted);font-weight:400;border-bottom:1px solid transparent}
+html[data-studio-page][data-studio-page] .ss-seg a[aria-current] {color:var(--ed-ink);background:transparent;border-bottom-color:var(--ed-ink)}
+html[data-studio-page][data-studio-page] :where(.ss-home,.ss-lang) {border:0;background:transparent;color:var(--ed-muted);width:28px;min-height:36px}
+html[data-studio-page][data-studio-page] .ss-home {display:none}
+html[data-studio-page][data-studio-page] :where(.workspace,.app) {display:grid;grid-template-columns:minmax(0,1fr) 390px;gap:28px 36px;padding:0 40px 48px;max-width:1800px;margin:0 auto;align-items:start}
+html[data-studio-page][data-studio-page] .ed-intro {grid-column:1/-1;display:grid;grid-template-columns:minmax(0,1.45fr) minmax(260px,.8fr);gap:48px;align-items:center;padding:34px 0 30px;border-bottom:1px solid var(--ed-line);margin:0 0 0}
+html[data-studio-page][data-studio-page] .ed-headline {font:400 clamp(42px,4.65vw,80px)/1.25 var(--ed-serif);letter-spacing:-.065em;margin:0;text-wrap:balance}
+html[data-studio-page][data-studio-page] .ed-signature {font:italic 20px/1.6 Georgia,serif;letter-spacing:.08em;color:var(--ed-muted);text-align:left;margin-top:6px;padding:0;white-space:normal}
+html[data-studio-page][data-studio-page] .ed-description {font:400 19px/1.8 var(--ed-serif);color:var(--ed-muted);text-align:left;white-space:normal;padding:0 0 0 32px;border-left:1px solid var(--ed-line)}
+html[data-studio-page][data-studio-page] .preview-column {min-width:0}
+html[data-studio-page][data-studio-page] .preview-card {background:transparent;border:0;overflow:visible;box-shadow:none}
+html[data-studio-page][data-studio-page] .preview-toolbar {height:auto;min-height:54px;padding:10px 0;gap:12px;border:0}
+html[data-studio-page][data-studio-page] .preview-status {font-size:11px;color:var(--ed-muted);gap:10px;white-space:normal}
+html[data-studio-page][data-studio-page] .preview-status strong {font:400 19px/1.5 var(--ed-serif);color:var(--ed-ink);white-space:nowrap}
+html[data-studio-page][data-studio-page] :where(.alive-dot,.toolbar-divider,.tiny-sparkle,.preview-caption>span:last-child) {display:none}
+html[data-studio-page][data-studio-page] :where(.icon-text-button,.pin-button,.stage-pin,.stage-zoom) {color:var(--ed-muted);font-size:11px;font-weight:400;background:transparent;border:0}
+html[data-studio-page][data-studio-page] .canvas-stage {background:transparent;padding:0;min-height:0}
+html[data-studio-page][data-studio-page] #posterCanvas {box-shadow:none;border:1px solid var(--ed-line);background:var(--ed-bg)}
+html[data-studio-page][data-studio-page] #textMark {border-color:var(--ed-ink)}
+html[data-studio-page][data-studio-page] .preview-caption {padding:10px 0;color:var(--ed-muted);font-size:11px}
+html[data-studio-page][data-studio-page] .export-quality-panel {display:flex;align-items:center;flex-wrap:wrap;gap:10px 22px;border-top:1px solid var(--ed-line);padding:12px 0}
+html[data-studio-page][data-studio-page] .export-quality-head {display:none}
+html[data-studio-page][data-studio-page] .export-quality-options {display:flex;gap:24px;flex:1}
+html[data-studio-page][data-studio-page] .export-quality-options button {padding:8px 0;border:0;border-bottom:1px solid transparent;min-height:40px;min-width:0;background:transparent;box-shadow:none;color:var(--ed-muted)}
+html[data-studio-page][data-studio-page] .export-quality-options button strong {font-weight:400;font-size:12px;color:inherit}
+html[data-studio-page][data-studio-page] .export-quality-options button small {font-size:10px;color:var(--ed-muted)}
+html[data-studio-page][data-studio-page] .export-quality-options button.selected {color:var(--ed-ink);border-bottom-color:var(--ed-ink);background:transparent}
+html[data-studio-page][data-studio-page] .ed-preview-download {height:38px;min-height:38px;padding:8px 16px;letter-spacing:0}
+html[data-studio-page][data-studio-page] .editor {position:sticky;top:24px;min-width:0;border:0;border-left:1px solid var(--ed-line);background:transparent;padding-left:32px;overflow:visible;box-shadow:none}
+html[data-studio-page][data-studio-page] .editor-top {display:flex;justify-content:space-between;align-items:center;border:0;padding:0 0 12px;gap:12px}
+html[data-studio-page][data-studio-page] .editor-top h2 {font:400 24px/1.6 var(--ed-serif);margin:0}
+html[data-studio-page][data-studio-page] .reset-button {padding:4px 0;border:0}
+html[data-studio-page][data-studio-page] .editor-top .eyebrow {display:none}
+html[data-studio-page][data-studio-page] .ed-editor-nav {display:flex;justify-content:space-between;gap:20px;border-bottom:1px solid var(--ed-line);margin-bottom:12px}
+html[data-studio-page][data-studio-page] .ed-editor-nav button {min-height:44px;padding:6px 10px;color:var(--ed-muted);border-bottom:1px solid transparent;letter-spacing:.06em;font-size:13px}
+html[data-studio-page][data-studio-page] .ed-editor-nav [aria-selected=true] {color:var(--ed-ink);border-bottom-color:var(--ed-ink)}
+html[data-studio-page][data-studio-page] .editor-section[hidden] {display:none!important}
+html[data-studio-page][data-studio-page] .editor-scroll {max-height:calc(100vh - 220px);min-height:400px;overflow-y:auto;scrollbar-color:#1c1c1c40 transparent;padding-right:6px;scroll-behavior:smooth}
+html[data-studio-page][data-studio-page] .editor-section {padding:18px 0 26px;border-bottom:1px solid var(--ed-line);scroll-margin-top:8px}
+html[data-studio-page][data-studio-page] .section-title {margin:0 0 16px}
+html[data-studio-page][data-studio-page] .section-title h3 {font:400 21px/1.6 var(--ed-serif);letter-spacing:0}
+html[data-studio-page][data-studio-page] :where(.section-title>span,.section-description) {display:none}
+html[data-studio-page][data-studio-page] .text-cards {gap:16px;margin-top:0}
+html[data-studio-page][data-studio-page] .text-card {gap:4px;padding:0 0 6px;border:0}
+html[data-studio-page][data-studio-page] :where(.text-input,.prefixed-field,.date-field input) {border:0;border-bottom:1px solid var(--ed-line);padding:0 0 8px;height:40px;color:var(--ed-ink);font:400 21px/1.5 var(--ed-serif);background:transparent;box-shadow:none;letter-spacing:0}
+html[data-studio-page][data-studio-page] .prefixed-field input {color:var(--ed-ink);font:400 21px/1.5 var(--ed-serif);letter-spacing:0}
+html[data-studio-page][data-studio-page] .prefixed-field>span {display:none}
+html[data-studio-page][data-studio-page] .field-label {font-size:11px;margin:0}
+html[data-studio-page][data-studio-page] .text-chips {gap:6px;margin-top:4px}
+html[data-studio-page][data-studio-page] .text-chip {min-height:28px;font-size:11px;padding:4px 7px;border:0;color:var(--ed-muted)}
+html[data-studio-page][data-studio-page] .global-font-panel {padding:24px 0 16px;margin:0;border:0;border-bottom:1px solid var(--ed-line)}
+html[data-studio-page][data-studio-page] .global-font-heading {margin-bottom:14px}
+html[data-studio-page][data-studio-page] .global-font-heading .field-label {font:400 19px/1.6 var(--ed-serif);color:var(--ed-ink)}
+html[data-studio-page][data-studio-page] :where(.global-font-heading p,.font-global-mark) {display:none}
+html[data-studio-page][data-studio-page] .font-preset-grid {gap:8px}
+html[data-studio-page][data-studio-page] .font-preset {min-height:52px;padding:8px 10px;justify-content:center;align-items:center}
+html[data-studio-page][data-studio-page] .font-preset .font-sample {display:none}
+html[data-studio-page][data-studio-page] .font-preset-name {color:var(--ed-ink);font:400 17px/1.5 var(--ed-serif)}
+html[data-studio-page][data-studio-page] .font-upload-button {border:0;padding:6px 0;min-height:36px}
+html[data-studio-page][data-studio-page] .direction-panel {margin-top:20px;padding:12px 0}
+html[data-studio-page][data-studio-page] .direction-panel+.section-note {margin:0 0 8px}
+html[data-studio-page][data-studio-page] .editor-footer {padding:18px 0 0;border:0}
+html[data-studio-page][data-studio-page] .editor-footer p {color:var(--ed-muted);font-size:11px}
+html[data-studio-page][data-studio-page] .download-main {font-size:12px;letter-spacing:.1em}
+html[data-studio-page][data-studio-page] .download-main small {color:inherit}
+html[data-studio-page][data-studio-page] .site-footer {color:var(--ed-muted);padding:24px 40px;border-top:1px solid var(--ed-line);font:11px/1.7 var(--ed-sans);letter-spacing:.08em}
+/* The accordion is a monochrome editorial insert; its open/closed and effect states remain independent. */
+html[data-studio-page][data-studio-page] .art-mosaic {--am-accent:var(--ed-ink);--am-deep:var(--ed-ink);--am-soft:var(--ed-soft);--am-line:var(--ed-line);--am-ink:var(--ed-ink);--am-muted:var(--ed-muted);--am-white:var(--ed-bg);border:0;border-block:1px solid var(--ed-line);border-left:0;margin:0 0 20px;border-radius:0;background:transparent}
+html[data-studio-page][data-studio-page] .art-mosaic .am-heading {grid-template-columns:minmax(0,1fr) auto 18px;gap:6px 12px;min-height:108px;padding:12px 0;background:transparent;border:0}
+html[data-studio-page][data-studio-page] :where(.am-icon,.am-title small) {display:none}
+html[data-studio-page][data-studio-page] .am-title {font:400 23px/1.5 var(--ed-serif)}
+html[data-studio-page][data-studio-page] .am-subtitle {font-size:12px;color:var(--ed-muted)}
+html[data-studio-page][data-studio-page] .am-status {font-size:12px;font-weight:400;color:var(--ed-muted)}
+html[data-studio-page][data-studio-page] .am-ribbon {height:7px;gap:8px;margin-top:8px}
+html[data-studio-page][data-studio-page] .am-ribbon i {background:#3e3e3d!important}
+html[data-studio-page][data-studio-page] .am-ribbon i:nth-child(2) {background:#666564!important}
+html[data-studio-page][data-studio-page] .am-ribbon i:nth-child(3) {background:#969592!important}
+html[data-studio-page][data-studio-page] .am-ribbon i:nth-child(4) {background:#bdbbb7!important}
+html[data-studio-page][data-studio-page] .am-ribbon i:nth-child(5) {background:#dfdcd7!important}
+html[data-studio-page][data-studio-page] .am-body {padding:24px 0 28px;gap:28px}
+html[data-studio-page][data-studio-page] .art-mosaic h3 {font:400 19px/1.6 var(--ed-serif)}
+html[data-studio-page][data-studio-page] .art-mosaic :where(button,select) {border-color:var(--ed-line);box-shadow:none}
+html[data-studio-page][data-studio-page] .art-mosaic [aria-pressed=true] {color:var(--ed-ink)!important;border-color:var(--ed-ink)!important;background-color:var(--ed-soft)!important}
+html[data-studio-page][data-studio-page] .art-mosaic .am-colors button {background:var(--am-swatch)!important}
+html[data-studio-page][data-studio-page] .am-advanced {border-color:var(--ed-line)}
+html[data-studio-page][data-studio-page] :where(.preview-dialog,.hsv-picker-dialog,.result-card,.ed-preset-dialog,.mo,.mo-card,.sp-edit) {background:var(--ed-bg);color:var(--ed-ink);border:1px solid var(--ed-line);box-shadow:none;--mo-bg:var(--ed-bg);--mo-ink:var(--ed-ink);--mo-line:var(--ed-line);--mo-muted:var(--ed-muted);--mo-accent:var(--ed-ink);--mo-on-accent:var(--ed-bg);--mo-accent-bg:var(--ed-soft);--mo-radius:0px;--mo-font:var(--ed-sans);--mo-title-font:400 24px/1.5 var(--ed-serif)}
+html[data-studio-page][data-studio-page] :where(dialog::backdrop,.result::backdrop) {background:#1c1c1ca6;backdrop-filter:none}
+html[data-studio-page][data-studio-page] .toast {background:var(--ed-ink);color:var(--ed-bg);box-shadow:none;max-width:calc(100vw - 32px);white-space:normal}
+html[data-studio-page][data-studio-page] #presetBar {--sp-line:var(--ed-line);--sp-bg:var(--ed-bg);--sp-active:var(--ed-ink);color:var(--ed-ink)}
+html[data-studio-page][data-studio-page] #presetBar :where(.sp-chip,.sp-edit,.sp-acts button,.sp-edit input) {border-color:var(--ed-line);background:var(--ed-bg);color:var(--ed-ink);box-shadow:none}
+html[data-studio-page][data-studio-page] .ed-preset-dialog {width:min(620px,calc(100vw - 40px));padding:28px;max-height:85vh;overflow:auto}
+.ed-dialog-head {display:flex;justify-content:space-between;gap:24px;align-items:center;border-bottom:1px solid var(--ed-line);padding-bottom:16px;margin-bottom:24px}
+.ed-dialog-head h2 {margin:0;font:400 27px/1.4 var(--ed-serif)}
+.ed-preset-content {min-height:80px;margin-bottom:24px}
+.ed-preset-empty {color:var(--ed-muted);font-size:14px;line-height:1.8}
+html[data-studio-page][data-studio-page] #pageTitle {font:400 clamp(42px,4.65vw,80px)/1.25 var(--ed-serif);letter-spacing:-.065em}
+html[data-studio-page][data-studio-page] :where(.scale-number-field input,.font-upload-button,.font-upload-button span,.footer-action,.footer-action-mark,.text-reset,.text-font b,.text-chip,.text-chip span,.scale-mode-switch strong,.scale-mode-switch small,.ratio-option strong,.ratio-option small,.direction-option,.direction-panel>span,.color-item span,.pin-button[aria-pressed=true],.font-control output,#selectedImageLabel,.layout-option strong) {color:var(--ed-ink)}
+html[data-studio-page][data-studio-page] .ed-field-tools {border:0;font-size:11px;color:var(--ed-muted);margin-top:4px}
+html[data-studio-page][data-studio-page] .ed-field-tools summary {cursor:pointer;min-height:26px;width:fit-content;line-height:26px;font-size:11px;color:var(--ed-muted)}
+html[data-studio-page][data-studio-page] .ed-field-tools[open] summary {margin-bottom:8px}
+/* Day Night uses the same chrome while retaining its complete settings and responsive tabs. */
+html[data-studio-page=daynight][data-studio-page] .app {padding-top:0}
+html[data-studio-page=daynight][data-studio-page] .stage-wrap.am-final-stage {grid-column:1;grid-row:2;position:static;padding:0;min-width:0}
+html[data-studio-page=daynight][data-studio-page] .app>.panel {grid-column:2;grid-row:2;min-width:0;padding:0 0 40px 32px;border-left:1px solid var(--ed-line)}
+html[data-studio-page=daynight][data-studio-page] .stage {height:auto!important;min-height:0!important;aspect-ratio:var(--ar,1.333);background:transparent;overflow:hidden;border:1px solid var(--ed-line)}
+html[data-studio-page=daynight][data-studio-page] #cv {box-shadow:none;max-width:100%}
+html[data-studio-page=daynight][data-studio-page] .ed-stage-toolbar {display:flex;align-items:center;gap:16px;padding:10px 0;min-height:54px}
+.ed-stage-toolbar h3 {margin:0 auto 0 0;font:400 19px/1.5 var(--ed-serif)}
+html[data-studio-page=daynight][data-studio-page] :where(.stage-pin,.stage-zoom) {position:static;padding:8px 0;opacity:1}
+html[data-studio-page=daynight][data-studio-page] .stage-meta {background:var(--ed-bg);padding:2px 5px;color:var(--ed-muted)}
+html[data-studio-page=daynight][data-studio-page] .tabs {display:flex;margin:0 0 24px;padding:0;position:static;border-color:var(--ed-line);gap:4px;z-index:auto;background:transparent}
+html[data-studio-page=daynight][data-studio-page] .tabs button {padding:8px;min-height:44px;font-size:12px;border-bottom-width:1px;color:var(--ed-muted)}
+html[data-studio-page=daynight][data-studio-page] .tabs [aria-selected=true] {color:var(--ed-ink);border-bottom-color:var(--ed-ink);font-weight:400}
+html[data-studio-page=daynight][data-studio-page] .pane {gap:24px}
+html[data-studio-page=daynight][data-studio-page] .pane-title {font-size:22px;line-height:1.5}
+html[data-studio-page=daynight][data-studio-page] .pane+.pane {border-color:var(--ed-line);padding-top:32px;margin-top:32px}
+html[data-studio-page=daynight][data-studio-page] :where(.field input,.date-row input,.plain-input) {font:400 20px/1.5 var(--ed-serif);border:0;border-bottom:1px solid var(--ed-line);background:transparent;padding:8px 0}
+html[data-studio-page=daynight][data-studio-page] .foot {margin:0;padding:24px 40px;border-top:1px solid var(--ed-line)}
+@media(max-width:1200px) and (min-width:901px) {
+  html[data-studio-page][data-studio-page] .ed-topbar {gap:18px;padding-inline:24px}
+  html[data-studio-page][data-studio-page] :where(.workspace,.app) {padding-inline:24px;grid-template-columns:minmax(0,1fr) 330px;gap:28px}
+  html[data-studio-page][data-studio-page] .ss-seg {gap:14px}
+  html[data-studio-page][data-studio-page] .topbar-actions {gap:14px}
+  html[data-studio-page][data-studio-page] .ed-save {display:none}
+  html[data-studio-page][data-studio-page] .editor {padding-left:24px}
+  html[data-studio-page][data-studio-page] .ed-headline {font-size:clamp(42px,4.6vw,60px)}
+}
+@media(max-width:959px) {
+  html[data-studio-page][data-studio-page] :where(.workspace,.app) {display:flex;flex-direction:column;gap:0;padding:0 24px 40px}
+  html[data-studio-page][data-studio-page] .ed-intro {width:100%;padding:40px 0;margin-bottom:32px;order:-3}
+  html[data-studio-page][data-studio-page] .ed-headline {font-size:clamp(46px,7.5vw,64px)}
+  html[data-studio-page][data-studio-page] .ed-description {font-size:16px}
+  html[data-studio-page][data-studio-page] .editor {order:-2;width:100%;position:static;padding:0;border:0;margin-bottom:36px}
+  html[data-studio-page][data-studio-page] .editor-scroll {max-height:none;min-height:0;overflow:visible;padding:0}
+  html[data-studio-page][data-studio-page] .editor-section {padding-block:24px}
+  html[data-studio-page][data-studio-page] .preview-column {width:100%}
+  html[data-studio-page][data-studio-page] .preview-column .preview-card {display:block!important}
+  html[data-studio-page][data-studio-page] .workspace>.preview-card.mobile-restored-preview {margin:0;width:100%;border:0;overflow:visible}
+  html[data-studio-page][data-studio-page] .workspace>.art-mosaic {margin:0 0 20px;width:100%}
+  html[data-studio-page][data-studio-page] .mobile-actions {display:none}
+  html[data-studio-page][data-studio-page] .mobile-preview-dock {background:var(--ed-bg);border-color:var(--ed-line);backdrop-filter:none;box-shadow:none;bottom:16px}
+  html[data-studio-page][data-studio-page] :where(.mobile-preview-title,.dock-hint) {background:var(--ed-bg);color:var(--ed-ink)}
+  html[data-studio-page][data-studio-page] .mobile-preview-title .dock-live-dot {display:none}
+  html[data-studio-page][data-studio-page] .ed-topbar {display:grid;grid-template-columns:minmax(0,1fr) auto;gap:16px 12px;padding:16px 24px 0;position:static}
+  html[data-studio-page][data-studio-page] #studioShell {grid-row:2;grid-column:1/-1;width:100%;margin:0;border-top:1px solid var(--ed-line);padding-top:6px}
+  html[data-studio-page][data-studio-page] .topbar-actions {grid-row:1;grid-column:2}
+  html[data-studio-page][data-studio-page] .ed-save {display:none}
+  html[data-studio-page][data-studio-page] .ss {display:flex;gap:12px;width:100%}
+  html[data-studio-page][data-studio-page] .ss>.ss {width:100%}
+  html[data-studio-page][data-studio-page] .ss-seg {width:100%;justify-content:space-between;gap:16px}
+  html[data-studio-page][data-studio-page] .ss-lang {flex:none}
+  html[data-studio-page][data-studio-page] .ss-short {display:none}
+  html[data-studio-page][data-studio-page] .ss-full {display:inline}
+  html[data-studio-page=daynight][data-studio-page] .app>.panel {order:-2;width:100%;padding:0;margin-bottom:36px;border:0}
+  html[data-studio-page=daynight][data-studio-page] .stage-wrap.am-final-stage {width:100%;padding:0}
+  html[data-studio-page=daynight][data-studio-page] .ed-inspector .pane:not(.is-active) {display:none}
+  html[data-studio-page=daynight][data-studio-page] .ed-inspector .pane {margin:0;padding:0;border:0}
+  html[data-studio-page=daynight][data-studio-page] .tabs {position:static;flex-shrink:0}
+}
+@media(max-width:580px) {
+  html[data-studio-page][data-studio-page] .ed-topbar {padding:16px 22px 0;gap:18px 8px}
+  html[data-studio-page][data-studio-page] :where(.brand-wordmark,.brand-word) {gap:9px}
+  .ed-brand-name {font-size:25px}
+  .ed-brand-studio {font-size:9px;letter-spacing:.04em}
+  html[data-studio-page][data-studio-page] .top-export {width:auto!important;min-width:70px!important;max-width:none;height:38px;min-height:38px;padding:6px 10px!important;flex:auto;aspect-ratio:auto;border-radius:0;font-size:12px;line-height:1.6}
+  html[data-studio-page][data-studio-page] .top-export-label {display:inline;font-size:0}
+  html[data-studio-page][data-studio-page] .top-export-label::after {content:'导出 ↗';font-size:12px}
+  html[data-studio-page][data-studio-page] .topbar-actions>.ed-export {font-size:0;padding:8px 10px;min-height:38px;height:38px}
+  html[data-studio-page][data-studio-page] .topbar-actions>.ed-export::after {content:'导出 ↗';font-size:12px}
+  html[data-studio-page][data-studio-page] :where(.workspace,.app) {padding-inline:22px}
+  html[data-studio-page][data-studio-page] .ed-intro {display:block;padding:34px 0 30px;margin-bottom:24px}
+  html[data-studio-page][data-studio-page] .ed-headline {font-size:clamp(42px,11.5vw,62px);line-height:1.3;letter-spacing:-.04em;max-width:330px;text-wrap:initial}
+  html[data-studio-page][data-studio-page] #pageTitle {font:400 clamp(42px,11.5vw,62px)/1.3 var(--ed-serif);letter-spacing:-.04em;max-width:330px}
+  .ed-title-line {display:block}
+  html[data-studio-page][data-studio-page] .ed-signature {display:none}
+  html[data-studio-page][data-studio-page] .ed-description {display:block;margin-top:18px;border:0;padding:0;font-size:15px;line-height:1.8}
+  html[data-studio-page][data-studio-page] .ed-description br {display:none}
+  html[data-studio-page][data-studio-page] .ss {gap:6px}
+  html[data-studio-page][data-studio-page] .ss-seg {gap:8px}
+  html[data-studio-page][data-studio-page] .ss-seg a {font-size:12px}
+  html[data-studio-page][data-studio-page] .ed-presets {font-size:12px;letter-spacing:0}
+  html[data-studio-page][data-studio-page] .editor-top {padding:0 0 12px}
+  html[data-studio-page][data-studio-page] .editor-top h2 {font-size:23px}
+  html[data-studio-page][data-studio-page] .section-title h3 {font-size:20px}
+  html[data-studio-page][data-studio-page] .text-cards {gap:18px}
+  html[data-studio-page][data-studio-page] .global-font-panel {margin:0;padding-top:24px}
+  html[data-studio-page][data-studio-page] .font-preset {min-height:50px}
+  html[data-studio-page][data-studio-page] .preview-toolbar {flex-wrap:wrap;gap:4px;padding-bottom:12px}
+  html[data-studio-page][data-studio-page] .preview-status {gap:8px;font-size:10px}
+  html[data-studio-page][data-studio-page] .preview-status strong {font-size:18px}
+  html[data-studio-page][data-studio-page] .toolbar-actions {margin-left:auto;gap:12px}
+  html[data-studio-page][data-studio-page] .preview-toolbar .toolbar-divider {display:none}
+  html[data-studio-page][data-studio-page] .preview-status span:last-child {display:none}
+  html[data-studio-page][data-studio-page] .mobile-restored-preview .canvas-stage {min-height:0;background:transparent;padding:0}
+  html[data-studio-page][data-studio-page] .art-mosaic .am-heading {min-height:110px;padding:12px 0}
+  html[data-studio-page][data-studio-page] .am-title {font-size:22px}
+  html[data-studio-page][data-studio-page] .am-subtitle {font-size:12px}
+  html[data-studio-page][data-studio-page] .am-ribbon {height:7px;gap:5px}
+  html[data-studio-page][data-studio-page] .am-body {padding:24px 0}
+  html[data-studio-page][data-studio-page] .export-quality-panel {gap:12px}
+  html[data-studio-page][data-studio-page] .export-quality-options {gap:18px}
+  html[data-studio-page][data-studio-page] .export-quality-options button strong {font-size:12px}
+  html[data-studio-page][data-studio-page] .export-quality-options button small {font-size:9px}
+  html[data-studio-page][data-studio-page] .ed-preview-download {width:100%;min-height:44px}
+  html[data-studio-page][data-studio-page] .site-footer {padding:24px 22px}
+  html[data-studio-page][data-studio-page] .ed-preset-dialog {padding:20px}
+  html[data-studio-page=daynight][data-studio-page] .foot {padding:24px 22px}
+}
+@media(prefers-reduced-motion:reduce) {
+  html[data-studio-page][data-studio-page],html[data-studio-page][data-studio-page] *,html[data-studio-page][data-studio-page] *::before,html[data-studio-page][data-studio-page] *::after {scroll-behavior:auto!important;transition:none!important;animation:none!important}
+}

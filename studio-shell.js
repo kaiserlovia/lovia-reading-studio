@@ -221,8 +221,8 @@
     if (!mount) return;
     const style = document.createElement('style'); style.textContent = CSS; document.head.append(style);
     const T = SRC === 'sc'
-      ? { group: '展示风格', lovia: 'Lovia 经典', loviaS: '经典', dn: 'Day Night', dnS: 'Day Night' }
-      : { group: '展示風格', lovia: 'Lovia 經典', loviaS: '經典', dn: 'Day Night', dnS: 'Day Night' };
+      ? { group: '展示风格', lovia: '经典模板', loviaS: '经典', dn: '日夜对开', dnS: '日夜对开' }
+      : { group: '展示風格', lovia: '經典模板', loviaS: '經典', dn: '日夜對開', dnS: '日夜對開' };
     mount.innerHTML =
       `<div class="ss"><a class="ss-home" href="../" title="回 Reeden 小工具" aria-label="回 Reeden 小工具"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="1.5"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.5"/></svg></a>` +
       `<div class="ss"><nav class="ss-seg" aria-label="${T.group}">` +
