@@ -264,3 +264,52 @@ html[data-studio-page=daynight][data-studio-page] .foot {margin:0;padding:24px 4
 @media(prefers-reduced-motion:reduce) {
   html[data-studio-page][data-studio-page],html[data-studio-page][data-studio-page] *,html[data-studio-page][data-studio-page] *::before,html[data-studio-page][data-studio-page] *::after {scroll-behavior:auto!important;transition:none!important;animation:none!important}
 }
+
+/* Classic-only: a persistent real canvas replaces the introductory banner. */
+html[data-studio-page=lovia] {
+  --ed-classic-header-height:78px; --ed-classic-preview-height:400px; --ed-classic-ratio:1.333333;
+  --ed-classic-canvas-height:min(65svh,calc(100svh - var(--ed-classic-header-height) - 100px));
+  scroll-padding-top:calc(var(--ed-classic-header-height) + 16px);
+}
+html[data-studio-page=lovia][data-studio-page] .ed-topbar {position:sticky;top:0;z-index:20}
+html[data-studio-page=lovia][data-studio-page] .workspace {padding-top:20px}
+html[data-studio-page=lovia][data-studio-page] .preview-column {
+  position:sticky;top:calc(var(--ed-classic-header-height) + 20px);align-self:start;
+  background:var(--ed-bg);min-width:0;
+}
+html[data-studio-page=lovia][data-studio-page] .preview-card {margin:0!important;border:0;display:block!important}
+html[data-studio-page=lovia][data-studio-page] .preview-card .canvas-stage {display:flex;justify-content:center;min-height:0;padding:0}
+html[data-studio-page=lovia][data-studio-page] #posterCanvas {
+  width:min(100%,calc(var(--ed-classic-canvas-height) * var(--ed-classic-ratio)));
+  height:auto;max-height:none;flex:none;
+}
+html[data-studio-page=lovia][data-studio-page] .editor {position:static}
+html[data-studio-page=lovia][data-studio-page] .editor-scroll {max-height:none;min-height:0;overflow:visible;padding:0}
+html[data-studio-page=lovia][data-studio-page] .ed-editor-nav {align-items:center;background:var(--ed-bg);margin-top:0}
+html[data-studio-page=lovia][data-studio-page] .ed-editor-nav .reset-button {margin-left:auto;font-size:11px}
+html[data-studio-page=lovia][data-studio-page] .ed-editor-nav .reset-button span {display:none}
+html[data-studio-page=lovia][data-studio-page] .editor>.art-mosaic {margin:28px 0 12px}
+html[data-studio-page=lovia][data-studio-page] .ed-output-controls {margin-top:24px}
+html[data-studio-page=lovia][data-studio-page] .ed-output-controls .export-quality-panel {display:grid}
+html[data-studio-page=lovia][data-studio-page] .ed-output-controls .ed-preview-download {width:100%}
+html[data-studio-page=lovia][data-studio-page] .mobile-preview-dock {display:none!important}
+@media(max-width:959px) {
+  html[data-studio-page=lovia] {
+    --ed-classic-canvas-height:max(96px,min(34svh,calc(50svh - var(--ed-classic-header-height) - 64px)));
+    scroll-padding-top:calc(var(--ed-classic-header-height) + var(--ed-classic-preview-height) + 60px);
+  }
+  html[data-studio-page=lovia][data-studio-page] .workspace {padding-top:12px}
+  html[data-studio-page=lovia][data-studio-page] .preview-column {
+    order:-3;top:var(--ed-classic-header-height);position:sticky;z-index:12;
+    padding-bottom:14px;border-bottom:1px solid var(--ed-line);
+  }
+  html[data-studio-page=lovia][data-studio-page] .preview-toolbar {min-height:36px;padding:4px 0 8px;flex-wrap:nowrap}
+  html[data-studio-page=lovia][data-studio-page] .preview-status strong {font-size:16px}
+  html[data-studio-page=lovia][data-studio-page] .preview-status>span {display:none}
+  html[data-studio-page=lovia][data-studio-page] .toolbar-actions {gap:10px}
+  html[data-studio-page=lovia][data-studio-page] .editor {order:0;margin:14px 0 0}
+  html[data-studio-page=lovia][data-studio-page] .ed-editor-nav {
+    position:sticky;top:calc(var(--ed-classic-header-height) + var(--ed-classic-preview-height));z-index:13;
+    gap:8px;margin:0;padding-top:4px;
+  }
+}
