@@ -219,6 +219,27 @@ svg.i{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.7;stro
 #libGallery .sg{display:block!important;padding:0;max-width:none}
 #libGallery .sg-grid{grid-template-columns:repeat(auto-fill,minmax(200px,1fr))}
 #libGallery .sg-card,#libGallery .sg-h,#libGallery img,#libGallery .sg-none,#presetBar .sp-chip,#presetBar .sp-edit,#presetBar .sp-acts button,#libGallery .sp-acts button,#libGallery input,#libGallery button{border-radius:0!important}
+/* 原創藝術打碼：沿用整站的黑白方角，看起來就是「外觀」裡的一段 */
+#artHost .art-mosaic{--am-accent:var(--ink);--am-deep:var(--ink);--am-soft:var(--soft);--am-line:var(--rule);--am-ink:var(--ink);--am-muted:var(--mute);--am-white:var(--paper);
+  margin:0;border:0;border-radius:0;background:none;font-size:13px}
+#artHost .art-mosaic .am-heading{grid-template-columns:minmax(0,1fr) auto 18px;min-height:0;padding:0;background:none;gap:4px 12px}
+#artHost .am-icon,#artHost .am-ribbon{display:none}
+#artHost .am-title{font-size:14px;font-weight:600}
+#artHost .am-title small{border-color:var(--ink);border-radius:0;color:var(--ink);font-size:9px;padding:0 4px}
+#artHost .am-subtitle{font-size:12px}
+#artHost .am-status.is-on{color:var(--ink)}
+#artHost .am-chevron{font-size:18px;color:var(--ink)}
+#artHost .am-body{padding:16px 0 0;gap:18px}
+#artHost .am-enable input{border-radius:0;width:44px;height:26px;background:var(--rule)}
+#artHost .am-enable input::after{border-radius:0;width:22px;height:22px;left:2px;top:2px;box-shadow:0 1px 2px rgba(0,0,0,.25)}
+#artHost .am-enable input:checked{background:var(--ink)}
+#artHost .am-enable input:checked::after{transform:translateX(18px)}
+#artHost .art-mosaic .am-color-modes button,#artHost .art-mosaic .am-actions button,#artHost .art-mosaic .am-styles button,#artHost .art-mosaic select,#artHost .am-custom-color input{border:1px solid var(--rule);border-radius:0;background:var(--paper)}
+#artHost .art-mosaic [aria-pressed="true"]{border-color:var(--ink)!important;background:var(--soft)!important;color:var(--ink)!important}
+#artHost .am-styles canvas,#artHost .art-mosaic .am-colors button,#artHost .am-watermark-preview img{border-radius:0}
+#artHost .art-mosaic .am-colors button[aria-pressed="true"]{outline-color:var(--ink);background:var(--am-swatch)!important}
+#artHost .am-advanced{border-color:var(--rule)}
+#artHost .art-mosaic button:focus-visible,#artHost .art-mosaic input:focus-visible,#artHost .art-mosaic select:focus-visible,#artHost .art-mosaic summary:focus-visible{outline-color:var(--ink)}
 #presetBar{--sp-line:var(--rule);--sp-bg:var(--paper);--sp-active:var(--ink)}
 #libGallery{--sp-line:var(--rule);--sp-bg:var(--paper);--sp-active:var(--ink)}
 .mo{--mo-bg:var(--ground);--mo-ink:var(--ink);--mo-line:var(--rule);--mo-muted:var(--mute);--mo-accent:var(--ink);--mo-on-accent:var(--ground);--mo-accent-bg:transparent;--mo-font:var(--sans)}
@@ -627,7 +648,7 @@ svg.i{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.7;stro
   </div>
 </dialog>
 
-<script src="./studio-shell.js?v=21"></script>
+<script src="./studio-shell.js?v=22"></script>
 <script src="./studio-motion.js?v=6"></script>
 <script src="./studio-extra.js?v=5"></script>
 <script src="./art-mosaic.js?v=2"></script>
