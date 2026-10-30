@@ -22,7 +22,7 @@
     '删刪区區结結连連链鏈侧側订訂项項压壓备備扫掃畅暢轮輪转轉云雲别別继繼续續栏欄还還独獨夹夾写寫头頭' +
     '围圍属屬强強挡擋旧舊观觀双雙万萬响響尔爾径徑术術纵縱织織网網艺藝见見让讓许許银銀阶階雾霧频頻';
   // whole words that differ beyond single characters
-  const WORDS_S2T = [['屏幕', '螢幕'], ['复制', '複製'], ['视频', '影片'], ['相册', '相簿'], ['制作', '製作']];
+  const WORDS_S2T = [['屏幕', '螢幕'], ['复制', '複製'], ['视频', '影片'], ['相册', '相簿'], ['制作', '製作'], ['录制', '錄製']];
   const s2t = new Map(), t2s = new Map();
   for (let i = 0; i + 1 < PAIRS.length; i += 2) { s2t.set(PAIRS[i], PAIRS[i + 1]); t2s.set(PAIRS[i + 1], PAIRS[i]); }
 
