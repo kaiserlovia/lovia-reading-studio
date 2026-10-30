@@ -30,17 +30,8 @@
     header.append(actions);
 
     const main = q(classic ? '.workspace' : '.app');
-    const intro = classic ? q('.intro') : el('section', 'intro');
-    intro.classList.add('ed-intro');
-    intro.replaceChildren();
-    const title = el('div', 'ed-intro-title');
-    const h = el(classic ? 'h1' : 'h2', 'ed-headline');
-    if (classic) h.id = 'pageTitle';
-    h.append(el('span', 'ed-title-line', '把阅读，'), el('span', 'ed-title-line', '排成一页。'));
-    title.append(h, el('p', 'ed-signature', 'LOVIA READING STUDIO'));
-    const description = el('p', 'ed-description');
-    description.append(document.createTextNode('上传主题截图，自由编排与取色。'), el('br'), document.createTextNode('让每一处细节，都有自己的位置。'));
-    intro.append(title, description); main.prepend(intro);
+    // No introductory banner on either page. New workspace changes below are Classic-only.
+    q('.intro')?.remove();
 
     // Keep the real preset controls and their existing handlers, rather than copying their markup.
     const presetDialog = el('dialog', 'ed-preset-dialog');
@@ -73,15 +64,18 @@
     shell.querySelector('.ss-seg').append(button('我的预设', openPresets, 'ed-presets ed-link'));
 
     if (classic) {
-      q('#editorTitle').textContent = '编辑你的画报';
       q('.preview-status strong').textContent = '最终大预览';
       const editor = q('.editor');
+      editor.removeAttribute('aria-labelledby'); editor.setAttribute('aria-label', '画报设置');
+      q('.preview-column').removeAttribute('aria-labelledby'); q('.preview-column').setAttribute('aria-label', '实时画报预览');
+      const reset = q('#resetAll');
+      reset.setAttribute('aria-label', '恢复默认设置');
       const scroll = q('.editor-scroll');
       const nav = el('nav', 'ed-editor-nav'); nav.setAttribute('aria-label', '编辑区域'); nav.setAttribute('role', 'tablist');
       const sections = [...scroll.querySelectorAll('.editor-section')];
       const selectSection = (index, focus = false) => {
         sections.forEach((section, i) => { section.hidden = i !== index; });
-        [...nav.children].forEach((b, i) => {
+        [...nav.querySelectorAll('[role=tab]')].forEach((b, i) => {
           b.setAttribute('aria-selected', String(i === index)); b.tabIndex = i === index ? 0 : -1;
         });
         scroll.scrollTop = 0;
@@ -98,7 +92,8 @@
         });
         nav.append(b);
       });
-      editor.querySelector('.editor-top').after(nav);
+      editor.querySelector('.editor-top').replaceWith(nav);
+      nav.append(reset);
       selectSection(0);
       // The four editable fields lead the inspector, as in the accepted design.
       const textCards = q('.text-cards');
@@ -121,9 +116,18 @@
       }).observe(textCards, {subtree:true, attributes:true, attributeFilter:['class']});
       q('.welcome-note').hidden = true;
       const preview = q('.preview-card'), art = q('.art-mosaic'), column = q('.preview-column');
-      const narrow = matchMedia('(max-width:959px)');
-      const placePreview = () => { (narrow.matches ? main : column).append(art, preview); };
-      narrow.addEventListener('change', placePreview); placePreview();
+      column.append(preview);
+      // Settings stay outside the pinned canvas so expanding them cannot cover the preview.
+      editor.querySelector('.editor-footer').before(art);
+      const output = el('section', 'ed-output-controls'); output.setAttribute('aria-label', '高清导出');
+      output.append(q('.preview-caption'), q('.export-quality-panel'));
+      editor.append(output);
+      const setHeaderHeight = () => root.style.setProperty('--ed-classic-header-height', header.getBoundingClientRect().height + 'px');
+      new ResizeObserver(setHeaderHeight).observe(header); setHeaderHeight();
+      new ResizeObserver(() => root.style.setProperty('--ed-classic-preview-height', column.getBoundingClientRect().height + 'px')).observe(column);
+      const canvas = q('#posterCanvas');
+      const setPreviewRatio = () => root.style.setProperty('--ed-classic-ratio', String(canvas.width / canvas.height));
+      new MutationObserver(setPreviewRatio).observe(canvas, {attributes:true, attributeFilter:['width','height']}); setPreviewRatio();
       // A second export entry lives next to the quality controls, with the same original handler.
       q('.export-quality-panel').append(button('下载高清 PNG ↗', () => q('#downloadButton').click(), 'ed-export ed-preview-download'));
     } else {
