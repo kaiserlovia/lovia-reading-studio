@@ -58,10 +58,7 @@
 .am-watermark-preview{display:flex;align-items:center;gap:12px;min-width:0;font-size:12px;color:var(--am-muted);overflow-wrap:anywhere}
 .am-watermark-preview img{width:64px;height:64px;object-fit:contain;flex:none;border:1px solid var(--am-line);border-radius:7px;background:repeating-conic-gradient(#e6e8f1 0 25%,#fff 0 50%) 0/12px 12px}
 .art-mosaic [hidden]{display:none!important}
-/* Day Night keeps its original settings tabs; the final preview now follows them on phones. */
-[data-studio-page="daynight"] .stage-wrap.am-final-stage{position:static;grid-column:1;grid-row:1;min-width:0}
-@media(min-width:960px){[data-studio-page="daynight"] .app>.panel{grid-column:2;grid-row:1}}
-@media(max-width:959px){[data-studio-page="daynight"] .app>.am-settings-tabs{position:sticky;top:0;z-index:5;margin:0;padding:0 12px;background:var(--paper)}[data-studio-page="daynight"] .am-final-stage{padding-bottom:24px}[data-studio-page="daynight"] .am-final-stage .stage{height:auto;min-height:260px;aspect-ratio:var(--ar,1.333)}}
+/* 不可移動 Day Night 的預覽位置：卡片放在 .panel 最上面，預覽與分頁列維持原樣。 */
 @media(max-width:580px){
   .art-mosaic{border-radius:14px;margin-bottom:18px}
   .workspace>.art-mosaic{grid-column:1;margin-bottom:0}

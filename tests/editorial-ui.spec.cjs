@@ -39,7 +39,7 @@ for(const daynight of [false,true])for(const mobile of [false,true]){
   });
 }
 
-for(const daynight of [false,true])test(`${daynight?'Day Night':'Classic'} responsive resizing keeps the artwork directly before the final preview`,async({page})=>{
+for(const daynight of [false,true])test(`${daynight?'Day Night retains original preview and tabs':'Classic keeps artwork before final preview'} across responsive sizes`,async({page})=>{
   const errors=await open(page,daynight?'/daynight.html':'/index.html');
   await page.emulateMedia({reducedMotion:'reduce',colorScheme:'dark'});
   for(const width of [360,390,768,900,959,960,1024,1440,390]){
@@ -47,10 +47,11 @@ for(const daynight of [false,true])test(`${daynight?'Day Night':'Classic'} respo
     await expect.poll(()=>page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
     const geometry=await page.evaluate(daynight=>{
       const art=document.querySelector('.art-mosaic'),next=art.nextElementSibling;
-      const target=document.querySelector(daynight?'.ed-stage-toolbar':'.preview-card');
-      return {next:next===target,gap:target.getBoundingClientRect().top-art.getBoundingClientRect().bottom,expanded:art.querySelector('button').getAttribute('aria-expanded')};
+      const target=document.querySelector(daynight?'.panel>.editor-top':'.preview-card');
+      return {next:next===target,gap:target.getBoundingClientRect().top-art.getBoundingClientRect().bottom,expanded:art.querySelector('button').getAttribute('aria-expanded'),tabsTogether:!daynight||document.querySelector('.tabs').parentElement===document.querySelector('.stage').parentElement};
     },daynight);
     expect(geometry.next).toBe(true);expect(geometry.gap).toBeGreaterThanOrEqual(16);expect(geometry.gap).toBeLessThanOrEqual(24);expect(geometry.expanded).toBe('false');
+    expect(geometry.tabsTogether).toBe(true);
   }
   expect(await page.locator('.am-collapse').evaluate(e=>getComputedStyle(e).transitionDuration)).toBe('0s');
   expect(errors).toEqual([]);

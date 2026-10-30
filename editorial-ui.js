@@ -134,7 +134,8 @@
       q('.panel').classList.add('ed-inspector');
       const editorHead = el('div', 'editor-top');
       editorHead.append(el('h2', '', '编辑你的画报'), button('重置', () => q('#resetAll').click()));
-      q('.panel').prepend(editorHead, q('.am-settings-tabs'));
+      // Keep Day Night's preview and its tabs together, as in the upstream layout.
+      q('.panel>.art-mosaic').after(editorHead);
     }
   }
   // Day Night registers its shell during parsing; wait until that shell is mounted.
