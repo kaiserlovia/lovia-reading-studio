@@ -287,6 +287,29 @@ svg.i{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.7;stro
 #artHost .art-mosaic button:focus-visible,#artHost .art-mosaic input:focus-visible,#artHost .art-mosaic select:focus-visible,#artHost .art-mosaic summary:focus-visible{outline-color:var(--ink)}
 #presetBar{--sp-line:var(--rule);--sp-bg:var(--paper);--sp-active:var(--ink)}
 #libGallery{--sp-line:var(--rule);--sp-bg:var(--paper);--sp-active:var(--ink)}
+/* 柔和版試作（方向 A）：只套在「外觀」分頁。五個以內的選項連成一條軌道，六個以上各自是圓角小塊；選中都是白底浮起 */
+#pane-look{--r:10px;--lift:0 0 0 1px rgba(28,28,28,.2),0 1px 2px rgba(28,28,28,.1),0 3px 10px -3px rgba(28,28,28,.18)}
+#pane-look .g{border-bottom:0;padding:14px 0 18px}
+#pane-look .g h3{font:400 17px var(--serif)}
+#pane-look .seg{gap:6px}
+#pane-look .seg:not(:has(>button:nth-child(6))){gap:2px;padding:3px;background:var(--stage);border-radius:calc(var(--r) + 3px)}
+#pane-look .seg button{border:0;border-radius:var(--r);background:var(--stage);color:var(--mute);transition:background-color .15s,box-shadow .15s,color .15s}
+#pane-look .seg:not(:has(>button:nth-child(6))) button{background:none}
+#pane-look .seg button:hover{color:var(--ink)}
+#pane-look .seg button[aria-pressed=true]{background:var(--paper);color:var(--ink);font-weight:600;box-shadow:var(--lift)}
+#pane-look .b{border-radius:var(--r);border-color:var(--rule)}
+#pane-look .side{border-radius:calc(var(--r) + 4px);border-color:transparent;box-shadow:0 0 0 1px var(--rule)}
+#pane-look .cr input[type=color],#pane-look .cline input[type=color]{border-radius:8px;overflow:hidden}
+#pane-look .cr input[type=color]::-webkit-color-swatch-wrapper,#pane-look .cline input[type=color]::-webkit-color-swatch-wrapper{padding:0}
+#pane-look .cr input[type=color]::-webkit-color-swatch,#pane-look .cline input[type=color]::-webkit-color-swatch{border:0;border-radius:7px}
+#pane-look .plate,#pane-look .warn{border-radius:6px}
+#pane-look #artHost .am-enable input,#pane-look .tog input{border-radius:13px}
+#pane-look #artHost .am-enable input::after,#pane-look .tog input::after{border-radius:50%}
+#pane-look #artHost .art-mosaic .am-color-modes button,#pane-look #artHost .art-mosaic .am-actions button,#pane-look #artHost .art-mosaic .am-styles button,#pane-look #artHost .art-mosaic select,#pane-look #artHost .am-custom-color input{border-radius:var(--r)}
+#pane-look #artHost .am-styles canvas,#pane-look #artHost .art-mosaic .am-colors button{border-radius:7px}
+#pane-look #artHost .art-mosaic [aria-pressed="true"]{border-color:transparent!important;background:var(--paper)!important;box-shadow:var(--lift);font-weight:600}
+#pane-look #artHost .art-mosaic .am-colors button[aria-pressed="true"]{background:var(--am-swatch)!important;outline:2px solid var(--ink);outline-offset:2px}
+#pane-look #artHost .am-title{font:400 17px var(--serif)}
 .mo{--mo-bg:var(--ground);--mo-ink:var(--ink);--mo-line:var(--rule);--mo-muted:var(--mute);--mo-accent:var(--ink);--mo-on-accent:var(--ground);--mo-accent-bg:transparent;--mo-font:var(--sans)}
 
 
