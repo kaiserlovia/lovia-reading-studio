@@ -1059,8 +1059,8 @@ function openLib(){if(!lib.open)lib.showModal();}
 for(const id of['#topLib','#openLib'])$(id).addEventListener('click',openLib);
 $('#libClose').addEventListener('click',()=>lib.close());
 lib.addEventListener('click',e=>{if(e.target===lib)lib.close();});
-for(const id of['#topSave','#mSave','#libSave'])$(id).addEventListener('click',()=>$('#savePreset').click());
-for(const id of['#topExport','#mExport'])$(id).addEventListener('click',()=>$('#exportOne').click());
+for(const id of['#topSave','#stSave','#libSave'])$(id).addEventListener('click',()=>$('#savePreset').click());
+for(const id of['#topExport','#stExport'])$(id).addEventListener('click',()=>$('#exportOne').click());
 
 /* ---------------- UI: layout / segs ---------------- */
 function syncPairNote(){
@@ -1397,11 +1397,13 @@ function tryDownload(blob,name){
 }
 let resultFiles=[];
 function showResult(items,text){
-  $('#resultText').textContent=text||'如果沒有自動下載，手機請長按圖片選「儲存到照片」，電腦請按右鍵另存。';
   resultFiles=items.map(it=>new File([it.blob],it.name,{type:'image/png'}));
   let canShareAll=false;try{canShareAll=!!(navigator.share&&navigator.canShare&&navigator.canShare({files:resultFiles}));}catch(e){}
+  $('#resultText').textContent=text||(canShareAll?'按「存到相簿」，或長按圖片選「儲存到照片」。':'長按圖片選「儲存到照片」，或按「下載 PNG」。');
   $('#resultShare').hidden=!canShareAll;
   $('#resultShare').textContent=items.length>1?`全部存到相簿（${items.length} 張）`:'存到相簿';
+  $('#resultDownload').textContent=items.length>1?`下載 PNG（${items.length} 張）`:'下載 PNG';
+  $('#resultDownload').classList.toggle('pri',!canShareAll);
   const box=$('#resultImgs');box.textContent='';
   for(const it of items){const im=document.createElement('img');im.src=URL.createObjectURL(it.blob);im.alt=it.name;box.append(im);}
   $('#result').showModal();$('#resultClose').focus();
@@ -1409,6 +1411,10 @@ function showResult(items,text){
 $('#resultShare').addEventListener('click',async()=>{
   try{await navigator.share({files:resultFiles,title:S.title||'Day Night'});status('在分享選單選「儲存影像」就會存進相簿。');}
   catch(err){if(!err||err.name!=='AbortError')status('無法開啟分享，請長按圖片儲存。');}
+});
+$('#resultDownload').addEventListener('click',async()=>{
+  for(const f of resultFiles){const how=await saveFile(f,f.name);if(how==='declined'){status('已取消儲存。');return;}}
+  status(resultFiles.length>1?`已下載 ${resultFiles.length} 張。`:'已下載。');
 });
 $('#resultClose').addEventListener('click',()=>$('#result').close());
 $('#result').addEventListener('click',e=>{if(e.target.id==='result')$('#result').close();});
@@ -1420,9 +1426,7 @@ async function busy(fn){if(!hasShots()){status('先在「截圖」加入至少�
   finally{all.forEach(b=>b.disabled=false);}}
 $('#exportOne').addEventListener('click',()=>busy(async()=>{
   const r=await renderBlob();const name=`${safeName(S.title)}-${r.w}x${r.h}.png`;
-  const how=await saveFile(r.blob,name);
-  if(how==='saved'){status(`已儲存 ${r.w}×${r.h} PNG。`);return;}
-  if(how==='declined'){status('已取消儲存。');return;}
+  // 不自動下載（手機會先跳下載視窗），直接打開成品畫面，從那裡存到相簿或下載
   showResult([{blob:r.blob,name}]);status(`已產生 ${r.w}×${r.h} PNG。`);
 }));
 $('#exportPair').addEventListener('click',()=>busy(async()=>{

@@ -61,6 +61,11 @@ svg.i{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.7;stro
 .tb:hover{text-decoration:underline;text-underline-offset:3px}
 .tb[aria-pressed=true]{text-decoration:underline;text-underline-offset:3px}
 .tb[aria-pressed=true] svg{fill:currentColor}
+.m-only,.ls{display:none}
+.tb-pri{background:var(--ink);color:var(--ground);padding:6px 12px;letter-spacing:.06em}
+.tb-pri:hover{text-decoration:none}
+.thead .tb.tb-pri{padding:6px 10px;margin-left:2px}
+@media(max-width:959px){.m-only{display:inline-flex}.thead .t{display:none}.lf{display:none}.ls{display:inline}}
 .stage{position:relative;height:min(42svh,420px,calc((100vw - 32px) / var(--ar,1.333) + 24px));display:grid;place-items:center;background:var(--stage);overflow:hidden}
 #cv{display:block;touch-action:none;box-shadow:0 10px 30px -14px rgba(27,28,33,.45);cursor:grab}
 #cv.dragging{cursor:grabbing}
@@ -73,7 +78,7 @@ svg.i{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.7;stro
 .ptabs{display:none}
 .cbar{display:none}
 
-.panel{padding:6px max(16px,env(safe-area-inset-right,0px)) 120px max(16px,env(safe-area-inset-left,0px));min-width:0}
+.panel{padding:6px max(16px,env(safe-area-inset-right,0px)) 48px max(16px,env(safe-area-inset-left,0px));min-width:0}
 .pane:not(.is-active){display:none}
 .pane h2{font:400 24px var(--serif);margin:18px 0 2px}
 .lead{color:var(--mute);font-size:13px;margin:0 0 6px;max-width:36em;text-wrap:pretty}
@@ -112,11 +117,13 @@ svg.i{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.7;stro
 .ratios small{font-size:11px;color:var(--mute);font-variant-numeric:tabular-nums}
 
 /* sliders: every slider has a number box beside it */
-.sl{display:grid;grid-template-columns:5.6em minmax(0,1fr) 7.2em;align-items:center;gap:10px;font-size:13px}
+.sl{display:grid;grid-template-columns:5.6em minmax(0,1fr) 4.6em;align-items:center;gap:10px;font-size:13px}
 .sl label{color:var(--mute)}
 .sl input[type=range]{width:100%;accent-color:var(--ink);min-height:28px;margin:0}
-.num{display:inline-flex;align-items:center;gap:3px;font-size:12px;color:var(--mute)}
-.num input{width:4.4em;border:1px solid var(--rule);background:var(--paper);padding:5px 6px;font-size:15px;text-align:right;font-variant-numeric:tabular-nums;border-radius:0;color:var(--ink)}
+.num{display:inline-flex;align-items:baseline;gap:2px;font-size:13px;color:var(--mute);border-bottom:1px solid var(--ink);padding:0 0 2px;justify-self:stretch;min-width:0}
+.num input{flex:1;min-width:0;width:auto;border:0;background:none;padding:0;font-size:15px;line-height:1.3;text-align:right;font-variant-numeric:tabular-nums;border-radius:0;color:var(--ink);-moz-appearance:textfield}
+.num input::-webkit-inner-spin-button,.num input::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+.num input:focus{outline:none}.num:focus-within{border-bottom-width:2px;padding-bottom:1px}
 
 /* toggles */
 .tog{display:flex;align-items:center;gap:10px;padding:4px 0;font-size:14px;cursor:pointer;min-height:40px}
@@ -244,9 +251,6 @@ svg.i{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.7;stro
 #libGallery{--sp-line:var(--rule);--sp-bg:var(--paper);--sp-active:var(--ink)}
 .mo{--mo-bg:var(--ground);--mo-ink:var(--ink);--mo-line:var(--rule);--mo-muted:var(--mute);--mo-accent:var(--ink);--mo-on-accent:var(--ground);--mo-accent-bg:transparent;--mo-font:var(--sans)}
 
-/* phone: bottom action bar */
-.mbar{position:fixed;left:0;right:0;bottom:0;z-index:20;display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:8px max(16px,env(safe-area-inset-right,0px)) max(8px,env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));background:var(--ground);border-top:1px solid var(--rule)}
-.mbar .b{min-height:46px}
 
 @media (min-width:960px){
   .hd{position:sticky;top:0;z-index:12;padding-inline:28px}
@@ -263,7 +267,6 @@ svg.i{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.7;stro
   .cbar b{font:500 10px var(--mono);padding:2px 4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .panel{border-left:1px solid var(--rule);padding:0 26px 60px;min-height:calc(100svh - 61px)}
   .ptabs{display:flex;position:sticky;top:61px;z-index:5}
-  .mbar{display:none}
 }
 @media (max-width:959px){input,select,textarea{font-size:16px!important}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
@@ -293,8 +296,11 @@ svg.i{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.7;stro
     <div class="thead">
       <span class="t">預覽</span><span id="stageMeta"></span><span class="grow"></span>
       <button class="tb" id="pinShots" type="button" aria-pressed="false" title="固定後截圖不能在預覽裡拖動"><svg class="i"><use href="#i-pin"/></svg><span>固定截圖</span></button>
-      <button class="tb" id="resetPos" type="button" title="所有截圖放回原位、大小回到 100%"><svg class="i"><use href="#i-reset"/></svg>全部復位</button>
+      <button class="tb" id="resetPos" type="button" title="所有截圖放回原位、大小回到 100%"><svg class="i"><use href="#i-reset"/></svg><span class="lf">全部復位</span><span class="ls">復位</span></button>
       <button class="tb" id="openLarge" type="button"><svg class="i"><use href="#i-zoom"/></svg>放大</button>
+      <!-- 手機：儲存和匯出放在跟著預覽固定在頂端的這一列，不另外佔底部空間 -->
+      <button class="tb m-only" id="stSave" type="button" title="儲存設置"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h11l3 3v13H5zM8 4v5h7V4M8 20v-6h8v6"/></svg>儲存</button>
+      <button class="tb tb-pri m-only" id="stExport" type="button">匯出</button>
     </div>
     <div class="stage" id="stage">
       <canvas id="cv" role="img" aria-label="畫報預覽，可拖動截圖調整位置，雙擊放回原位"></canvas>
@@ -603,7 +609,6 @@ svg.i{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.7;stro
   </div>
 </main>
 
-<div class="mbar"><button class="b" type="button" id="mSave">儲存設置</button><button class="b pri" type="button" id="mExport">匯出</button></div>
 
 <dialog class="drawer" id="lib" aria-labelledby="libTitle">
   <div class="dhead"><h2 id="libTitle">作品集</h2><span class="grow"></span><button class="b sm" id="libClose" type="button">關閉</button></div>
@@ -616,9 +621,10 @@ svg.i{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.7;stro
 <dialog class="result" id="result" aria-labelledby="resultTitle">
   <div class="result-card">
     <h2 id="resultTitle">畫報完成</h2>
-    <p id="resultText">如果沒有自動下載，手機請長按圖片選「儲存到照片」，電腦請按右鍵另存。</p>
+    <p id="resultText">按「存到相簿」，或長按圖片選「儲存到照片」；電腦請按「下載 PNG」。</p>
     <div class="result-imgs" id="resultImgs"></div>
     <button class="b pri" id="resultShare" hidden>全部存到相簿</button>
+    <button class="b" id="resultDownload" type="button">下載 PNG</button>
     <button class="b" id="resultClose">關閉</button>
   </div>
 </dialog>
@@ -652,6 +658,6 @@ svg.i{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.7;stro
 <script src="./studio-motion.js?v=6"></script>
 <script src="./studio-extra.js?v=5"></script>
 <script src="./art-mosaic.js?v=2"></script>
-<script src="./studio.js?v=1"></script>
+<script src="./studio.js?v=2"></script>
 </body>
 </html>
