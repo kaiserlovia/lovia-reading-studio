@@ -10,7 +10,10 @@
 <link rel="stylesheet" href="./art-mosaic.css?v=3">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Huninn&family=Iansui&family=LXGW+WenKai+TC:wght@400;700&family=Noto+Sans+TC:wght@400;700&family=Noto+Serif+TC:wght@500;700&display=swap">
+<!-- 字型表不擋畫面：先用系統字顯示介面，載完再換；畫報要用字前會等 window.dnFontCss（最多 4 秒）。 -->
+<script>window.dnFontCss=new Promise(function(r){window.dnFontCssDone=r;setTimeout(r,4000);});</script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Huninn&family=Iansui&family=LXGW+WenKai+TC:wght@400;700&family=Noto+Sans+TC:wght@400;700&family=Noto+Serif+TC:wght@500;700&display=swap" media="print" onload="this.media='all';dnFontCssDone()" onerror="dnFontCssDone()">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Huninn&family=Iansui&family=LXGW+WenKai+TC:wght@400;700&family=Noto+Sans+TC:wght@400;700&family=Noto+Serif+TC:wght@500;700&display=swap"></noscript>
 <style>
 /* Layout: poster stage on the left (sticky), control sheet on the right; on phones the stage pins to the top with tabs under it. */
 :root{
@@ -243,6 +246,29 @@ button{cursor:pointer}
 </style>
 
 <link rel="stylesheet" href="./editorial-ui.css?v=1">
+<style>
+/* Day Night 專用的介面修正（不影響經典頁與畫報輸出）。 */
+html[data-studio-page=daynight][data-studio-page]{
+  --ed-sans:"PingFang TC","PingFang SC","Microsoft JhengHei","Microsoft YaHei",system-ui,sans-serif;
+  --ed-serif:"KingHwaOldSong","Songti TC","Songti SC","Noto Serif TC","SimSun",Georgia,serif;
+}
+html[data-studio-page=daynight][data-studio-page] :where(button,a,input,select,textarea,summary):focus-visible{outline:2px solid var(--ed-ink);outline-offset:3px}
+html[data-studio-page=daynight][data-studio-page] :where(.stage-pin,.stage-zoom,.ratios small,.tag,.am-styles span,.am-status,.seg-col button small){font-size:12px}
+html[data-studio-page=daynight][data-studio-page] input[type=checkbox]{width:24px;height:24px;flex:none}
+html[data-studio-page=daynight][data-studio-page] input[type=range]{min-height:24px}
+.dn-jump{display:none}
+@media(min-width:960px){
+  html[data-studio-page=daynight][data-studio-page] .dn-jump{display:flex;position:sticky;top:0;z-index:4;gap:4px;margin:0 0 24px;background:var(--ed-bg);border-bottom:1px solid var(--ed-line)}
+  .dn-jump a{flex:1 1 0;min-height:44px;display:flex;align-items:center;justify-content:center;font-size:13px;color:var(--ed-muted);text-decoration:none;border-bottom:1px solid transparent;margin-bottom:-1px}
+  .dn-jump a[aria-current=true]{color:var(--ed-ink);border-bottom-color:var(--ed-ink)}
+}
+@media(max-width:959px){
+  html[data-studio-page=daynight][data-studio-page] .ed-intro{padding:20px 0 16px;margin-bottom:16px}
+  html[data-studio-page=daynight][data-studio-page] .ed-headline{font-size:clamp(28px,8vw,40px);line-height:1.3;max-width:none;letter-spacing:-.02em}
+  html[data-studio-page=daynight][data-studio-page] .ed-title-line{display:inline}
+  html[data-studio-page=daynight][data-studio-page] .ed-description{margin-top:6px;font-size:14px;line-height:1.7}
+}
+</style>
 <script src="./editorial-ui.js?v=1" defer></script>
 <header class="topbar">
   <div class="brand" aria-label="Lovia Reading Studio · Day Night"><span class="brand-mark" aria-hidden="true">L<span>.</span></span><span class="brand-word"><span class="bw-long">LOVIA READING STUDIO</span><i></i>DAY NIGHT</span></div>
@@ -275,6 +301,10 @@ button{cursor:pointer}
   </section>
 
   <div class="panel">
+    <!-- 桌機才顯示：跳到各設定段落。手機仍用預覽下方的 .tabs（位置不可動）。 -->
+    <nav class="dn-jump" aria-label="跳到設定段落">
+      <a href="#pane-shots" aria-current="true">截圖</a><a href="#pane-layout">版型</a><a href="#pane-color">色彩</a><a href="#pane-text">文字</a><a href="#pane-export">匯出</a>
+    </nav>
     <!-- SHOTS -->
     <section class="pane is-active" id="pane-shots" role="tabpanel" aria-labelledby="tab-shots">
       <h2 class="pane-title">截圖</h2>
@@ -1636,6 +1666,7 @@ function renderFonts(){
 }
 $('#globalFontBtn').addEventListener('click',()=>{const b=$('#globalFontBtn'),open=b.getAttribute('aria-expanded')!=='true';b.setAttribute('aria-expanded',String(open));$('#globalFontBox').hidden=!open;});
 async function ensureFont(){
+  await window.dnFontCss;
   const txt=[S.title,S.tagline,S.author,S.date,S.message,S.labelDay,S.labelNight,'首頁書架閱讀頁目錄筆記#0123456789ABCDEF'].join('');
   const fonts=new Set([curFont(),...TEXT_FIELDS.map(fieldFont)]);
   const loads=[];for(const f of fonts)loads.push(document.fonts.load(`${f.tw} 40px "${f.fam}"`,txt),document.fonts.load(`${f.bw} 40px "${f.fam}"`,txt));
@@ -2101,6 +2132,18 @@ async function applySettings(st,files={}){
 // 注意：不可移動 Day Night 的預覽位置（.stage-wrap 和裡面的 .tabs 要留在原處，手機上固定在頂端）。
 // 新功能的卡片請放進 .panel，不要把預覽搬到編輯區下方或拆開分頁列。
 LoviaArtMosaic.mount({before:$('.panel').firstElementChild,change:req});
+// 桌機右欄的段落導覽：捲動時標出目前所在段落。
+(function(){
+  const wide=matchMedia('(min-width:960px)'),links=[...document.querySelectorAll('.dn-jump a')];
+  const panes=links.map(a=>document.querySelector(a.getAttribute('href')));let tick=0;
+  const mark=()=>{tick=0;if(!wide.matches)return;let i=0;panes.forEach((p,k)=>{if(p.getBoundingClientRect().top<=140)i=k;});
+    if(innerHeight+scrollY>=document.documentElement.scrollHeight-2)i=panes.length-1;
+    links.forEach((a,k)=>a.setAttribute('aria-current',String(k===i)));};
+  addEventListener('scroll',()=>{if(!tick)tick=requestAnimationFrame(mark);},{passive:true});
+  links.forEach((a,k)=>a.addEventListener('click',e=>{e.preventDefault();
+    panes[k].scrollIntoView({behavior:matchMedia('(prefers-reduced-motion:reduce)').matches?'auto':'smooth'});
+    links.forEach((b,j)=>b.setAttribute('aria-current',String(j===k)));}));
+})();
 async function init(){
   syncQuality();syncColorInputs();syncSegs();
   renderFonts();syncLayoutUI();
