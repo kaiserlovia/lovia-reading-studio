@@ -8,13 +8,14 @@ const T=s=>window.LoviaStudio?window.LoviaStudio.t(s):s;
 
 /* ---------------- constants ---------------- */
 const RATIOS={'4:3':[3600,2700],'1:1':[3000,3000],'3:4':[2700,3600],'9:16':[2160,3840]};
+// 網路字型（Google 的繁體字型）沒有部分簡體字，後面都接同風格的簡體字型補字
 const FONTS={
-  wenkai:{name:'霞鶩文楷',stack:'"LXGW WenKai TC","Noto Serif TC",serif',fam:'LXGW WenKai TC',tw:700,bw:400},
-  serif:{name:'思源宋體',stack:'"Noto Serif TC","Songti TC",serif',fam:'Noto Serif TC',tw:700,bw:500},
-  sans:{name:'思源黑體',stack:'"Noto Sans TC","PingFang TC",sans-serif',fam:'Noto Sans TC',tw:700,bw:400},
-  iansui:{name:'芫荽',stack:'Iansui,"LXGW WenKai TC",serif',fam:'Iansui',tw:400,bw:400},
-  huninn:{name:'粉圓',stack:'Huninn,"Noto Sans TC",sans-serif',fam:'Huninn',tw:400,bw:400},
-  garamond:{name:'英文襯線',stack:'"Cormorant Garamond","Noto Serif TC",serif',fam:'Cormorant Garamond',tw:600,bw:500},
+  wenkai:{name:'霞鶩文楷',stack:'"LXGW WenKai TC","LXGW WenKai","Noto Serif TC","Noto Serif SC",serif',fam:'LXGW WenKai TC',tw:700,bw:400},
+  serif:{name:'思源宋體',stack:'"Noto Serif TC","Noto Serif SC","Songti TC","Songti SC",serif',fam:'Noto Serif TC',tw:700,bw:500},
+  sans:{name:'思源黑體',stack:'"Noto Sans TC","Noto Sans SC","PingFang TC","PingFang SC",sans-serif',fam:'Noto Sans TC',tw:700,bw:400},
+  iansui:{name:'芫荽',stack:'Iansui,"LXGW WenKai TC","LXGW WenKai",serif',fam:'Iansui',tw:400,bw:400},
+  huninn:{name:'粉圓',stack:'Huninn,"Noto Sans TC","Noto Sans SC",sans-serif',fam:'Huninn',tw:400,bw:400},
+  garamond:{name:'英文襯線',stack:'"Cormorant Garamond","Noto Serif TC","Noto Serif SC",serif',fam:'Cormorant Garamond',tw:600,bw:500},
   /* Lovia presets (native stacks, same as the Lovia page) */
   kinghwa:{name:'京華老宋',stack:'"KingHwaOldSong","KingHwa_OldSong","京華老宋体","京华老宋体","Songti SC",serif',fam:'KingHwaOldSong',tw:400,bw:400},
   song:{name:'典雅宋體',stack:'"Songti SC","STSong","Noto Serif CJK SC","SimSun",serif',fam:'Songti SC',tw:400,bw:400},
@@ -1232,11 +1233,13 @@ function renderFonts(){
   renderTextCards();
 }
 $('#globalFontBtn').addEventListener('click',()=>{const b=$('#globalFontBtn'),open=b.getAttribute('aria-expanded')!=='true';b.setAttribute('aria-expanded',String(open));$('#globalFontBox').hidden=!open;});
+const famsOf=f=>(f.stack.match(/"[^"]+"|[A-Za-z][\w ]*(?=,|$)/g)||[f.fam]).map(x=>x.replace(/"/g,'').trim()).filter(x=>!/^(serif|sans-serif|monospace)$/.test(x));
 async function ensureFont(){
   await window.dnFontCss;
   const txt=[S.title,S.tagline,S.author,S.date,S.message,S.labelDay,S.labelNight,'首頁書架閱讀頁目錄筆記#0123456789ABCDEF'].join('');
   const fonts=new Set([curFont(),...TEXT_FIELDS.map(fieldFont)]);
-  const loads=[];for(const f of fonts)loads.push(document.fonts.load(`${f.tw} 40px "${f.fam}"`,txt),document.fonts.load(`${f.bw} 40px "${f.fam}"`,txt));
+  // 整串字型都要載入：繁體字型缺的簡體字由後面的字型補上，沒先載好畫出來會變成系統字
+  const loads=[];for(const f of fonts)for(const fam of famsOf(f))loads.push(document.fonts.load(`${f.tw} 40px "${fam}"`,txt),document.fonts.load(`${f.bw} 40px "${fam}"`,txt));
   try{await Promise.race([Promise.all(loads),new Promise(r=>setTimeout(r,4000))]);}catch(e){}
 }
 // imported fonts: no limit; each gets its own key (local, local2…) and file slot (font, font2…)
